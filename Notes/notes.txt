@@ -1,0 +1,3 @@
+- Immune cell decomposition from RNA-seq useful?
+- Pathways incorporated (derived from literature)?
+- Immune cell related genes of focus?
