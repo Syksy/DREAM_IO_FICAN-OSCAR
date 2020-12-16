@@ -99,7 +99,7 @@
 # GSE93157 - Programmed death 1 receptor blockade and immune-related gene expression profiling in non-small cell lung carcinoma, head and neck squamous cell carcinoma and melanoma
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE93157
 # Prat et al.
-# Cancer(s): Non-small cell lung carcinoma, heda and neck squamous cell carcinoma, melanoma
+# Cancer(s): Non-small cell lung carcinoma, head and neck squamous cell carcinoma, melanoma
 # Treatment(s): Anti-PD1 (pembrolizumab or nivolumab)
 # N(s): 
 # Response types:
@@ -125,3 +125,52 @@
 # - 2
 # - 3
 
+###
+#
+# Download and process
+#
+###
+
+setwd("D:\\Gits\\DREAM_2020_IO\\download")
+library(GEOquery)
+# Follow guidelines e.g. in http://genomicsclass.github.io/book/pages/GEOquery.html
+
+# GSE115821 - Robust prediction of response to immune checkpoint blockade therapy in metastatic melanoma
+gse_auslander <- getGEO("GSE115821", GSEMatrix = TRUE)
+
+# GSE121810 - Neoadjuvant anti-PD-1 immunotherapy promotes a survival benefit with intratumoral and systemic immune responses in recurrent glioblastoma
+gse_cloughesy <- getGEO("GSE121810", GSEMatrix = TRUE)
+
+# GSE78220 - mRNA expressions in pre-treatment melanomas undergoing anti-PD-1 checkpoint inhibition therapy
+gse_hugo <-  getGEO("GSE78220", GSEMatrix = TRUE)
+
+# GSE52562 - Gene expression profiling of tumor biopsies before and after pidilizumab therapy in patients with relapsed follicular lymphoma grade 1 or grade 2.
+gse_westin <-  getGEO("GSE52562", GSEMatrix = TRUE)
+
+# GSE79691 - Transcriptional mechanisms of resistance to anti-PD-1 therapy
+gse_ascierto <- getGEO("GSE79691", GSEMatrix = TRUE)
+
+# GSE79691 - Transcriptional mechanisms of resistance to anti-PD-1 therapy
+gse_ascierto2 <- getGEO("GSE79691", GSEMatrix = TRUE)
+
+# GSE91061 - Molecular portraits of tumor mutational and micro-environmental sculpting by immune checkpoint blockade therapy
+gse_riaz <- getGEO("GSE91061", GSEMatrix = TRUE)
+
+# GSE93157 - Programmed death 1 receptor blockade and immune-related gene expression profiling in non-small cell lung carcinoma, head and neck squamous cell carcinoma and melanoma
+gse_prat <- getGEO("GSE93157", GSEMatrix = TRUE)
+
+# Examine main characteristics of the reported phenodata
+head(pData(gse_auslander[[1]]))[1:2,]
+head(pData(gse_cloughesy[[1]]))[1:2,]
+head(pData(gse_hugo[[1]]))[1:2,]
+head(pData(gse_westin[[1]]))[1:2,]
+head(pData(gse_ascierto[[1]]))[1:2,]
+head(pData(gse_ascierto2[[1]]))[1:2,]
+head(pData(gse_riaz[[1]]))[1:2,]
+head(pData(gse_prat[[1]]))[1:2,]
+# Response abbreviations:
+#
+# From e.g. Hugo et al.
+# PD: Progressive disease
+# CR: Complete response
+# PR: Partial response
