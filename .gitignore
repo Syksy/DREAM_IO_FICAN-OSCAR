@@ -1,3 +1,5 @@
 *.tws
 *.gz
 *.csv
+*.soft
+*.xlsx
