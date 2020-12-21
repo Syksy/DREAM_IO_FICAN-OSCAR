@@ -199,21 +199,31 @@ sup_cloughesy <- readxl::read_excel(rownames(sup_cloughesy)[1])
 gse_hugo <-  GEOquery::getGEO("GSE78220", GSEMatrix = TRUE)
 sup_hugo <- GEOquery::getGEOSuppFiles("GSE78220")
 sup_hugo <- readxl::read_excel(rownames(sup_hugo)[1])
+# sup_hugo -> tibble table, cast to matrix preferably
 
 # GSE52562 - Gene expression profiling of tumor biopsies before and after pidilizumab therapy in patients with relapsed follicular lymphoma grade 1 or grade 2.
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE52562
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL10558
 gse_westin <-  GEOquery::getGEO("GSE52562", GSEMatrix = TRUE, getGPL = TRUE)
+# Mapping/collapsing:
+# gse_westin[[1]]@featureData@data[1:2,]
+# column "ID" <-> "ILMN_Gene"
 
 # GSE79691 - Transcriptional mechanisms of resistance to anti-PD-1 therapy
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE67501
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL18281
 gse_ascierto <- GEOquery::getGEO("GSE67501", GSEMatrix = TRUE, getGPL = TRUE)
+# Mapping/collapsing:
+# gse_ascierto[[1]]@featureData@data[1:2,]
+# column "ID" <-> "ILMN_Gene"
 
 # GSE79691 - Transcriptional mechanisms of resistance to anti-PD-1 therapy
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE79691
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL14951
 gse_ascierto2 <- GEOquery::getGEO("GSE79691", GSEMatrix = TRUE, getGPL = TRUE)
+# Mapping/collapsing:
+# gse_ascierto2[[1]]@featureData@data[1:2,]
+# column "ID" <-> "ILMN_Gene"
 
 # GSE91061 - Molecular portraits of tumor mutational and micro-environmental sculpting by immune checkpoint blockade therapy
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE91061
@@ -285,6 +295,21 @@ gex_auslander <- gex_auslander[which(rownames(gex_auslander) %in% genes$hgnc_sym
 #> dim(gex_auslander)
 #[1] 20245    37
 # Much more reasonable row count - previously over 70k?!
+
+##
+## Westin et al.
+##
+#str(gse_westin[[1]]@featureData)
+#head(gse_westin[[1]]@featureData@data)
+
+
+##
+## Ascierto et al.
+##
+
+##
+## Ascierto et al. 2
+##
 
 
 ##
