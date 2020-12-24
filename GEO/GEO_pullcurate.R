@@ -131,16 +131,16 @@
 #
 ###
 
-setwd("D:\\Gits\\DREAM_2020_IO\\download")
+#setwd("D:\\Gits\\DREAM_2020_IO\\download")
 # GEOquery
 library(GEOquery)
 # Read excel
 library(readxl)
 # RNA-seq normalization
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("DESeq2")
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+#
+#BiocManager::install("DESeq2")
 library("DESeq2")
 
 # Generate a human genome mapping helper data frame

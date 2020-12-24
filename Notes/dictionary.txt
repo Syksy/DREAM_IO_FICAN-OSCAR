@@ -1,2 +1,64 @@
 TCR = T cell receptor sequencing
 
+List of clinical variables:
+
+e.g.
+
+patientID,SEX,AAGE,CRFHIST,TOBACUSE,ECOGPS,PDL1,TMB,TCR_Shannon,TCR_Richness,TCR_Evenness,BCR_Shannon,BCR_Richness,BCR_Evenness
+p227,M,49.1039818351742,NON-SQUAMOUS,CURRENT,1,55,76,2.80693842594914,21,0.122891428880582,6.72129677373314,903,0.0461293287589975
+p359,M,76.118548788348,NON-SQUAMOUS,NEVER,1,69,NA,1.82946481046416,11,0.202729612384583,6.04839372497185,3083,0.0279323080490057
+
+SEX: M -> Male, F -> Female
+AAGE: double years
+CRFHIST: NON-SQUAMOUS vs. SQUAMOUS
+TOBACUSE: NEVER (0), FORMER (1), CURRENT (2)
+-> isFormer? isCurrent? binarized
+ECOGPS: integer
+PDL1: integer (percentage of staining presumably) 
+TMB: integer (esimate of mutations/MBp presumably)
+TCR_Shannon: double (above >1 too)
+TCR_Richness: integer
+TCR_Evenness: double (<0)
+BCR_Shannon: double
+BCR_Richness: integer
+BCR_Evenness: double
+
+# Characteristics in R:
+
+> range(synthetic_clin$TCR_Shannon)
+[1] 0.000000 4.804296
+> range(synthetic_clin$TCR_Richness)
+[1]   0 138
+> range(synthetic_clin$TCR_Evenness)
+[1] 0.04420034 0.41569046
+> range(synthetic_clin$BCR_Shannon)
+[1] 2.684376 7.956455
+> range(synthetic_clin$BCR_Richness)
+[1]   43 8008
+> range(synthetic_clin$BCR_Evenness)
+[1] 9.984428e-05 6.889121e-02
+> table(synthetic_clin$SEX)
+
+ F  M 
+25 30 
+> range(synthetic_clin$AAGE)
+[1] 37.00966 78.63016
+> table(synthetic_clin$CRFHIST)
+
+NON-SQUAMOUS     SQUAMOUS 
+          45           10 
+> table(synthetic_clin$TOBACUSE)
+
+CURRENT  FORMER   NEVER 
+     13      36       6 
+> table(synthetic_clin$ECOGPS)
+
+           0            1 NOT REPORTED 
+          17           37            1 
+> range(synthetic_clin$PDL1)
+[1]  0 99
+> range(synthetic_clin$TMB)
+[1] NA NA
+> range(synthetic_clin$TMB, na.rm=TRUE)
+[1]   7 991
+
