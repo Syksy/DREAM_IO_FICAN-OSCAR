@@ -41,7 +41,7 @@ genes <- genes[order(genes$chromosome_name, genes$start_position, genes$end_posi
 # Omit row names (wrong order indices)
 rownames(genes) <- NULL
 
-
+### Synthetic dataset from DREAM IO 2020 (no signal, must right composition for data)
 
 # Read in synthetic data and examine fields
 cli_synthetic <- read.csv(".\\Synthetic\\CM_026_formatted_synthetic_data_subset\\clinical_data.csv", row.names=1)
@@ -70,9 +70,190 @@ gex_synthetic_refseq105_isoforms_tpm <- read.csv(".\\Synthetic\\CM_026_formatted
 
 ## Non-comforming dimensions, except when normalized count -> tpm
 
-library(survival)
 
-# Datasets downloaded from TIDE
+
+
+### Corresponding datasets from TCGA
+
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+#BiocManager::install("RTCGA")
+library("RTCGA")
+
+RTCGA::checkTCGA(what="Dates", c("LUAD", "LUSC"))
+RTCGA::checkTCGA(what="DataSets", "LUAD")
+RTCGA::checkTCGA(what="DataSets", "LUSC")
+
+# Latest "2016-01-28"
+
+# Clinical annotations
+RTCGA::downloadTCGA(c("LUAD", "LUSC"), "Merge_Clinical.Level_1", "TCGA", date="2016-01-28", untarFile=TRUE, removeTar=TRUE)
+
+#> list.files("TCGA")
+#[1] "gdac.broadinstitute.org_LUAD.Merge_Clinical.Level_1.2016012800.0.0"
+#[2] "gdac.broadinstitute.org_LUSC.Merge_Clinical.Level_1.2016012800.0.0"
+
+RTCGA::downloadTCGA(c("LUAD", "LUSC"), "mRNAseq_Preprocess.Level_3", "TCGA", date="2016-01-28", untarFile=TRUE, removeTar=TRUE)
+
+## use cBioPortal and its package cgdsr instead
+
+# install.packages("cgdsr")
+library("cgdsr")
+
+mycgds = cgdsr::CGDS("http://www.cbioportal.org/")
+#getCancerStudies(mycgds)
+
+#> getCancerStudies(mycgds)[grep("luad", getCancerStudies(mycgds)$cancer_study_id),-3]
+#                 cancer_study_id                                         name
+#136                   luad_broad       Lung Adenocarcinoma (Broad, Cell 2012)
+#137              luad_mskcc_2015    Lung Adenocarcinoma (MSKCC, Science 2015)
+#138             luad_oncosg_2020 Lung Adenocarcinoma (OncoSG, Nat Genet 2020)
+#139                    luad_tcga  Lung Adenocarcinoma (TCGA, Firehose Legacy)
+#140                luad_tcga_pub      Lung Adenocarcinoma (TCGA, Nature 2014)
+#141 luad_tcga_pan_can_atlas_2018  Lung Adenocarcinoma (TCGA, PanCancer Atlas)
+#142                     luad_tsp       Lung Adenocarcinoma (TSP, Nature 2008)
+#> getCancerStudies(mycgds)[grep("lusc", getCancerStudies(mycgds)$cancer_study_id),-3]
+#                 cancer_study_id                                                 name
+#143                    lusc_tcga Lung Squamous Cell Carcinoma (TCGA, Firehose Legacy)
+#144                lusc_tcga_pub     Lung Squamous Cell Carcinoma (TCGA, Nature 2012)
+#145 lusc_tcga_pan_can_atlas_2018 Lung Squamous Cell Carcinoma (TCGA, PanCancer Atlas)
+
+#> getCaseLists(mycgds, "luad_tcga")[,-5]
+#                  case_list_id                              case_list_name                                        case_list_description cancer_study_id
+#1                luad_tcga_all                                 All samples                                    All samples (586 samples)            2715
+#2      luad_tcga_3way_complete                            Complete samples Samples with mutation, CNA and expression data (230 samples)            2715
+#3                luad_tcga_cna                       Samples with CNA data                          Samples with CNA data (516 samples)            2715
+#4    luad_tcga_methylation_all               Samples with methylation data                  Samples with methylation data (580 samples)            2715
+#5   luad_tcga_methylation_hm27        Samples with methylation data (HM27)           Samples with methylation data (HM27) (150 samples)            2715
+#6  luad_tcga_methylation_hm450       Samples with methylation data (HM450)          Samples with methylation data (HM450) (492 samples)            2715
+#7               luad_tcga_mrna Samples with mRNA data (Agilent microarray)               Samples with mRNA expression data (32 samples)            2715
+#8    luad_tcga_rna_seq_v2_mrna         Samples with mRNA data (RNA Seq V2)              Samples with mRNA expression data (517 samples)            2715
+#9             luad_tcga_cnaseq          Samples with mutation and CNA data             Samples with mutation and CNA data (230 samples)            2715
+#10         luad_tcga_sequenced                  Samples with mutation data                     Samples with mutation data (230 samples)            2715
+#11              luad_tcga_rppa            Samples with protein data (RPPA)                    Samples protein data (RPPA) (365 samples)            2715
+
+#cli_luad <- cgdsr::getClinicalData(mycgds, caseList=cgdsr::getCaseLists(mycgds, "luad_tcga")[1,"case_ids"])
+cli_luad <- cgdsr::getClinicalData(mycgds, caseList="luad_tcga_all")
+#cli_lusc <- cgdsr::getClinicalData(mycgds, caseList=cgdsr::getCaseLists(mycgds, "lusc_tcga")[1,"case_ids"])
+cli_lusc <- cgdsr::getClinicalData(mycgds, caseList="lusc_tcga_all")
+
+## Response binarization:
+#> table(cli_luad$TREATMENT_OUTCOME_FIRST_COURSE)
+#
+#                            Complete Remission/Response  Partial Remission/Response         Progressive Disease              Stable Disease 
+#                        435                         130                           2                           7                          12 
+## Samples should be preoperative ("" = ???):
+#> table(cli_luad$PERFORMANCE_STATUS_TIMING)
+#
+#                                      Other Post-Adjuvant Therapy  Pre-Adjuvant Therapy          Preoperative 
+#                  355                    23                    11                    20                   177
+## Discretized notation of tobacco smoking
+#> table(cli_luad$TOBACCO_SMOKING_HISTORY_INDICATOR)
+#
+#  1   2   3   4   5 
+# 76 122 137 171   4
+## level 1 -> never smoked
+
+#> cgdsr::getGeneticProfiles(mycgds, "luad_tcga")[,-c(3,4,6)]
+#                                    genetic_profile_id                                                   genetic_profile_name genetic_alteration_type
+#1                                       luad_tcga_rppa                                              Protein expression (RPPA)           PROTEIN_LEVEL
+#2                               luad_tcga_rppa_Zscores                                     Protein expression z-scores (RPPA)           PROTEIN_LEVEL
+#3                                     luad_tcga_gistic                           Putative copy-number alterations from GISTIC  COPY_NUMBER_ALTERATION
+#4                                       luad_tcga_mrna                                           mRNA expression (microarray)         MRNA_EXPRESSION
+#5                        luad_tcga_mrna_median_Zscores      mRNA expression z-scores relative to diploid samples (microarray)         MRNA_EXPRESSION
+#6                            luad_tcga_rna_seq_v2_mrna                                      mRNA expression (RNA Seq V2 RSEM)         MRNA_EXPRESSION
+#7             luad_tcga_rna_seq_v2_mrna_median_Zscores mRNA expression z-scores relative to diploid samples (RNA Seq V2 RSEM)         MRNA_EXPRESSION
+#8                                 luad_tcga_linear_CNA                              Capped relative linear copy-number values  COPY_NUMBER_ALTERATION
+#9                           luad_tcga_methylation_hm27                                                     Methylation (HM27)             METHYLATION
+#10                         luad_tcga_methylation_hm450                                                    Methylation (HM450)             METHYLATION
+#11                                 luad_tcga_mutations                                                              Mutations       MUTATION_EXTENDED
+#12 luad_tcga_rna_seq_v2_mrna_median_all_sample_Zscores mRNA expression z-scores relative to all samples (log RNA Seq V2 RSEM)         MRNA_EXPRESSION
+#13            luad_tcga_mrna_median_all_sample_Zscores      mRNA expression z-scores relative to all samples (log microarray)         MRNA_EXPRESSION
+
+#> cgdsr::getGeneticProfiles(mycgds, "lusc_tcga")[,-c(3,4,6)]
+#                                    genetic_profile_id                                                        genetic_profile_name genetic_alteration_type
+#1                                       lusc_tcga_rppa                                                   Protein expression (RPPA)           PROTEIN_LEVEL
+#2                               lusc_tcga_rppa_Zscores                                          Protein expression z-scores (RPPA)           PROTEIN_LEVEL
+#3                                     lusc_tcga_gistic                                Putative copy-number alterations from GISTIC  COPY_NUMBER_ALTERATION
+#4                                  lusc_tcga_mrna_U133                                      mRNA expression (U133 microarray only)         MRNA_EXPRESSION
+#5                          lusc_tcga_mrna_U133_Zscores mRNA expression z-scores relative to diploid samples (U133 microarray only)         MRNA_EXPRESSION
+#6                                       lusc_tcga_mrna                                                mRNA expression (microarray)         MRNA_EXPRESSION
+#7                        lusc_tcga_mrna_median_Zscores           mRNA expression z-scores relative to diploid samples (microarray)         MRNA_EXPRESSION
+#8                            lusc_tcga_rna_seq_v2_mrna                                           mRNA expression (RNA Seq V2 RSEM)         MRNA_EXPRESSION
+#9             lusc_tcga_rna_seq_v2_mrna_median_Zscores      mRNA expression z-scores relative to diploid samples (RNA Seq V2 RSEM)         MRNA_EXPRESSION
+#10                                lusc_tcga_linear_CNA                                   Capped relative linear copy-number values  COPY_NUMBER_ALTERATION
+#11                          lusc_tcga_methylation_hm27                                                          Methylation (HM27)             METHYLATION
+#12                         lusc_tcga_methylation_hm450                                                         Methylation (HM450)             METHYLATION
+#13                                 lusc_tcga_mutations                                                                   Mutations       MUTATION_EXTENDED
+#14 lusc_tcga_rna_seq_v2_mrna_median_all_sample_Zscores      mRNA expression z-scores relative to all samples (log RNA Seq V2 RSEM)         MRNA_EXPRESSION
+#15            lusc_tcga_mrna_median_all_sample_Zscores           mRNA expression z-scores relative to all samples (log microarray)         MRNA_EXPRESSION
+#16              lusc_tcga_mrna_U133_all_sample_Zscores     mRNA expression z-scores relative to all samples (U133 microarray only)         MRNA_EXPRESSION
+
+
+## MUTATION_COUNT --> Number of genes with relevant mutations (proxy for TMB?)
+
+generate_cbioportal <- function(
+  genes = sort(unique(curatedPCaData_genes$hgnc_symbol)), 
+  geneticProfiles = c("luad_tcga_rna_seq_v2_mrna_median_all_sample_Zscores", # Lung adenocarcinoma gex 
+                      "lusc_tcga_rna_seq_v2_mrna_median_all_sample_Zscores", # Lung squamous gex
+                      ), # for cgdsr calls, platform and dataset specific string
+  caseList = c("luad_tcga_all", # Lung adenocarcinoma
+               "lusc_tcga_all"  # Lung squamous
+               ), # for cgdsr calls, platform and dataset specific string
+  delay = 0.05, 
+  splitsize = 100, 
+  verb = TRUE
+){
+  # If given genes is a list (with slots for various annotation types), try to extract hugo gene symbols
+  if(class(genes)=="list"){
+    genes <- genes$hgnc_symbol
+  }
+  # Establisigh connection to cBioPortal
+  mycgds <- cgdsr::CGDS("http://www.cbioportal.org/")
+  # Split gene name vector into suitable lengths
+  genesplit <- rep(1:ceiling(length(genes)/splitsize), 
+                   each = splitsize)[1:length(genes)]
+  splitgenes <- split(genes, f = genesplit)
+  # Bind the API calls as per columns
+  gex <- as.matrix(do.call("cbind", lapply(1:length(splitgenes), FUN = function(z){
+      if(verb == TRUE) cat(paste(z, "of", length(splitgenes), "\n"))
+      # Sleep if necessary to avoid API call overflow
+      Sys.sleep(delay)
+      # Fetch each split gene name list from the URL-based API, essentially a wrapper for cgdsr's own function
+      cgdsr::getProfileData(mycgds, genes = splitgenes[[z]], 
+                            geneticProfiles = geneticProfiles, caseList = caseList)
+    })))  
+  
+  gex <- t(gex)
+  gex
+}  
+
+## -> 
+# luad_tcga_rna_seq_v2_mrna_median_all_sample_Zscores
+# lusc_tcga_rna_seq_v2_mrna_median_all_sample_Zscores
+
+empty.omit <- function(x) { if("" %in% x){ x[-which(x=="")] } else { x }}
+
+## Download TCGAs for lung for LUAD and LUSC
+
+gex_luad <- generate_cbioportal(
+	genes = empty.omit(sort(unique(genes$hgnc_symbol))),
+	geneticProfiles = "luad_tcga_rna_seq_v2_mrna_median_all_sample_Zscores",
+	caseList = "luad_tcga_all"
+)
+gex_lusc <- generate_cbioportal(
+	genes = empty.omit(sort(unique(genes$hgnc_symbol))),
+	geneticProfiles = "lusc_tcga_rna_seq_v2_mrna_median_all_sample_Zscores",
+	caseList = "lusc_tcga_all"
+)
+
+
+
+
+
+
+
+### Datasets downloaded from TIDE
 
 # Lauss et al., Nat Commun 2017
 # PFS, OS and 0/1 Response available
