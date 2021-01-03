@@ -6,9 +6,12 @@
 
 # First setwd to correct project root!
 # setwd("...")
-setwd("C:\\Users\\Daniel\\DREAM_2020_IO\\")
+setwd("D:\\Gits\\DREAM_2020_IO\\")
 
 # Just in case ...
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.12")
 update.packages(ask=FALSE, checkBuilt=TRUE)
 
 # Generate biomaRt gene mapping data.frame for convenience
@@ -247,7 +250,22 @@ gex_lusc <- generate_cbioportal(
 	caseList = "lusc_tcga_all"
 )
 
-
+# Clean up clinical information from cli_luad and cli_lusc
+cli_luad <- data.frame(
+	PFS = cli_luad$OS_MONTHS,
+	PFS.Event = cli_luad$,
+	OS = ,
+	OS.Event = 
+	Response =
+	Age = ,
+	Tobacco,
+	T = ,
+	N = ,
+	M = ,
+	RACE = cli_luad$RACE
+	SEX = cli_luad$SEX
+)
+	
 
 
 
@@ -349,85 +367,11 @@ gmt_chen <- rbind(
 	GSVA::gsva(gex_chen, gmt_c7)	# Immunology
 )
 
-library(glmnet)
-library(survival)
-# LASSO testing
-
-### Lauss
-
-set.seed(1)
-# PFS
-lasso_sub1_lauss <- glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox")
-lassocv_sub1_lauss <- cv.glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox", nfolds=5)
-plot(lassocv_sub1_lauss)
-# No non-zeros...
-# OS
-lasso_sub2_lauss <- glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox")
-lassocv_sub2_lauss <- cv.glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox", nfolds=5)
-plot(lassocv_sub2_lauss)
-# No non-zeros...
-# Response
-lasso_sub3_lauss <- glmnet(x=t(gmt_lauss), y=cli_lauss[,"Response"], family="binomial")
-lassocv_sub3_lauss <- cv.glmnet(x=t(gmt_lauss), y=cli_lauss[,"Response"], family="binomial", nfolds=5)
-plot(lassocv_sub3_lauss)
-
-### Kim
-
-set.seed(1)
-# Response
-lasso_sub3_kim <- glmnet(x=t(gmt_kim), y=cli_kim[,"Response"], family="binomial")
-lassocv_sub3_kim <- cv.glmnet(x=t(gmt_kim), y=cli_kim[,"Response"], family="binomial", nfolds=5)
-plot(lassocv_sub3_kim)
-#> rownames(gmt_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.min, type="nonzero")[,1]]
-# [1] "IL15_UP.V1_DN"                                                            
-# [2] "GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_DN"                                      
-# [3] "GSE17721_4H_VS_24H_POLYIC_BMDC_DN"                                        
-# [4] "GSE26495_NAIVE_VS_PD1LOW_CD8_TCELL_UP"                                    
-# [5] "GSE29615_CTRL_VS_DAY7_LAIV_FLU_VACCINE_PBMC_DN"                           
-# [6] "GSE36476_YOUNG_VS_OLD_DONOR_MEMORY_CD4_TCELL_40H_TSST_ACT_UP"             
-# [7] "GSE8515_IL1_VS_IL6_4H_STIM_MAC_DN"                                        
-# [8] "GSE22601_DOUBLE_NEGATIVE_VS_IMMATURE_CD4_SP_THYMOCYTE_UP"                 
-# [9] "GSE2585_CD80_HIGH_VS_LOW_MTEC_UP"                                         
-#[10] "GSE3920_IFNA_VS_IFNG_TREATED_FIBROBLAST_DN"                               
-#[11] "GSE6875_WT_VS_FOXP3_KO_TREG_DN"                                           
-#[12] "GSE7831_CPG_VS_INFLUENZA_STIM_PDC_4H_UP"                                  
-#[13] "GSE12484_HEALTHY_VS_PERIDONTITIS_NEUTROPHILS_DN"                          
-#[14] "GSE7459_UNTREATED_VS_IL6_TREATED_ACT_CD4_TCELL_DN"                        
-#[15] "GSE19374_UNINF_VS_LISTERIA_INFECTED_MACROPHAGE_UP"                        
-#[16] "GSE22432_CONVENTIONAL_CDC_VS_PLASMACYTOID_PDC_DN"                         
-#[17] "GSE34156_NOD2_LIGAND_VS_NOD2_AND_TLR1_TLR2_LIGAND_24H_TREATED_MONOCYTE_UP"
-#[18] "GSE11961_MARGINAL_ZONE_BCELL_VS_MEMORY_BCELL_DAY7_DN"                     
-#[19] "GSE11961_FOLLICULAR_BCELL_VS_MARGINAL_ZONE_BCELL_DN"                      
-#[20] "GSE42724_MEMORY_VS_B1_BCELL_UP"                                           
-#[21] "GSE46606_IRF4_KO_VS_WT_CD40L_IL2_IL5_1DAY_STIMULATED_BCELL_UP"
-#> rownames(gmt_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.1se, type="nonzero")[,1]]
-#[1] "IL21_UP.V1_DN"                                                "GSE10325_MYELOID_VS_LUPUS_MYELOID_UP"                        
-#[3] "GSE36476_YOUNG_VS_OLD_DONOR_MEMORY_CD4_TCELL_40H_TSST_ACT_UP" "GSE2585_CD80_HIGH_VS_LOW_MTEC_UP"                            
-#[5] "GSE41176_UNSTIM_VS_ANTI_IGM_STIM_TAK1_KO_BCELL_3H_DN"
-
-
-### Chen
-
-set.seed(1)
-# Response
-lasso_sub3_chen <- glmnet(x=t(gmt_chen), y=cli_chen[,"Response"], family="binomial")
-## Of note:
-#Warning message:
-#In lognet(x, is.sparse, ix, jx, y, weights, offset, alpha, nobs,  :
-#  one multinomial or binomial class has fewer than 8  observations; dangerous ground
-lassocv_sub3_chen <- cv.glmnet(x=t(gmt_chen), y=cli_chen[,"Response"], family="binomial", nfolds=5)
-plot(lassocv_sub3_chen)
-#rownames(gmt_chen)[predict(lasso_sub3_chen, s=lassocv_sub3_chen$lambda.min, type="nonzero")[,1]]
-#> rownames(gmt_chen)[predict(lasso_sub3_chen, s=lassocv_sub3_chen$lambda.min, type="nonzero")[,1]]
-#[1] "GSE22601_IMMATURE_CD4_SINGLE_POSITIVE_VS_DOUBLE_POSITIVE_THYMOCYTE_UP"
-#[2] "GSE37301_HEMATOPOIETIC_STEM_CELL_VS_CD4_TCELL_DN"
-
-
 
 
 ###
 #
-# Immune cell deconvolution
+# Immune cell deconvolution, using immunedeconv-package
 #
 ###
 
@@ -457,62 +401,170 @@ rownames(idc_kim) <- c(tmp)[[1]]
 
 rm(tmp)
 
+###
+#
+# DeMixT
+#
+###
+
+# https://github.com/wwylab/DeMixT
+# devtools::install_github("wwylab/DeMixT")
+
+
+
+###
+#
+# ESTIMATE
+#
+###
+
+# https://www.nature.com/articles/ncomms3612
+# https://bioinformatics.mdanderson.org/public-software/estimate/
+# http://r-forge.r-project.org/R/?group_id=2237
+# install.packages("estimate", repos="http://r-forge.r-project.org", dependencies=TRUE)
+library(estimate)
+
+# Nevermind, requires .gct input
+
+# Preliminary testing whether any of the gmt / gene sets are found by lasso
+if(FALSE){
+	library(glmnet)
+	library(survival)
+	# LASSO testing
+
+	### Lauss
+
+	set.seed(1)
+	# PFS
+	lasso_sub1_lauss <- glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox")
+	lassocv_sub1_lauss <- cv.glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox", nfolds=5)
+	plot(lassocv_sub1_lauss)
+	# No non-zeros...
+	# OS
+	lasso_sub2_lauss <- glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox")
+	lassocv_sub2_lauss <- cv.glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox", nfolds=5)
+	plot(lassocv_sub2_lauss)
+	# No non-zeros...
+	# Response
+	lasso_sub3_lauss <- glmnet(x=t(gmt_lauss), y=cli_lauss[,"Response"], family="binomial")
+	lassocv_sub3_lauss <- cv.glmnet(x=t(gmt_lauss), y=cli_lauss[,"Response"], family="binomial", nfolds=5)
+	plot(lassocv_sub3_lauss)
+
+	### Kim
+
+	set.seed(1)
+	# Response
+	lasso_sub3_kim <- glmnet(x=t(gmt_kim), y=cli_kim[,"Response"], family="binomial")
+	lassocv_sub3_kim <- cv.glmnet(x=t(gmt_kim), y=cli_kim[,"Response"], family="binomial", nfolds=5)
+	plot(lassocv_sub3_kim)
+	#> rownames(gmt_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.min, type="nonzero")[,1]]
+	# [1] "IL15_UP.V1_DN"                                                            
+	# [2] "GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_DN"                                      
+	# [3] "GSE17721_4H_VS_24H_POLYIC_BMDC_DN"                                        
+	# [4] "GSE26495_NAIVE_VS_PD1LOW_CD8_TCELL_UP"                                    
+	# [5] "GSE29615_CTRL_VS_DAY7_LAIV_FLU_VACCINE_PBMC_DN"                           
+	# [6] "GSE36476_YOUNG_VS_OLD_DONOR_MEMORY_CD4_TCELL_40H_TSST_ACT_UP"             
+	# [7] "GSE8515_IL1_VS_IL6_4H_STIM_MAC_DN"                                        
+	# [8] "GSE22601_DOUBLE_NEGATIVE_VS_IMMATURE_CD4_SP_THYMOCYTE_UP"                 
+	# [9] "GSE2585_CD80_HIGH_VS_LOW_MTEC_UP"                                         
+	#[10] "GSE3920_IFNA_VS_IFNG_TREATED_FIBROBLAST_DN"                               
+	#[11] "GSE6875_WT_VS_FOXP3_KO_TREG_DN"                                           
+	#[12] "GSE7831_CPG_VS_INFLUENZA_STIM_PDC_4H_UP"                                  
+	#[13] "GSE12484_HEALTHY_VS_PERIDONTITIS_NEUTROPHILS_DN"                          
+	#[14] "GSE7459_UNTREATED_VS_IL6_TREATED_ACT_CD4_TCELL_DN"                        
+	#[15] "GSE19374_UNINF_VS_LISTERIA_INFECTED_MACROPHAGE_UP"                        
+	#[16] "GSE22432_CONVENTIONAL_CDC_VS_PLASMACYTOID_PDC_DN"                         
+	#[17] "GSE34156_NOD2_LIGAND_VS_NOD2_AND_TLR1_TLR2_LIGAND_24H_TREATED_MONOCYTE_UP"
+	#[18] "GSE11961_MARGINAL_ZONE_BCELL_VS_MEMORY_BCELL_DAY7_DN"                     
+	#[19] "GSE11961_FOLLICULAR_BCELL_VS_MARGINAL_ZONE_BCELL_DN"                      
+	#[20] "GSE42724_MEMORY_VS_B1_BCELL_UP"                                           
+	#[21] "GSE46606_IRF4_KO_VS_WT_CD40L_IL2_IL5_1DAY_STIMULATED_BCELL_UP"
+	#> rownames(gmt_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.1se, type="nonzero")[,1]]
+	#[1] "IL21_UP.V1_DN"                                                "GSE10325_MYELOID_VS_LUPUS_MYELOID_UP"                        
+	#[3] "GSE36476_YOUNG_VS_OLD_DONOR_MEMORY_CD4_TCELL_40H_TSST_ACT_UP" "GSE2585_CD80_HIGH_VS_LOW_MTEC_UP"                            
+	#[5] "GSE41176_UNSTIM_VS_ANTI_IGM_STIM_TAK1_KO_BCELL_3H_DN"
+
+	### Chen
+
+	set.seed(1)
+	# Response
+	lasso_sub3_chen <- glmnet(x=t(gmt_chen), y=cli_chen[,"Response"], family="binomial")
+	## Of note:
+	#Warning message:
+	#In lognet(x, is.sparse, ix, jx, y, weights, offset, alpha, nobs,  :
+	#  one multinomial or binomial class has fewer than 8  observations; dangerous ground
+	lassocv_sub3_chen <- cv.glmnet(x=t(gmt_chen), y=cli_chen[,"Response"], family="binomial", nfolds=5)
+	plot(lassocv_sub3_chen)
+	#rownames(gmt_chen)[predict(lasso_sub3_chen, s=lassocv_sub3_chen$lambda.min, type="nonzero")[,1]]
+	#> rownames(gmt_chen)[predict(lasso_sub3_chen, s=lassocv_sub3_chen$lambda.min, type="nonzero")[,1]]
+	#[1] "GSE22601_IMMATURE_CD4_SINGLE_POSITIVE_VS_DOUBLE_POSITIVE_THYMOCYTE_UP"
+	#[2] "GSE37301_HEMATOPOIETIC_STEM_CELL_VS_CD4_TCELL_DN"
+
+
+}
 
 
 
 
-### Lauss
 
-set.seed(1)
-# PFS
-lasso_sub1_lauss <- glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox")
-lassocv_sub1_lauss <- cv.glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox", nfolds=5)
-plot(lassocv_sub1_lauss)
-#> rownames(idc_lauss)[predict(lasso_sub1_lauss, s=lassocv_sub1_lauss$lambda.min, type="nonzero")[,1]]
-# [1] "Myeloid dendritic cell activated" "T cell CD4+ (non-regulatory)"     "T cell CD4+ central memory"      
-# [4] "T cell CD4+ effector memory"      "T cell CD8+ effector memory"      "Common lymphoid progenitor"      
-# [7] "Common myeloid progenitor"        "Cancer associated fibroblast"     "Hematopoietic stem cell"         
-#[10] "Macrophage M2"                    "Mast cell"                        "Neutrophil"                      
-#[13] "NK cell"                          "T cell NK"                        "B cell plasma"                   
-#[16] "T cell CD4+ Th1"                  "T cell CD4+ Th2"                  "T cell regulatory (Tregs)"       
-#[19] "stroma score"                     "cytotoxicity score"               "NK cell"                         
-#[22] "Myeloid dendritic cell"           "Neutrophil"
-# --> All cell types except couple...
-# OS
-lasso_sub2_lauss <- glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox")
-lassocv_sub2_lauss <- cv.glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox", nfolds=5)
-plot(lassocv_sub2_lauss)
-#> rownames(idc_lauss)[predict(lasso_sub2_lauss, s=lassocv_sub2_lauss$lambda.min, type="nonzero")[,1]]
-# [1] "Myeloid dendritic cell activated" "T cell CD4+ (non-regulatory)"     "T cell CD4+ effector memory"     
-# [4] "T cell CD8+ naive"                "T cell CD8+ effector memory"      "Class-switched memory B cell"    
-# [7] "Common lymphoid progenitor"       "Cancer associated fibroblast"     "Hematopoietic stem cell"         
-#[10] "Monocyte"                         "Neutrophil"                       "NK cell"                         
-#[13] "T cell NK"                        "T cell gamma delta"               "T cell CD4+ Th1"                 
-#[16] "T cell regulatory (Tregs)"        "stroma score"                     "T cell"                          
-#[19] "NK cell"                          "Myeloid dendritic cell"           "Neutrophil"                      
-#[22] "Endothelial cell"                 "Cancer associated fibroblast"    
-#> rownames(idc_lauss)[predict(lasso_sub2_lauss, s=lassocv_sub2_lauss$lambda.1se, type="nonzero")[,1]]
-# [1] "Myeloid dendritic cell activated" "T cell CD4+ effector memory"      "T cell CD8+ naive"               
-# [4] "T cell CD8+ effector memory"      "Common lymphoid progenitor"       "Granulocyte-monocyte progenitor" 
-# [7] "Hematopoietic stem cell"          "Macrophage M2"                    "T cell CD4+ Th1"                 
-#[10] "T cell regulatory (Tregs)"        "cytotoxicity score"               "NK cell"
-# --> Highly informative for both PFS/OS
-# Response
-lasso_sub3_lauss <- glmnet(x=t(idc_lauss), y=cli_lauss[,"Response"], family="binomial")
-lassocv_sub3_lauss <- cv.glmnet(x=t(idc_lauss), y=cli_lauss[,"Response"], family="binomial", nfolds=5)
-plot(lassocv_sub3_lauss)
-# No non-zeros...
 
-### Kim
+# Preliminary testing of whether glmnet grabs anything
+if(FALSE){
 
-set.seed(1)
-# Response
-lasso_sub3_kim <- glmnet(x=t(idc_kim), y=cli_kim[,"Response"], family="binomial")
-lassocv_sub3_kim <- cv.glmnet(x=t(idc_kim), y=cli_kim[,"Response"], family="binomial", nfolds=5)
-plot(lassocv_sub3_kim)
-#> rownames(idc_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.min, type="nonzero")[,1]]
-#[1] "T cell CD4+ central memory"   "Macrophage"                   "T cell CD4+ Th1"              "Endothelial cell"            
-#[5] "Cancer associated fibroblast"
-#> rownames(idc_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.1se, type="nonzero")[,1]]
-#[1] "Macrophage"                   "T cell CD4+ Th1"              "Endothelial cell"             "Cancer associated fibroblast"
+	### Lauss
+
+	set.seed(1)
+	# PFS
+	lasso_sub1_lauss <- glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox")
+	lassocv_sub1_lauss <- cv.glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox", nfolds=5)
+	plot(lassocv_sub1_lauss)
+	#> rownames(idc_lauss)[predict(lasso_sub1_lauss, s=lassocv_sub1_lauss$lambda.min, type="nonzero")[,1]]
+	# [1] "Myeloid dendritic cell activated" "T cell CD4+ (non-regulatory)"     "T cell CD4+ central memory"      
+	# [4] "T cell CD4+ effector memory"      "T cell CD8+ effector memory"      "Common lymphoid progenitor"      
+	# [7] "Common myeloid progenitor"        "Cancer associated fibroblast"     "Hematopoietic stem cell"         
+	#[10] "Macrophage M2"                    "Mast cell"                        "Neutrophil"                      
+	#[13] "NK cell"                          "T cell NK"                        "B cell plasma"                   
+	#[16] "T cell CD4+ Th1"                  "T cell CD4+ Th2"                  "T cell regulatory (Tregs)"       
+	#[19] "stroma score"                     "cytotoxicity score"               "NK cell"                         
+	#[22] "Myeloid dendritic cell"           "Neutrophil"
+	# --> All cell types except couple...
+	# OS
+	lasso_sub2_lauss <- glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox")
+	lassocv_sub2_lauss <- cv.glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox", nfolds=5)
+	plot(lassocv_sub2_lauss)
+	#> rownames(idc_lauss)[predict(lasso_sub2_lauss, s=lassocv_sub2_lauss$lambda.min, type="nonzero")[,1]]
+	# [1] "Myeloid dendritic cell activated" "T cell CD4+ (non-regulatory)"     "T cell CD4+ effector memory"     
+	# [4] "T cell CD8+ naive"                "T cell CD8+ effector memory"      "Class-switched memory B cell"    
+	# [7] "Common lymphoid progenitor"       "Cancer associated fibroblast"     "Hematopoietic stem cell"         
+	#[10] "Monocyte"                         "Neutrophil"                       "NK cell"                         
+	#[13] "T cell NK"                        "T cell gamma delta"               "T cell CD4+ Th1"                 
+	#[16] "T cell regulatory (Tregs)"        "stroma score"                     "T cell"                          
+	#[19] "NK cell"                          "Myeloid dendritic cell"           "Neutrophil"                      
+	#[22] "Endothelial cell"                 "Cancer associated fibroblast"    
+	#> rownames(idc_lauss)[predict(lasso_sub2_lauss, s=lassocv_sub2_lauss$lambda.1se, type="nonzero")[,1]]
+	# [1] "Myeloid dendritic cell activated" "T cell CD4+ effector memory"      "T cell CD8+ naive"               
+	# [4] "T cell CD8+ effector memory"      "Common lymphoid progenitor"       "Granulocyte-monocyte progenitor" 
+	# [7] "Hematopoietic stem cell"          "Macrophage M2"                    "T cell CD4+ Th1"                 
+	#[10] "T cell regulatory (Tregs)"        "cytotoxicity score"               "NK cell"
+	# --> Highly informative for both PFS/OS
+	# Response
+	lasso_sub3_lauss <- glmnet(x=t(idc_lauss), y=cli_lauss[,"Response"], family="binomial")
+	lassocv_sub3_lauss <- cv.glmnet(x=t(idc_lauss), y=cli_lauss[,"Response"], family="binomial", nfolds=5)
+	plot(lassocv_sub3_lauss)
+	# No non-zeros...
+
+	### Kim
+
+	set.seed(1)
+	# Response
+	lasso_sub3_kim <- glmnet(x=t(idc_kim), y=cli_kim[,"Response"], family="binomial")
+	lassocv_sub3_kim <- cv.glmnet(x=t(idc_kim), y=cli_kim[,"Response"], family="binomial", nfolds=5)
+	plot(lassocv_sub3_kim)
+	#> rownames(idc_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.min, type="nonzero")[,1]]
+	#[1] "T cell CD4+ central memory"   "Macrophage"                   "T cell CD4+ Th1"              "Endothelial cell"            
+	#[5] "Cancer associated fibroblast"
+	#> rownames(idc_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.1se, type="nonzero")[,1]]
+	#[1] "Macrophage"                   "T cell CD4+ Th1"              "Endothelial cell"             "Cancer associated fibroblast"
+
+}
 

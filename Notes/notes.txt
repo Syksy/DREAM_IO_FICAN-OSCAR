@@ -1,3 +1,95 @@
 - Immune cell decomposition from RNA-seq useful?
 - Pathways incorporated (derived from literature)?
 - Immune cell related genes of focus?
+
+
+JAN 1ST 2021
+
+Layman summarization:
+https://www.cancer.org/cancer/lung-cancer/treating-non-small-cell/targeted-therapies.html
+Listed mutations of interest (in addition to targeting angiogenesis):
+EGFR (T790M mutation in particular, separate drugs used for squamous)
+ALK (often seen in non-smoker, young, adenocarcinoma subtype)
+ROS1 (adenocarcinoma, often negative for ALK, KRAS and EGFR muts)
+BRAF (mutation helps tumor to grow)
+RET (mutation helps tumor to grow)
+MET (mutation helps tumor to grow)
+NTRK (mutation helps tumor to grow)
+
+NSLungCa PeerView podcast:
+EGFR
+ALK
+BRAF
+NTRK
+RET
+MET
+HER2
+ROS1
+KRAS
+NRG1
+others
+"Young non-smoker (female) patients typically searched for oncogenic driver mutations, while older patients may well also present with driving oncogenic mutations"
+
+--
+
+RNA-seq gives info on transcript level for alternative splicibg over DNA-seq; however DNA-seq gives mutation landscape "Young non-smoker (female) patients typically looked for driver mutations, but older (smoker) patients may well present with drivers as well"
+
+Ethnicity affects which mutations are most prevalent
+
+7 main subcategories
+"Characterize the mechanisms of action, safety/efficacy profiles, and indications of the various approved and investigational targeted therapies for NSCLC in different patient populations (eg, those targeting EGFR, ALK, BRAF, NTRK, RET, MET, HER2, ROS1, KRAS, NRG1, and others),"
+
+https://player.fm/series/peerview-immunology-transplantation-cmecnecpe-audio-podcast/suresh-s-ramalingam-md-facp-fasco-everything-you-need-to-know-about-molecular-testing-and-targeted-therapies-in-nsclc-essential-guidance-for-modern-patient-centered-precision-lung-cancer-care
+
+https://meetinglibrary.asco.org/record/173998/abstract
+PD-1 and PD-L1 genes
+
+ESTIMATE:
+https://www.nature.com/articles/ncomms3612
+
+CD274 / PDL1 gene:
+https://www.genecards.org/cgi-bin/carddisp.pl?gene=CD274
+
+PDCD1 / CD279 gene:
+https://www.genecards.org/cgi-bin/carddisp.pl?gene=PDCD1
+
+
+Microsatellite instability (exprs data):
+https://www.sciencedirect.com/science/article/pii/S2001037019305446
+
+Gene expression proxy:
+https://www.sciencedirect.com/science/article/abs/pii/S1556086418331162
+"PD-L1 protein expression on tumor-infiltrating immune cells was correlated with the T-effector and IFN-? gene signature (p < 0.001), but not with TMB. For TCs, all of these biomarkers were independent of each other and neither PD-L1 protein expression, TMB, or T-effector and IFN-? gene signatures were independently prognostic for patient outcomes."
+
+GEX as predictive for immune or chemo response:
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5386795/
+e.g. "The genes were mainly immune-related involving interferon gamma pathways and specific chemokines, supporting data that the pretreatment tumor immune microenvironment was associated with clinical response to this immunotherapy. However, in the recently reported NSCLC MAGRIT trial (MAGE-A3 as Adjuvant Non–Small-Cell Lung Cancer Immunotherapy trial) (27), adjuvant MAGE-A3 did not increase disease-free survival compared with placebo in patients with MAGE-A3-positive tumors, and a gene signature predictive of clinical response could not be determined."... "Thus, data on the creation of predictive gene signatures will be reviewed in the specific context of genomic landscape, DNA damage, mutational load, and neoantigens."... "Common characteristics of inflamed tumors responsive to anti-PD1 therapy include dense CD8+ T-cell infiltrates, a broad chemokine profile, PD-L1 expression on immune cells, a type 1 interferon (IFN) signature, and elevated expression of IFN-gamma induced genes.(33, 34) High cytolytic activity is also correlated with expression of IFN-stimulated chemokines (CXCL9, CLCL10 and CSCL11) capable of attracting T cells to the tumor site.(35) For anti-CTLA-4 therapy, early on-treatment proliferation of ICOS+ CD4+ T-cells can be used as a pharmacodynamic biomarker for monitoring of treatment efficacy.(36) In melanoma several cytokine and chemokine signaling genes, as well as the cytotoxic factors granzyme A and perforin 1, are differently expressed prior to ipilimumab therapy between responders and non-responders.(37, 38)
+
+IHC-based studies support the notion that the density and location of CD8+, CD4+, PD-1+, and PD-L1+ in tumor cells and/or tumor-infiltrating immune cells in pretreatment biopsies can predict therapeutic response to immune checkpoint inhibitors.(39, 40) While pre-treatment PD-L1 expression in tumor biopsies does appear to predict response to anti-PD-1 therapies,(10, 34, 41) many tumors scored as PD-L1 positive do not respond, while some responses occur in PD-L1-negative tumors.(12, 42) Such conflicting results likely reflect the limitations related to IHC staining and scoring techniques, as well as to the complexity related to PD-L1 expression in a single biopsy across cells present in the tumor microenvironment, including infiltrating myeloid cells; therefore, better biomarkers are clearly needed to optimize therapeutic decisions. Expression of PD-L1/PD-L2 and CTLA-4 represent mechanisms of immune regulation and opportunities for gene expression-based targeting with immune checkpoint blockade.(34, 38) High pretreatment levels of CTLA-4 mRNA are predictive of response to both anti-CTLA-4 and anti-PD-L1 therapy. Further, amplification of the PD-L1/PD-L2 regions has been demonstrated to be associated with high cytolytic activity in cervical, gastric and colorectal cancer.(35) In Hodgkin’s lymphoma, amplification of PD-L1/PD-L2 is associated with an approximately 90% response rate to nivolumab.(43)"..."A gene expression profiling mechanism to characterize the tumor microenvironment has been created using a recently developed computational method to characterize tumor-infiltrating immune cell subsets (CIBERSORT) using RNA-sequencing (RNA-seq). This technique addresses many limitations of IHC, has enabled detailed transcript analysis of the tumor leukocytic infiltrate, and is capable of predicting prognosis from pretreatment biopsies.(44) Further, useful insight can be gained into the relationship between regulatory cell types (T-regulatory cells and myeloid derived suppressor cells) and checkpoint inhibition responses.(45)"
+
+APM-panel (Antigen processing machinery) estimation using 8 genes:
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7542663/
+
+TIS (Tumor Inflammation Signature), average over ~150 genes:
+https://ascopubs.org/doi/abs/10.1200/JCO.2020.38.5_suppl.47
+
+R script in docker:
+https://www.statworx.com/ch/blog/running-your-r-script-in-docker/
+
+J Cli Med, Xiao et al. good list of IO trials / setting:
+"...The “immunoediting” hypothesis conceptualizes the evolution of the tumor cells under immune pressures towards expansion and immune surveillance escape of the tumor [29]. Several factors contribute to this immune evasion. The tumor microenvironment (TME) can be immunosuppressive per se, facilitating tumor progression with cytokines, chemokines, and inhibitory factors [30]. For example, VEGFA can upregulate PD-1 expression on CD8+ T cells, while TGF-ß enhances PD-L1 expression on tumor cells [31,32]. In addition, immune-cold tumors could prevent effector T cells from entering into the tumor, in which case the patients are mostly irresponsive to cancer immunotherapy. Moreover, the TME can also recruit immunosuppressive immune cells including regulatory T cells, myeloid-derived suppressor cells (MDSCs), and tumor-associated macrophages to evade immune clearance [33–35].
+Besides, tumor cells could diminish the number of T-cell-recognized neoantigens by reducing their gene expression or losing the mutant allele in a selection process triggered by the pressure of the immune attack [36]. Other mechanisms related to tumor immunoediting include the downregulation of interferon-? (IFN-?) or antigen presentation and recruitment pathways [37–39].
+Finally, one of the major mechanisms of immunosuppression that occurs in the context of tumorigenesis and tumor growth is the upregulation of multiple inhibitory co-receptors (ICRs) that create a series of interactions on the tumor–stroma interface and within the stroma itself, leading to the blockade of the immune attack and exhaustion of the T cells [12]. T cell exhaustion was first observed in mice infected with certain strains of lymphocytic choriomeningitis virus (LCMV) [40].
+Strikingly, these viruses escaped elimination by rapidly inducing most of the CD8+ effector T cells (Teff), thereby resulting in the depletion of this specific antiviral T cell population within a few days and, consequently, persistent infection. The key hallmarks of T cell exhaustion are the expression of ICR, leading to loss of effector functions and failure to transition into the memory T cell pool [41].
+Importantly, recent research demonstrated that T cell exhaustion is of central importance in various cancers similarly to the exhaustion occurring during chronic infection. In both cases, chronic antigen stimulation triggers co-expression of high levels of multiple inhibitory receptors, including PD-1, CTLA-4, LAG-3, and T-cell immunoglobulin and mucin domain-3 (TIM-3) [42]. The PD-1/PD-L1 signaling axis plays a predominant role in negative regulation of immune response. For instance, when co-expressed with TIM-3, PD-1 decreases the secretion of various pro-inflammatory cytokines, such as IL-2, IFN-?, and TNF, and results in T cell tolerance towards tumor cells in acute myelogenous leukemia, colon adenocarcinoma, and melanoma [43–45]. Another clinically relevant ICR is CTLA4 that, as PD-1, but non-redundantly, establishes immune inhibitory interactions for the blockade of the co-stimulation of T cell activation, and it maintains the peripheral immune tolerance. When
+CTLA-4 and PD-1 are co-blocked in B16 melanoma cells vaccinated with B16-Flt3-ligand (Fvax), these agents synergistically increase the ratio of Teff to Treg and myeloid-derived suppressor cells, as well as the production of T cells that secrete IFN-? and TNF-alpha. This triggers an inflammatory cascade that enhances tumor rejection and diminishes tumor-induced immune suppression [46]. Given this prominent role of the PD-1/PD-L1 and CTLA4 pathways in cancer immune evasion, anti-PD-1/PD-L1 and anti-CTLA4 drugs, and their combinations, have become the current paradigm of IBC-based cancer immunotherapy. ..."
+
+Blons et al.:
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6353739/
+
+"First trials identified smoking as a predictive marker of response to ICIs (1) and rapidly it was showed that non-smokers with EGFR mutated or ALK rearranged tumors do not do well with ICIs and should not receive first line ICIs even though tumor cells may express high PD-L1 levels [see Miura et al. (7) for review]. Indeed up-regulation of PD-L1 is not rare in EGFR mutated or ALK rearranged lung tumors and linked to oncogene induced up-regulation, activation of ERK or mTOR signaling (8,9). Most trials have excluded EGFR, ALK and ROS1 positive tumors and literature is scarce on the subject and relies on small subgroups of patients. In second line, the use of ICIs remains controversial. The CheckMate 057 and KEYNOTE-010 trials, which tested the benefit of nivolumab and pembrolizumab over docetaxel chemotherapy in second line did not show any differences between study arms among EGFR-mutant or ALK-fusion patients (1,10)."
+
+... stratify patients as a combination of age/smoking status prior to molecular characterization based prediction model building?
+
+Keenan et al.
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6599710/
