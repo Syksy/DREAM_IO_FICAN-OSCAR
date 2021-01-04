@@ -296,7 +296,6 @@ generate_cbioportal <- function(
 empty.omit <- function(x) { if("" %in% x){ x[-which(x=="")] } else { x }}
 
 ## Download TCGAs for lung for LUAD and LUSC
-
 gex_luad <- generate_cbioportal(
 	genes = empty.omit(sort(unique(genes$hgnc_symbol))),
 	geneticProfiles = "luad_tcga_rna_seq_v2_mrna_median_all_sample_Zscores",
@@ -307,8 +306,8 @@ gex_lusc <- generate_cbioportal(
 	geneticProfiles = "lusc_tcga_rna_seq_v2_mrna_median_all_sample_Zscores",
 	caseList = "lusc_tcga_all"
 )
-
 # Clean up clinical information from cli_luad and cli_lusc
+## TODO
 cli_luad <- data.frame(
 	PFS = cli_luad$OS_MONTHS,
 	PFS.Event = cli_luad$,
@@ -325,11 +324,225 @@ cli_luad <- data.frame(
 )
 	
 
+## Datasets from GEO
+library(GEOquery)
+library(DESeq2)
+# Follow guidelines e.g. in http://genomicsclass.github.io/book/pages/GEOquery.html
+# http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+
+# Subdirectory for GEO stuff
+setwd("GEO")
+
+# Regarding gene length normalization in DESeq2: https://www.biostars.org/p/140090/
+
+# Extract GPLs https://warwick.ac.uk/fac/sci/moac/people/students/peter_cock/r/geo/
+
+# GSE115821 - Robust prediction of response to immune checkpoint blockade therapy in metastatic melanoma
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE115821
+gse_auslander <- GEOquery::getGEO("GSE115821", GSEMatrix = TRUE)
+sup_auslander <- GEOquery::getGEOSuppFiles("GSE115821")
+GEOquery::gunzip(rownames(sup_auslander)[1])
+sup_auslander <- read.csv("GSE115821/GSE115821_MGH_counts.csv")
+
+# GSE121810 - Neoadjuvant anti-PD-1 immunotherapy promotes a survival benefit with intratumoral and systemic immune responses in recurrent glioblastoma
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE121810
+gse_cloughesy <- GEOquery::getGEO("GSE121810", GSEMatrix = TRUE)
+sup_cloughesy <- GEOquery::getGEOSuppFiles("GSE121810")
+sup_cloughesy <- readxl::read_excel(rownames(sup_cloughesy)[1])
+
+# GSE78220 - mRNA expressions in pre-treatment melanomas undergoing anti-PD-1 checkpoint inhibition therapy
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE78220
+gse_hugo <-  GEOquery::getGEO("GSE78220", GSEMatrix = TRUE)
+sup_hugo <- GEOquery::getGEOSuppFiles("GSE78220")
+sup_hugo <- readxl::read_excel(rownames(sup_hugo)[1])
+# sup_hugo -> tibble table, cast to matrix preferably
+
+# GSE52562 - Gene expression profiling of tumor biopsies before and after pidilizumab therapy in patients with relapsed follicular lymphoma grade 1 or grade 2.
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE52562
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL10558
+gse_westin <-  GEOquery::getGEO("GSE52562", GSEMatrix = TRUE, getGPL = TRUE)
+# Mapping/collapsing:
+# gse_westin[[1]]@featureData@data[1:2,]
+# column "ID" <-> "ILMN_Gene"
+
+# GSE79691 - Transcriptional mechanisms of resistance to anti-PD-1 therapy
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE67501
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL18281
+gse_ascierto <- GEOquery::getGEO("GSE67501", GSEMatrix = TRUE, getGPL = TRUE)
+# Mapping/collapsing:
+# gse_ascierto[[1]]@featureData@data[1:2,]
+# column "ID" <-> "ILMN_Gene"
+
+# GSE79691 - Transcriptional mechanisms of resistance to anti-PD-1 therapy
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE79691
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL14951
+gse_ascierto2 <- GEOquery::getGEO("GSE79691", GSEMatrix = TRUE, getGPL = TRUE)
+# Mapping/collapsing:
+# gse_ascierto2[[1]]@featureData@data[1:2,]
+# column "ID" <-> "ILMN_Gene"
+
+# GSE91061 - Molecular portraits of tumor mutational and micro-environmental sculpting by immune checkpoint blockade therapy
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE91061
+# Note: 'Gene IDs in the processed data files are NCBI Entrez Gene IDs.'
+gse_riaz <- GEOquery::getGEO("GSE91061", GSEMatrix = TRUE, getGPL = TRUE)
+sup_riaz <- GEOquery::getGEOSuppFiles("GSE91061")
+lapply(rownames(sup_riaz), FUN=GEOquery::gunzip)
+sup_riaz1 <- read.csv(gsub(".gz", "", rownames(sup_riaz)[1]))
+sup_riaz2 <- read.csv(gsub(".gz", "", rownames(sup_riaz)[2]))
+sup_riaz3 <- read.csv(gsub(".gz", "", rownames(sup_riaz)[3]))
+sup_riaz4 <- read.csv(gsub(".gz", "", rownames(sup_riaz)[4]))
+# sup_riaz2 are raw counts, using those with DESeq2
+gpl_riaz <- getGEO('GPL9052', destdir=".")
+
+# GSE93157 - Programmed death 1 receptor blockade and immune-related gene expression profiling in non-small cell lung carcinoma, head and neck squamous cell carcinoma and melanoma
+gse_prat <- GEOquery::getGEO("GSE93157", GSEMatrix = TRUE)
+
+# Examine main characteristics of the reported phenodata
+head(pData(gse_auslander[[1]]))[1:2,]
+head(pData(gse_cloughesy[[1]]))[1:2,]
+head(pData(gse_hugo[[1]]))[1:2,]
+head(pData(gse_westin[[1]]))[1:2,]
+head(pData(gse_ascierto[[1]]))[1:2,]
+head(pData(gse_ascierto2[[1]]))[1:2,]
+head(pData(gse_riaz[[1]]))[1:2,]
+head(pData(gse_prat[[1]]))[1:2,]
+# Response abbreviations:
+#
+# From e.g. Hugo et al.
+# PD: Progressive disease
+# CR: Complete response
+# PR: Partial response
+
+
+# Create gene expression matrices
+
+##
+## Auslander et al.
+##
+exprs(gse_auslander[[1]])
+# Botched
+# 0 features, 23 + 14 samples? Raw counts in supplementary files
+
+## First batch
+colnames(sup_auslander) <- gsub("X|.bam", "", colnames(sup_auslander))
+# Substrata
+str_auslander1 <- pData(gse_auslander[[1]])$`treatment state:ch1`
+gex_auslander1 <- sup_auslander[,gsub("X|.bam", "", gsub("-", ".", pData(gse_auslander[[1]])$title))]
+# DESeq2
+gex_auslander1 <- DESeq2::DESeqDataSetFromMatrix(countData=gex_auslander1, 
+	colData = data.frame("str_auslander1" = str_auslander1), 
+	design = ~ str_auslander1)
+gex_auslander1 <- estimateSizeFactors(gex_auslander1)
+gex_auslander1 <- counts(gex_auslander1, normalized=TRUE)
+rownames(gex_auslander1) <- make.unique(sup_auslander[,1])
+
+## Second batch
+
+## Substrata
+str_auslander2 <- pData(gse_auslander[[2]])$`treatment state:ch1`
+# DESeq2
+gex_auslander2 <- sup_auslander[,gsub(".bam", "", gsub("-", ".", pData(gse_auslander[[2]])$title))]
+gex_auslander2 <- DESeq2::DESeqDataSetFromMatrix(countData=gex_auslander2, 
+	colData = data.frame("str_auslander2" = pData(gse_auslander[[2]])$`treatment state:ch1`), 
+	design = ~ str_auslander2)
+gex_auslander2 <- estimateSizeFactors(gex_auslander2)
+gex_auslander2 <- counts(gex_auslander2, normalized=TRUE)
+rownames(gex_auslander2) <- make.unique(sup_auslander[,1])
+# Combine the two batches
+gex_auslander <- cbind(gex_auslander1, gex_auslander2)
+# Spurious gene names such as '1-Dec', '1-Mar', '1-Sep', '10-Mar', '10-Sep', ... ??
+#> sort(table(rownames(gex_auslander)))[1:10]
+#
+#  1-Dec   1-Mar 1-Mar.1   1-Sep  10-Mar  10-Sep  11-Mar  11-Sep  12-Sep  14-Sep 
+#      1       1       1       1       1       1       1       1       1       1
+# Gene names shouldn't be repeated
+# Collapse over unique gene IDs, use mean
+gex_auslander <- do.call("rbind", by(gex_auslander, INDICES=sup_auslander[,1], FUN=function(z) { apply(z, MARGIN=2, FUN=mean) }))
+# Include only ones included in genes from biomaRt
+gex_auslander <- gex_auslander[which(rownames(gex_auslander) %in% genes$hgnc_symbol),]
+#> dim(gex_auslander)
+#[1] 20245    37
+# Much more reasonable row count - previously over 70k?!
+# contains e.g. NONHSAG000315 etc (noncoding genes)
+## Clinical data
+cli_auslander <- rbind(pData(gse_auslander[[1]]), pData(gse_auslander[[2]]))
+## TODO: Filter down to PRE samples only!
+grep("PRE", cli_auslander$`treatment state:ch1`)
+#> grep("PRE", cli_auslander$`treatment state:ch1`)
+# [1]  1  4  5  7  8 10 17 18 24 26 28 30 32 35
+## -> 14 samples usable
+## Should also filter down to only antibody:ch1 being "anti-PD-1" or is "anti-CTLA-4" or combination representative as well? 
+ 
+ 
+##
+## Westin et al.
+##
+#str(gse_westin[[1]]@featureData)
+#head(gse_westin[[1]]@featureData@data)
+
+
+##
+## Ascierto et al.
+##
+
+##
+## Ascierto et al. 2
+##
+
+
+##
+## Riaz et al.
+##
+#rownames(sup_riaz2) <- genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]
+#> table(table(genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]))
+#
+#    1     2     3   217 
+#20584    25     1     1
+#
+# 20584 had unique hugo symbol mapping, filtering the rest ("" occurred 217 times)
+sup_riaz2[,1] <- genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]
+sup_riaz2 <- sup_riaz2[-which(sup_riaz2[,1] %in% names(table(sup_riaz2[,1])>1)[which(table(sup_riaz2[,1])>1)]),]
+sup_riaz2 <- sup_riaz2[-which(is.na(sup_riaz2[,1])),]
+rownames(sup_riaz2) <- sup_riaz2[,1]
+sup_riaz2 <- sup_riaz2[,-1]
+# Substrata
+str_riaz <- pData(gse_riaz[[1]])$`characteristics_ch1`
+# DESeq2
+gex_riaz <- DESeq2::DESeqDataSetFromMatrix(countData=sup_riaz2,
+	colData = data.frame("str_riaz" = str_riaz),
+	design = ~ str_riaz)
+gex_riaz <- estimateSizeFactors(gex_riaz)
+gex_riaz <- counts(gex_riaz, normalized=TRUE)
+## Clinical info
+
+
+##
+## Prat et al.
+##
+gex_prat <- exprs(gse_prat[[1]])
+#> dim(gex_prat)
+#[1] 765  65
+gex_prat <- as.matrix(gex_prat)
+# Removing NA-rows with no values observed
+gex_prat <- gex_prat[-which(apply(gex_prat, MARGIN=1, FUN=function(z) { all(is.na(z)) })),]
+#> dim(gex_prat)
+#[1] 725  65
+#> sum(is.na(gex_prat))
+#[1] 0
+## Clinical info
+cli_prat <- pData(gse_prat[[1]])
+
+
+setwd("..")
 
 
 
 
-### Datasets downloaded from TIDE
+
+
+
+
+## Datasets downloaded from TIDE
 
 # Lauss et al., Nat Commun 2017
 # PFS, OS and 0/1 Response available
@@ -497,7 +710,9 @@ idc_mcp_kim <- rename_idc(immunedeconv::deconvolute(gex_kim, method="mcp_counter
 
 # https://github.com/wwylab/DeMixT
 # devtools::install_github("wwylab/DeMixT")
-
+# or rather...
+# https://bioconductor.org/packages/release/bioc/html/DeMixT.html
+library(DeMixT)
 
 
 ###
