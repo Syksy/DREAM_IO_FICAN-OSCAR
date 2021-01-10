@@ -139,28 +139,224 @@ gex_synthetic_refseq105_isoforms_tpm <- read.csv(".\\CM_026_formatted_synthetic_
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #    install.packages("BiocManager")
 #BiocManager::install("RTCGA")
-library("RTCGA")
-
-RTCGA::checkTCGA(what="Dates", c("LUAD", "LUSC"))
-RTCGA::checkTCGA(what="DataSets", "LUAD")
-RTCGA::checkTCGA(what="DataSets", "LUSC")
-
+#library("RTCGA")
+#RTCGA::checkTCGA(what="Dates", c("LUAD", "LUSC"))
+#RTCGA::checkTCGA(what="DataSets", "LUAD")
+#RTCGA::checkTCGA(what="DataSets", "LUSC")
 # Latest "2016-01-28"
-
 # Clinical annotations
-RTCGA::downloadTCGA(c("LUAD", "LUSC"), "Merge_Clinical.Level_1", "TCGA", date="2016-01-28", untarFile=TRUE, removeTar=TRUE)
-
+#RTCGA::downloadTCGA(c("LUAD", "LUSC"), "Merge_Clinical.Level_1", "TCGA", date="2016-01-28", untarFile=TRUE, removeTar=TRUE)
 #> list.files("TCGA")
 #[1] "gdac.broadinstitute.org_LUAD.Merge_Clinical.Level_1.2016012800.0.0"
 #[2] "gdac.broadinstitute.org_LUSC.Merge_Clinical.Level_1.2016012800.0.0"
+#RTCGA::downloadTCGA(c("LUAD", "LUSC"), "mRNAseq_Preprocess.Level_3", "TCGA", date="2016-01-28", untarFile=TRUE, removeTar=TRUE)
 
-RTCGA::downloadTCGA(c("LUAD", "LUSC"), "mRNAseq_Preprocess.Level_3", "TCGA", date="2016-01-28", untarFile=TRUE, removeTar=TRUE)
+# curatedTCGAdata from BioconductoR
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+#
+#BiocManager::install("curatedTCGAData")
+
+tmp_luad <- curatedTCGAData::curatedTCGAData("LUAD", c("RNASeq2GeneNorm"), FALSE)
+# Prompts possibly a question to create a temporary directory
+tmp_lusc <- curatedTCGAData::curatedTCGAData("LUSC", c("RNASeq2GeneNorm"), FALSE)
+# Prompts possibly a question to create a temporary directory
+
+## use curatedTCGAData instead:
+gex_luad <- tmp_luad[[1]]@assays$data@listData[[1]]
+gex_lusc <- tmp_lusc[[1]]@assays$data@listData[[1]]
+## Generation of clinical info
+## Specific fields
+
+#> colData(tmp_luad)[1:2,grep("age_at|tobac|performance|cell|purity|targeted|therapy", colnames(colData(tmp_luad)), value=TRUE)]
+#DataFrame with 2 rows and 130 columns
+#             radiation_therapy karnofsky_performance_score year_of_tobacco_smoking_onset patient.age_at_initial_pathologic_diagnosis patient.drugs.drug.10.days_to_drug_therapy_end patient.drugs.drug.10.days_to_drug_therapy_start
+#                   <character>                   <integer>                     <integer>                                   <integer>                                      <integer>                                        <integer>
+#TCGA-05-4249                no                          NA                            NA                                          67                                             NA                                               NA
+#TCGA-05-4382               yes                          NA                            NA                                          68                                             NA                                               NA
+#             patient.drugs.drug.10.therapy_ongoing patient.drugs.drug.10.therapy_types.therapy_type patient.drugs.drug.2.days_to_drug_therapy_end patient.drugs.drug.2.days_to_drug_therapy_start patient.drugs.drug.2.therapy_ongoing
+#                                       <character>                                      <character>                                     <integer>                                       <integer>                          <character>
+#TCGA-05-4249                                    NA                                               NA                                            NA                                              NA                                   NA
+#TCGA-05-4382                                    NA                                               NA                                            NA                                              NA                                   NA
+#             patient.drugs.drug.2.therapy_types.therapy_type patient.drugs.drug.2.therapy_types.therapy_type_notes patient.drugs.drug.3.days_to_drug_therapy_end patient.drugs.drug.3.days_to_drug_therapy_start
+#                                                 <character>                                           <character>                                     <integer>                                       <integer>
+#TCGA-05-4249                                              NA                                                    NA                                            NA                                              NA
+#TCGA-05-4382                                              NA                                                    NA                                            NA                                              NA
+#             patient.drugs.drug.3.therapy_ongoing patient.drugs.drug.3.therapy_types.therapy_type patient.drugs.drug.4.days_to_drug_therapy_end patient.drugs.drug.4.days_to_drug_therapy_start patient.drugs.drug.4.therapy_ongoing
+#                                      <character>                                     <character>                                     <integer>                                       <integer>                          <character>
+#TCGA-05-4249                                   NA                                              NA                                            NA                                              NA                                   NA
+#TCGA-05-4382                                   NA                                              NA                                            NA                                              NA                                   NA
+#             patient.drugs.drug.4.therapy_types.therapy_type patient.drugs.drug.4.therapy_types.therapy_type_notes patient.drugs.drug.5.days_to_drug_therapy_end patient.drugs.drug.5.days_to_drug_therapy_start
+#                                                 <character>                                           <character>                                     <integer>                                       <integer>
+#TCGA-05-4249                                              NA                                                    NA                                            NA                                              NA
+#TCGA-05-4382                                              NA                                                    NA                                            NA                                              NA
+#             patient.drugs.drug.5.therapy_ongoing patient.drugs.drug.5.therapy_types.therapy_type patient.drugs.drug.6.days_to_drug_therapy_end patient.drugs.drug.6.days_to_drug_therapy_start patient.drugs.drug.6.therapy_ongoing
+#                                      <character>                                     <character>                                     <integer>                                       <integer>                          <character>
+#TCGA-05-4249                                   NA                                              NA                                            NA                                              NA                                   NA
+#TCGA-05-4382                                   NA                                              NA                                            NA                                              NA                                   NA
+#             patient.drugs.drug.6.therapy_types.therapy_type patient.drugs.drug.7.days_to_drug_therapy_end patient.drugs.drug.7.days_to_drug_therapy_start patient.drugs.drug.7.therapy_ongoing
+#                                                 <character>                                     <integer>                                       <integer>                          <character>
+#TCGA-05-4249                                              NA                                            NA                                              NA                                   NA
+#TCGA-05-4382                                              NA                                            NA                                              NA                                   NA
+#             patient.drugs.drug.7.therapy_types.therapy_type patient.drugs.drug.8.days_to_drug_therapy_end patient.drugs.drug.8.days_to_drug_therapy_start patient.drugs.drug.8.therapy_ongoing
+#                                                 <character>                                     <integer>                                       <integer>                          <character>
+#TCGA-05-4249                                              NA                                            NA                                              NA                                   NA
+#TCGA-05-4382                                              NA                                            NA                                              NA                                   NA
+#             patient.drugs.drug.8.therapy_types.therapy_type patient.drugs.drug.9.days_to_drug_therapy_end patient.drugs.drug.9.days_to_drug_therapy_start patient.drugs.drug.9.therapy_ongoing
+#                                                 <character>                                     <integer>                                       <integer>                          <character>
+#TCGA-05-4249                                              NA                                            NA                                              NA                                   NA
+#TCGA-05-4382                                              NA                                            NA                                              NA                                   NA
+#             patient.drugs.drug.9.therapy_types.therapy_type patient.drugs.drug.days_to_drug_therapy_end patient.drugs.drug.days_to_drug_therapy_start patient.drugs.drug.therapy_ongoing patient.drugs.drug.therapy_types.therapy_type
+#                                                 <character>                                   <integer>                                     <integer>                        <character>                                   <character>
+#TCGA-05-4249                                              NA                                          NA                                            NA                                 NA                                            NA
+#TCGA-05-4382                                              NA                                          NA                                            NA                                 NA                                            NA
+#             patient.drugs.drug.therapy_types.therapy_type_notes patient.follow_ups.follow_up.2.additional_pharmaceutical_therapy patient.follow_ups.follow_up.2.additional_radiation_therapy
+#                                                     <character>                                                      <character>                                                 <character>
+#TCGA-05-4249                                                  NA                                                               NA                                                          NA
+#TCGA-05-4382                                                  NA                                                               NA                                                          NA
+#             patient.follow_ups.follow_up.2.karnofsky_performance_score patient.follow_ups.follow_up.2.performance_status_scale_timing patient.follow_ups.follow_up.2.primary_therapy_outcome_success
+#                                                              <integer>                                                    <character>                                                    <character>
+#TCGA-05-4249                                                         NA                                                             NA                                                             NA
+#TCGA-05-4382                                                         NA                                                             NA                                                             NA
+#             patient.follow_ups.follow_up.2.radiation_therapy patient.follow_ups.follow_up.2.targeted_molecular_therapy patient.follow_ups.follow_up.3.additional_pharmaceutical_therapy
+#                                                  <character>                                               <character>                                                      <character>
+#TCGA-05-4249                                               NA                                                        NA                                                               NA
+#TCGA-05-4382                                               NA                                                        NA                                                               NA
+#             patient.follow_ups.follow_up.3.additional_radiation_therapy patient.follow_ups.follow_up.3.karnofsky_performance_score patient.follow_ups.follow_up.3.performance_status_scale_timing
+#                                                             <character>                                                  <integer>                                                    <character>
+#TCGA-05-4249                                                          NA                                                         NA                                                             NA
+#TCGA-05-4382                                                          NA                                                         NA                                                             NA
+#             patient.follow_ups.follow_up.3.primary_therapy_outcome_success patient.follow_ups.follow_up.3.radiation_therapy patient.follow_ups.follow_up.3.targeted_molecular_therapy
+#                                                                <character>                                      <character>                                               <character>
+#TCGA-05-4249                                                             NA                                               NA                                                        NA
+#TCGA-05-4382                                                             NA                                               NA                                                        NA
+#             patient.follow_ups.follow_up.4.additional_pharmaceutical_therapy patient.follow_ups.follow_up.4.additional_radiation_therapy patient.follow_ups.follow_up.4.performance_status_scale_timing
+#                                                                  <character>                                                 <character>                                                    <character>
+#TCGA-05-4249                                                               NA                                                          NA                                                             NA
+#TCGA-05-4382                                                               NA                                                          NA                                                             NA
+#             patient.follow_ups.follow_up.4.primary_therapy_outcome_success patient.follow_ups.follow_up.4.radiation_therapy patient.follow_ups.follow_up.4.targeted_molecular_therapy
+#                                                                <character>                                      <character>                                               <character>
+#TCGA-05-4249                                                             NA                                               NA                                                        NA
+#TCGA-05-4382                                                             NA                                               NA                                                        NA
+#             patient.follow_ups.follow_up.additional_pharmaceutical_therapy patient.follow_ups.follow_up.additional_radiation_therapy patient.follow_ups.follow_up.karnofsky_performance_score
+#                                                                <character>                                               <character>                                                <integer>
+#TCGA-05-4249                                                             NA                                                        NA                                                       NA
+#TCGA-05-4382                                                             NA                                                       yes                                                       NA
+#             patient.follow_ups.follow_up.performance_status_scale_timing patient.follow_ups.follow_up.primary_therapy_outcome_success patient.follow_ups.follow_up.radiation_therapy
+#                                                              <character>                                                  <character>                                    <character>
+#TCGA-05-4249                                                           NA                                                           NA                                             no
+#TCGA-05-4382                                                           NA                                       complete remission/r..                                            yes
+#             patient.follow_ups.follow_up.targeted_molecular_therapy patient.karnofsky_performance_score patient.new_tumor_events.new_tumor_event.additional_pharmaceutical_therapy
+#                                                         <character>                           <integer>                                                                <character>
+#TCGA-05-4249                                                      no                                  NA                                                                         NA
+#TCGA-05-4382                                                      no                                  NA                                                                         NA
+#             patient.new_tumor_events.new_tumor_event.additional_radiation_therapy patient.performance_status_scale_timing patient.primary_therapy_outcome_success patient.radiation_therapy
+#                                                                       <character>                             <character>                             <character>               <character>
+#TCGA-05-4249                                                                    NA                                      NA                                      NA                        NA
+#TCGA-05-4382                                                                    NA                                      NA                                      NA                        NA
+#             patient.radiations.radiation.2.days_to_radiation_therapy_end patient.radiations.radiation.2.days_to_radiation_therapy_start patient.radiations.radiation.3.days_to_radiation_therapy_end
+#                                                                <integer>                                                      <integer>                                                    <integer>
+#TCGA-05-4249                                                           NA                                                             NA                                                           NA
+#TCGA-05-4382                                                           NA                                                             NA                                                           NA
+#             patient.radiations.radiation.3.days_to_radiation_therapy_start patient.radiations.radiation.4.days_to_radiation_therapy_end patient.radiations.radiation.4.days_to_radiation_therapy_start
+#                                                                  <integer>                                                    <integer>                                                      <integer>
+#TCGA-05-4249                                                             NA                                                           NA                                                             NA
+#TCGA-05-4382                                                             NA                                                           NA                                                             NA
+#             patient.radiations.radiation.days_to_radiation_therapy_end patient.radiations.radiation.days_to_radiation_therapy_start patient.targeted_molecular_therapy patient.tobacco_smoking_history
+#                                                              <integer>                                                    <integer>                        <character>                     <character>
+#TCGA-05-4249                                                         NA                                                           NA                                 NA          current reformed smo..
+#TCGA-05-4382                                                        393                                                          365                                 NA          current reformed smo..
+#             patient.year_of_tobacco_smoking_onset patient.samples.sample.2.portions.portion.2.slides.slide.2.percent_normal_cells patient.samples.sample.2.portions.portion.2.slides.slide.2.percent_stromal_cells
+#                                         <integer>                                                                       <integer>                                                                        <integer>
+#TCGA-05-4249                                    NA                                                                              NA                                                                               NA
+#TCGA-05-4382                                    NA                                                                              NA                                                                               NA
+#             patient.samples.sample.2.portions.portion.2.slides.slide.2.percent_tumor_cells patient.samples.sample.2.portions.portion.2.slides.slide.percent_normal_cells
+#                                                                                  <integer>                                                                     <integer>
+#TCGA-05-4249                                                                             NA                                                                            NA
+#TCGA-05-4382                                                                             NA                                                                            NA
+#             patient.samples.sample.2.portions.portion.2.slides.slide.percent_stromal_cells patient.samples.sample.2.portions.portion.2.slides.slide.percent_tumor_cells
+#                                                                                  <integer>                                                                    <integer>
+#TCGA-05-4249                                                                             NA                                                                           NA
+#TCGA-05-4382                                                                             NA                                                                           NA
+#             patient.samples.sample.2.portions.portion.slides.slide.2.percent_normal_cells patient.samples.sample.2.portions.portion.slides.slide.2.percent_stromal_cells
+#                                                                                 <integer>                                                                      <integer>
+#TCGA-05-4249                                                                            NA                                                                             NA
+#TCGA-05-4382                                                                            NA                                                                             NA
+#             patient.samples.sample.2.portions.portion.slides.slide.2.percent_tumor_cells patient.samples.sample.2.portions.portion.slides.slide.percent_normal_cells
+#                                                                                <integer>                                                                   <integer>
+#TCGA-05-4249                                                                           NA                                                                          NA
+#TCGA-05-4382                                                                           NA                                                                          NA
+#             patient.samples.sample.2.portions.portion.slides.slide.percent_stromal_cells patient.samples.sample.2.portions.portion.slides.slide.percent_tumor_cells
+#                                                                                <integer>                                                                  <integer>
+#TCGA-05-4249                                                                           NA                                                                         NA
+#TCGA-05-4382                                                                           NA                                                                         NA
+#             patient.samples.sample.3.portions.portion.slides.slide.percent_normal_cells patient.samples.sample.3.portions.portion.slides.slide.percent_stromal_cells
+#                                                                               <integer>                                                                    <integer>
+#TCGA-05-4249                                                                          NA                                                                           NA
+#TCGA-05-4382                                                                          NA                                                                           NA
+#             patient.samples.sample.3.portions.portion.slides.slide.percent_tumor_cells patient.samples.sample.4.portions.portion.2.slides.slide.percent_normal_cells
+#                                                                              <integer>                                                                     <integer>
+#TCGA-05-4249                                                                         NA                                                                            NA
+#TCGA-05-4382                                                                         NA                                                                            NA
+#             patient.samples.sample.4.portions.portion.2.slides.slide.percent_stromal_cells patient.samples.sample.4.portions.portion.2.slides.slide.percent_tumor_cells
+#                                                                                  <integer>                                                                    <integer>
+#TCGA-05-4249                                                                             NA                                                                           NA
+#TCGA-05-4382                                                                             NA                                                                           NA
+#             patient.samples.sample.4.portions.portion.3.slides.slide.percent_normal_cells patient.samples.sample.4.portions.portion.3.slides.slide.percent_stromal_cells
+#                                                                                 <integer>                                                                      <integer>
+#TCGA-05-4249                                                                            NA                                                                             NA
+#TCGA-05-4382                                                                            NA                                                                             NA
+#             patient.samples.sample.4.portions.portion.3.slides.slide.percent_tumor_cells patient.samples.sample.4.portions.portion.slides.slide.percent_normal_cells
+#                                                                                <integer>                                                                   <integer>
+#TCGA-05-4249                                                                           NA                                                                          NA
+#TCGA-05-4382                                                                           NA                                                                          NA
+#             patient.samples.sample.4.portions.portion.slides.slide.percent_stromal_cells patient.samples.sample.4.portions.portion.slides.slide.percent_tumor_cells
+#                                                                                <integer>                                                                  <integer>
+#TCGA-05-4249                                                                           NA                                                                         NA
+#TCGA-05-4382                                                                           NA                                                                         NA
+#             patient.samples.sample.portions.portion.2.slides.slide.2.percent_normal_cells patient.samples.sample.portions.portion.2.slides.slide.2.percent_stromal_cells
+#                                                                                 <integer>                                                                      <integer>
+#TCGA-05-4249                                                                            NA                                                                             NA
+#TCGA-05-4382                                                                            NA                                                                             NA
+#             patient.samples.sample.portions.portion.2.slides.slide.2.percent_tumor_cells patient.samples.sample.portions.portion.2.slides.slide.percent_normal_cells
+#                                                                                <integer>                                                                   <integer>
+#TCGA-05-4249                                                                           NA                                                                          NA
+#TCGA-05-4382                                                                           NA                                                                          NA
+#             patient.samples.sample.portions.portion.2.slides.slide.percent_stromal_cells patient.samples.sample.portions.portion.2.slides.slide.percent_tumor_cells
+#                                                                                <integer>                                                                  <integer>
+#TCGA-05-4249                                                                           NA                                                                         NA
+#TCGA-05-4382                                                                           NA                                                                         NA
+#             patient.samples.sample.portions.portion.3.slides.slide.percent_normal_cells patient.samples.sample.portions.portion.3.slides.slide.percent_stromal_cells
+#                                                                               <integer>                                                                    <integer>
+#TCGA-05-4249                                                                          NA                                                                           NA
+#TCGA-05-4382                                                                          NA                                                                           NA
+#             patient.samples.sample.portions.portion.3.slides.slide.percent_tumor_cells patient.samples.sample.portions.portion.slides.slide.2.percent_normal_cells
+#                                                                              <integer>                                                                   <integer>
+#TCGA-05-4249                                                                         NA                                                                           0
+#TCGA-05-4382                                                                         NA                                                                           0
+#             patient.samples.sample.portions.portion.slides.slide.2.percent_stromal_cells patient.samples.sample.portions.portion.slides.slide.2.percent_tumor_cells
+#                                                                                <integer>                                                                  <integer>
+#TCGA-05-4249                                                                           20                                                                         80
+#TCGA-05-4382                                                                           10                                                                         NA
+#             patient.samples.sample.portions.portion.slides.slide.percent_normal_cells patient.samples.sample.portions.portion.slides.slide.percent_stromal_cells patient.samples.sample.portions.portion.slides.slide.percent_tumor_cells
+#                                                                             <integer>                                                                  <integer>                                                                <integer>
+#TCGA-05-4249                                                                         0                                                                         20                                                                       80
+#TCGA-05-4382                                                                         0                                                                         10                                                                       NA
+
+table(colData(tmp_luad)[,"radiation_therapy"])
+#> table(colData(tmp_luad)[,"radiation_therapy"])
+#
+# no yes 
+#409  61
+
+## Clinical info
+cli_luad <- as.data.frame(colData(tmp_luad))
+cli_lusc <- as.data.frame(colData(tmp_lusc))
+
 
 ## use cBioPortal and its package cgdsr instead
-
 # install.packages("cgdsr")
 library("cgdsr")
-
 mycgds = cgdsr::CGDS("http://www.cbioportal.org/")
 #getCancerStudies(mycgds)
 

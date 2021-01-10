@@ -93,3 +93,15 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6353739/
 
 Keenan et al.
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6599710/
+
+
+
+
+LUSC = Squamous
+LUAD = Non-Squamous
+
+Performance metric:
+<0 indicates performance only in chemo army, awful model for predictivity for IO!
+~0 indicates equal performance in both, possibly awful model or one that is prognostic but not predictive
+>0 indicates increasing specificity to mere IO arm and higher the better; use this to guide submission
+
