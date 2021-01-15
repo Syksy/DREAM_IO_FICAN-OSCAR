@@ -1,0 +1,55 @@
+Tammikuu 15. 2021
+Daniel, Anni & Mikko -miitingi Zoom
+
+- PD-L1 expressio voi ekspressoitua paljon muuallakin kuin tuumorissa, esim. tupakoitsijoilla
+- Solukalvolla oleva PD-L1 IHC on se oikeesti tärkeä 
+
+- Mäyränpää-kalvojen sivu 33:
+-- Fumet et al. CD8-solut tärkeä ennustava 
+-- NK-solut tärkeitä 
+
+-- Residenttimakrofaagit pois, merkityksetön porukka - eivät reaktiivisia IO:lle
+-- Monosyyttiperäiset makrofagit voisivat olla kiinnostavia
+-- CD8+ tärkeitä vasteelle
+-- NK-solut oletettavasti tärkeitä kanssa hyökkäämään
+
+- Esim. residenttimakrofagit voivat kyllä reagoida niin että niiden interaktiona potilaat voivat saada tulehdustilan (erilainen funktio overall survival vs. progression ennustaminen)
+-- Tulehdusreaktio tärkeä! Todennäköisiä respondoijia
+-- Normaalisoluissa PD-L1 esim. sikiössä suojaa äidin immuunipuolustukselta
+
+- Tupakka altistaa mutaatioille, smokereilla todnäk korkeampi TMB, todnäk myös korkeampi PD-L1 ekspressio
+- Huonot keuhkot heavy smokerille, todnäk overall survival tällöin jo lähtökohtaisesti jo
+
+- Kemoterapia on toksista
+-- Usein levinneempi tauti tai ei pääse leikkaushoitoon
+-- Usein ECOG = 0 tai 1, levinneen taudin hoidossa
+-- Iso koko, invasiivisuus
+-- Jotkut stroomamarkerit saattaa ennustaa kuka saa kemoa (muttei välttämättä responssia)
+-- Kemohoidot tyypillisesti tehoaa parhaiten prolifiraatioaktiivisille tuumoreille MBI1, solusyklimarkkerit
+-- Tulehdussolut on usein myös syklissä, pyrkii tekemään klonaalisia popuulatioita
+-- Tuntuu tehoavan levyepiteelikarsinoomissa (squamous potilailla tyypillisesti kemovaste on parempi)
+-- Tuumorin lokaatio vaikuttaa voidaanko antaa sädetystä (esim. jos lähellä sydäntä niin ei mielellään anneta)
+-- Sädetystä voidaan esim. käyttää ennen leikkausta pienentämään tuumoria
+-- Usein jos potilasta on sädetetty aikaisemmin (esim. nuorena joku Hogkin's Lymphoma) niin todnäk vanhana keuhkosyöpäpotilaana ei voida enää hoitaa sädetyksellä koska kumulatiivinen annos alkaa tulla liian isoksi
+-- Metastaaseihin, erit. luustometastaasit, usein palliatiivinen
+-- Jos sädetys kohdennettu thorax-alueelle, useimmiten kuratiivinen tavoite
+-- Jos muualle, niin todnäk metastaaseihin, niin voi olla hyvin olla enemmän palliatiivinen hoito
+
+(Squamous vs. Adeno)
+-- Metastaasit yleisesti nostaa PD-L1
+-- Adeno metastasoi useammin aivoihin, mutta molemmat metastasoi 
+-- Tupakoitsijoiden levyepiteelisyöpä ois ehkä korkeempi PD-L1 ekspressio
+
+-- Melanoomadata on biologisena entiteettinä erilainen, neuraalilähtöisiä - transkriptomi varmasti aivan erilainen
+--- Melanooma-alueella tulehdussuureet voisi olla kuitenkin relevantteja lung-cancerille
+--- Tulehdusvaste on tuumorialue-agnostista prosessia
+--- PD-L1 ekspressiot aivan eri luokassa (selkeästi matalempia kuin lung)
+-- Nasaali (nieli) karsinooma lähempänä lung canceria kuin melanoma, pää-/kaula-alueen on eniten representatiivisia
+-- Glioblastoomat on veriaivoesteen takana olevia tuumoreita, hyvin erikoinen tulehdusvaste jotka pystyy hakeutumaan veriaivoesteen läpi
+
+Summa summarum:
+- Tulehdusprofiili ja tulehdusdata tosi kiinnostavia tässä kontekstissa!
+
+- n. 100 kpl muuttujia OSCAR:iin
+- yritetään priorisoida lung cancer, head and neck, gastric -syöpiä; esim. melanooma voi olla biologisesti hyvin erilainen kontekstillaan
+
