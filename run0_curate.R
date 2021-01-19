@@ -385,7 +385,7 @@ cli_lusc <- as.data.frame(colData(tmp_lusc))
 # Karnofsky  40 >= x >= 30 -> ECOG = 3
 # Karnosfky  20 >= x >= 10 -> ECOG = 4
 # Karnofsky  0, dead       -> ECOG = 5
-               
+           
 #> table(cli_lusc$patient.performance_status_scale_timing, cli_lusc$patient.karnofsky_performance_score, useNA="ifany")
 #                       
 #                          0  20  40  50  70  80  90 100 <NA>
@@ -402,6 +402,24 @@ cli_lusc <- as.data.frame(colData(tmp_lusc))
 #  pre-adjuvant therapy    0   0   0   0   0   0   0   20
 #  pre-operative           0   1   1   5  16  27  32   94
 #  <NA>                    2   0   1   0   5   1   0  277
+
+#ifelse(cli_luad$patient.performance_status_scale_timing == "pre-operative", 7-findInterval(cli_luad$patient.karnofsky_performance_score, c(-1, 9, 29, 49, 69, 89, 100)), NA)
+#7-findInterval(cli_luad$patient.karnofsky_performance_score, c(-1, 9, 20, 40, 60, 79, 100))                           
+table(ECOG = ifelse(cli_luad$patient.performance_status_scale_timing == "pre-operative", 6-findInterval(cli_luad$patient.karnofsky_performance_score, c(-1, 9, 29, 49, 69, 89, 101)), NA),
+	Karnofsky = cli_luad$patient.karnofsky_performance_score,
+	timing = cli_luad$patient.performance_status_scale_timing
+)
+# ...
+#
+#, , timing = pre-operative
+#
+#    Karnofsky
+#ECOG  0 40 60 70 80 90 100
+#   0  0  0  0  0  0 27  32
+#   1  0  0  0  5 16  0   0
+#   2  0  0  1  0  0  0   0
+#   3  0  1  0  0  0  0   0   
+
   
 # Gender:
 #> table(cli_lusc$patient.gender, useNA="ifany")
@@ -439,6 +457,27 @@ cli_lusc <- as.data.frame(colData(tmp_lusc))
 ## ... -> PFS
 
 
+# For subchallenge 3, in https://www.synapse.org/#!Synapse:syn18404605/wiki/607473
+#
+# - For Sub-challenge 3, do we just predict the patient will be PD or not PD? Or PD, Complete Response and Partial Response?
+#
+# > Here the response variable is binary. PD (progressive disease) will be treated as non-responder, 
+# NE (not evaluable) will be set as NA, and so, not used in the scoring calculation. All others are considered responders.
+
+#> table(Responder = c(0, 1, 1, 1, NA)[match(cli_luad[,"patient.drugs.drug.measure_of_response"], c("clinical progressive disease", "complete response", "partial response", "stable disease", NA))], raw = cli_luad[,"patient.drugs.drug.measure_of_response"], useNA="ifany")
+#         raw
+#Responder clinical progressive disease complete response partial response stable disease <NA>
+#     0                              22                 0                0              0    0
+#     1                               0                56                7             10    0
+#     <NA>                            0                 0                0              0  421
+
+#> table(Responder = c(0, 1, 1, 1, NA)[match(cli_lusc[,"patient.drugs.drug.measure_of_response"], c("clinical progressive disease", "complete response", "partial response", "stable disease", NA))], raw = cli_lusc[,"patient.drugs.drug.measure_of_response"], useNA="ifany")
+#         raw
+#Responder clinical progressive disease complete response partial response stable disease <NA>
+#     0                              13                 0                0              0    0
+#     1                               0                48                2              3    0
+#     <NA>                            0                 0                0              0  435
+
 # Clean up clinical information from cli_luad and cli_lusc
 # No obvious immunohistochemistry or PD* available for IO
 #> grep("IHC", colnames(cli_luad))
@@ -451,37 +490,80 @@ cli_lusc <- as.data.frame(colData(tmp_lusc))
 #[1] 2196 2212 2241
 #> colnames(cli_lusc)[grep("PD", colnames(cli_lusc))]
 #[1] "Mutation_PDYN"   "Mutation_PDGFRA" "CNA_PDGFRA"
-## TODO
+
+# Follow-up times scattered along multiple columns
+# Event: cli_lusc$patient.clinical_cqcf.consent_or_death_status
+# Time somewhere possibly in: cbind(DTD = cli_lusc$patient.clinical_cqcf.days_to_death, FU.1 = cli_lusc$patient.follow_ups.follow_up.days_to_death, FU.2 = cli_lusc$patient.follow_ups.follow_up.2.days_to_death, FU.3 = cli_lusc$patient.follow_ups.follow_up.3.days_to_death, FU.4 = cli_lusc$patient.follow_ups.follow_up.4.days_to_death)
+# or rather in any of the "days_to"-fields, with varying specificity
+omit.infinite <- function(x) { ifelse(is.finite(x), x, NA) }
+
 dat_luad <- data.frame(
-	patientID = as.character(paste(rownames(cli_luad), ".01", sep=""),
-	SEX = as.factor(ifelse(cli_luad$gender = "female", "F", "M"))
+	patientID = as.character(paste(rownames(cli_luad), ".01", sep="")),
+	SEX = as.factor(ifelse(cli_luad$gender == "female", "F", "M")),
 	AAGE = as.numeric(cli_luad$patient.age_at_initial_pathologic_diagnosis),
-	CRFHIST = as.factor("NON-SQUAMOUS", levels=c("NON-SQUAMOUS", "SQUAMOUS")),
-	TOBACUSE = as.factor(),
-	ECOGPS = as.numeric(),
+	CRFHIST = factor("NON-SQUAMOUS", levels=c("NON-SQUAMOUS", "SQUAMOUS")),
+	TOBACUSE = factor(c("CURRENT", "FORMER", "FORMER", "FORMER", "NEVER", "UNKNOWN")[match(cli_luad$patient.tobacco_smoking_history, c("current smoker", "current reformed smoker for < or = 15 years", "current reformed smoker for > 15 years", "current reformed smoker, duration not specified", "lifelong non-smoker", NA))]),
+	ECOGPS = as.numeric(ifelse(cli_luad$patient.performance_status_scale_timing == "pre-operative", 6-findInterval(cli_luad$patient.karnofsky_performance_score, c(-1, 9, 29, 49, 69, 89, 101)), NA)),
 	PDL1 = as.numeric(NA),
-	TMB = as.numeric(NA),
+	TMB = as.numeric(cli_luad[,"Nonsilent.Mutations.per.Mb"]),
 	TCR_Shannon = as.numeric(NA),
 	TCR_Richness = as.numeric(NA),
 	TCR_Evenness = as.numeric(NA),
 	BCR_Shannon = as.numeric(NA),
 	BCR_Richness = as.numeric(NA),
 	BCR_Evenness = as.numeric(NA),
-	PFS = as.numeric(cli_luad$patient.follow_ups.follow_up.days_to_new_tumor_event_after_initial_treatment),
-	PFS.Event = as.numeric(ifelse(cli_luad$patient.follow_ups.follow_up.new_tumor_event_after_initial_treatment == "yes", 1, 0)),
-	OS = as.numeric(cli_luad$days_to_last_followup),
-	OS.Event = ifelse(cli_luad$patient.clinical_cqcf.consent_or_death_status == "deceased", 1, 0),
-	Response =
-	Age = ,
-	Tobacco,
-	T = ,
-	N = ,
-	M = ,
-	RACE = cli_luad$RACE
+	PFS.time = as.numeric(cli_luad$patient.follow_ups.follow_up.days_to_new_tumor_event_after_initial_treatment),
+	PFS.event = as.numeric(ifelse(cli_luad$patient.follow_ups.follow_up.new_tumor_event_after_initial_treatment == "yes", 1, 0)),
+	#OS = as.numeric(cli_luad$days_to_last_followup),
+	OS.time = omit.infinite(as.numeric(apply(cli_luad[,grep("days_to", colnames(cli_luad), value=TRUE)[1:3]], MARGIN=1, FUN=function(x) { max(x, na.rm=TRUE) }))),
+	OS.event = ifelse(cli_luad$patient.clinical_cqcf.consent_or_death_status == "deceased", 1, 0),
+	Responder = c(0, 1, 1, 1, NA)[match(cli_luad[,"patient.drugs.drug.measure_of_response"], c("clinical progressive disease", "complete response", "partial response", "stable disease", NA))]
 )
-cli_lusc <- data.frame(
+# PFS times missing for patients that did not have a reported progression, filling with the longest known survival in those cases
+dat_luad[,"PFS.time"] <- ifelse(is.na(dat_luad$PFS.event), NA, omit.infinite(apply(dat_luad[,c("PFS.time", "OS.time")], MARGIN=1, FUN=function(x) { min(x, na.rm=TRUE) })))
 
+#> head(dat_luad)
+#        patientID SEX AAGE      CRFHIST TOBACUSE ECOGPS PDL1   TMB TCR_Shannon TCR_Richness TCR_Evenness BCR_Shannon BCR_Richness BCR_Evenness PFS.time PFS.event OS.time OS.event Responder
+#1 TCGA-05-4249.01   M   67 NON-SQUAMOUS   FORMER     NA   NA  8.47          NA           NA           NA          NA           NA           NA     1523         0    1523        0        NA
+#2 TCGA-05-4382.01   M   68 NON-SQUAMOUS   FORMER     NA   NA 37.78          NA           NA           NA          NA           NA           NA      334         1     607        0        NA
+#3 TCGA-05-4384.01   M   66 NON-SQUAMOUS   FORMER     NA   NA  3.50          NA           NA           NA          NA           NA           NA      183         1     426        0         0
+#4 TCGA-05-4389.01   M   70 NON-SQUAMOUS   FORMER     NA   NA  6.43          NA           NA           NA          NA           NA           NA     1369         0    1369        0        NA
+#5 TCGA-05-4390.01   F   58 NON-SQUAMOUS   FORMER     NA   NA 14.41          NA           NA           NA          NA           NA           NA      395         1    1126        0         1
+#6 TCGA-05-4395.01   M   76 NON-SQUAMOUS   FORMER     NA   NA  6.34          NA           NA           NA          NA           NA           NA       NA        NA       0        0        NA
+
+dat_lusc <- data.frame(
+	patientID = as.character(paste(rownames(cli_lusc), ".01", sep="")),
+	SEX = as.factor(ifelse(cli_lusc$gender == "female", "F", "M")),
+	AAGE = as.numeric(cli_lusc$patient.age_at_initial_pathologic_diagnosis),
+	CRFHIST = factor("SQUAMOUS", levels=c("NON-SQUAMOUS", "SQUAMOUS")),
+	TOBACUSE = factor(c("CURRENT", "FORMER", "FORMER", "FORMER", "NEVER", "UNKNOWN")[match(cli_lusc$patient.tobacco_smoking_history, c("current smoker", "current reformed smoker for < or = 15 years", "current reformed smoker for > 15 years", "current reformed smoker, duration not specified", "lifelong non-smoker", NA))]),
+	ECOGPS = as.numeric(ifelse(cli_lusc$patient.performance_status_scale_timing == "pre-operative", 6-findInterval(cli_lusc$patient.karnofsky_performance_score, c(-1, 9, 29, 49, 69, 89, 101)), NA)),
+	PDL1 = as.numeric(NA),
+	TMB = as.numeric(cli_lusc[,"Nonsilent.Mutatios.per.Mb"]), # Typo [sic]
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),
+	PFS.time = as.numeric(cli_lusc$patient.follow_ups.follow_up.days_to_new_tumor_event_after_initial_treatment),
+	PFS.event = as.numeric(ifelse(cli_lusc$patient.follow_ups.follow_up.new_tumor_event_after_initial_treatment == "yes", 1, 0)),
+	#OS = as.numeric(cli_lusc$days_to_last_followup),
+	OS.time = omit.infinite(as.numeric(apply(cli_lusc[,grep("days_to", colnames(cli_lusc), value=TRUE)[1:3]], MARGIN=1, FUN=function(x) { max(x, na.rm=TRUE) }))),
+	OS.event = ifelse(cli_lusc$patient.clinical_cqcf.consent_or_death_status == "deceased", 1, 0),
+	Responder = c(0, 1, 1, 1, NA)[match(cli_lusc[,"patient.drugs.drug.measure_of_response"], c("clinical progressive disease", "complete response", "partial response", "stable disease", NA))]
 )	
+# PFS times missing for patients that did not have a reported progression, filling with the longest known survival in those cases
+dat_lusc[,"PFS.time"] <- ifelse(is.na(dat_lusc$PFS.event), NA, omit.infinite(apply(dat_lusc[,c("PFS.time", "OS.time")], MARGIN=1, FUN=function(x) { min(x, na.rm=TRUE) })))
+
+#> head(dat_lusc)
+#        patientID SEX AAGE  CRFHIST TOBACUSE ECOGPS PDL1       TMB TCR_Shannon TCR_Richness TCR_Evenness BCR_Shannon BCR_Richness BCR_Evenness PFS.time PFS.event OS.time OS.event Responder
+#1 TCGA-18-3406.01   M   67 SQUAMOUS   FORMER     NA   NA  8.068481          NA           NA           NA          NA           NA           NA      357         1     371        1        NA
+#2 TCGA-18-3407.01   M   72 SQUAMOUS   FORMER     NA   NA  6.766357          NA           NA           NA          NA           NA           NA      136         0     136        1        NA
+#3 TCGA-18-3408.01   F   77 SQUAMOUS   FORMER     NA   NA  2.965731          NA           NA           NA          NA           NA           NA     1793         1    2304        0        NA
+#4 TCGA-18-3409.01   M   74 SQUAMOUS   FORMER     NA   NA 69.597030          NA           NA           NA          NA           NA           NA     2291         1    3747        0        NA
+#5 TCGA-18-3410.01   M   81 SQUAMOUS   FORMER     NA   NA 10.451920          NA           NA           NA          NA           NA           NA      146         0     146        1        NA
+#6 TCGA-18-3411.01   F   63 SQUAMOUS  CURRENT     NA   NA 10.561520          NA           NA           NA          NA           NA           NA       NA        NA    3576        0        NA
 
 ## Datasets from GEO
 library(GEOquery)
