@@ -9,10 +9,10 @@
 setwd("D:\\Gits\\DREAM_2020_IO\\")
 
 # Just in case ...
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install(version = "3.12")
-update.packages(ask=FALSE, checkBuilt=TRUE)
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+#BiocManager::install(version = "3.12")
+#update.packages(ask=FALSE, checkBuilt=TRUE)
 
 # Generate biomaRt gene mapping data.frame for convenience
 #BiocManager::install("biomaRt")
