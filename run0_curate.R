@@ -491,6 +491,16 @@ table(ECOG = ifelse(cli_luad$patient.performance_status_scale_timing == "pre-ope
 #> colnames(cli_lusc)[grep("PD", colnames(cli_lusc))]
 #[1] "Mutation_PDYN"   "Mutation_PDGFRA" "CNA_PDGFRA"
 
+
+# Summarize given treatments as additional fields
+#> table(unlist(cli_luad[,grep("therapy_type", colnames(cli_luad), value=TRUE)]))
+#
+#                                 ancillary aurora kinase inhibitor - protocol therapy                               chemotherapy                     gsk mage vaccine study                              immunotherapy 
+#                                         6                                          1                                        429                                          1                                          6 
+#                            other, specify            phase ii clinical trial krw2170                 targeted molecular therapy                                    vaccine 
+#                                         3                                          1                                         11                                          1
+
+
 # Follow-up times scattered along multiple columns
 # Event: cli_lusc$patient.clinical_cqcf.consent_or_death_status
 # Time somewhere possibly in: cbind(DTD = cli_lusc$patient.clinical_cqcf.days_to_death, FU.1 = cli_lusc$patient.follow_ups.follow_up.days_to_death, FU.2 = cli_lusc$patient.follow_ups.follow_up.2.days_to_death, FU.3 = cli_lusc$patient.follow_ups.follow_up.3.days_to_death, FU.4 = cli_lusc$patient.follow_ups.follow_up.4.days_to_death)
@@ -517,10 +527,20 @@ dat_luad <- data.frame(
 	#OS = as.numeric(cli_luad$days_to_last_followup),
 	OS.time = omit.infinite(as.numeric(apply(cli_luad[,grep("days_to", colnames(cli_luad), value=TRUE)[1:3]], MARGIN=1, FUN=function(x) { max(x, na.rm=TRUE) }))),
 	OS.event = ifelse(cli_luad$patient.clinical_cqcf.consent_or_death_status == "deceased", 1, 0),
-	Responder = c(0, 1, 1, 1, NA)[match(cli_luad[,"patient.drugs.drug.measure_of_response"], c("clinical progressive disease", "complete response", "partial response", "stable disease", NA))]
+	Responder = c(0, 1, 1, 1, NA)[match(cli_luad[,"patient.drugs.drug.measure_of_response"], c("clinical progressive disease", "complete response", "partial response", "stable disease", NA))],
+	# Reported chemotherapy therapy
+	tChemo = as.integer(apply(cli_luad[,grep("therapy_type", colnames(cli_luad), value=TRUE)], MARGIN=1, FUN=function(z) { any(z == "chemotherapy") })),
+	# Reported radiation therapy
+	tRadia = as.integer(cli_luad$radiation_therapy == "yes"),
+	# Reported other therapy
+	tOther = as.integer(apply(cli_luad[,grep("therapy_type", colnames(cli_luad), value=TRUE)], MARGIN=1, FUN=function(z) { any(!z == "chemotherapy") }))
 )
 # PFS times missing for patients that did not have a reported progression, filling with the longest known survival in those cases
 dat_luad[,"PFS.time"] <- ifelse(is.na(dat_luad$PFS.event), NA, omit.infinite(apply(dat_luad[,c("PFS.time", "OS.time")], MARGIN=1, FUN=function(x) { min(x, na.rm=TRUE) })))
+# Fill in NAs in treatments as non-observed
+dat_luad[is.na(dat_luad$tChemo),"tChemo"] <- 0
+dat_luad[is.na(dat_luad$tRadia),"tRadia"] <- 0
+dat_luad[is.na(dat_luad$tOther),"tOther"] <- 0
 
 #> head(dat_luad)
 #        patientID SEX AAGE      CRFHIST TOBACUSE ECOGPS PDL1   TMB TCR_Shannon TCR_Richness TCR_Evenness BCR_Shannon BCR_Richness BCR_Evenness PFS.time PFS.event OS.time OS.event Responder
@@ -551,10 +571,21 @@ dat_lusc <- data.frame(
 	#OS = as.numeric(cli_lusc$days_to_last_followup),
 	OS.time = omit.infinite(as.numeric(apply(cli_lusc[,grep("days_to", colnames(cli_lusc), value=TRUE)[1:3]], MARGIN=1, FUN=function(x) { max(x, na.rm=TRUE) }))),
 	OS.event = ifelse(cli_lusc$patient.clinical_cqcf.consent_or_death_status == "deceased", 1, 0),
-	Responder = c(0, 1, 1, 1, NA)[match(cli_lusc[,"patient.drugs.drug.measure_of_response"], c("clinical progressive disease", "complete response", "partial response", "stable disease", NA))]
+	Responder = c(0, 1, 1, 1, NA)[match(cli_lusc[,"patient.drugs.drug.measure_of_response"], c("clinical progressive disease", "complete response", "partial response", "stable disease", NA))],
+	# Reported chemotherapy therapy
+	tChemo = as.integer(apply(cli_lusc[,grep("therapy_type", colnames(cli_lusc), value=TRUE)], MARGIN=1, FUN=function(z) { any(z == "chemotherapy") })),
+	# Reported radiation therapy
+	tRadia = as.integer(cli_lusc$radiation_therapy == "yes"),
+	# Reported other therapy
+	tOther = as.integer(apply(cli_lusc[,grep("therapy_type", colnames(cli_lusc), value=TRUE)], MARGIN=1, FUN=function(z) { any(!z == "chemotherapy") }))
+	
 )	
 # PFS times missing for patients that did not have a reported progression, filling with the longest known survival in those cases
 dat_lusc[,"PFS.time"] <- ifelse(is.na(dat_lusc$PFS.event), NA, omit.infinite(apply(dat_lusc[,c("PFS.time", "OS.time")], MARGIN=1, FUN=function(x) { min(x, na.rm=TRUE) })))
+# Fill in NAs in treatments as non-observed
+dat_lusc[is.na(dat_lusc$tChemo),"tChemo"] <- 0
+dat_lusc[is.na(dat_lusc$tRadia),"tRadia"] <- 0
+dat_lusc[is.na(dat_lusc$tOther),"tOther"] <- 0
 
 #> head(dat_lusc)
 #        patientID SEX AAGE  CRFHIST TOBACUSE ECOGPS PDL1       TMB TCR_Shannon TCR_Richness TCR_Evenness BCR_Shannon BCR_Richness BCR_Evenness PFS.time PFS.event OS.time OS.event Responder
@@ -564,6 +595,13 @@ dat_lusc[,"PFS.time"] <- ifelse(is.na(dat_lusc$PFS.event), NA, omit.infinite(app
 #4 TCGA-18-3409.01   M   74 SQUAMOUS   FORMER     NA   NA 69.597030          NA           NA           NA          NA           NA           NA     2291         1    3747        0        NA
 #5 TCGA-18-3410.01   M   81 SQUAMOUS   FORMER     NA   NA 10.451920          NA           NA           NA          NA           NA           NA      146         0     146        1        NA
 #6 TCGA-18-3411.01   F   63 SQUAMOUS  CURRENT     NA   NA 10.561520          NA           NA           NA          NA           NA           NA       NA        NA    3576        0        NA
+
+# Combine datasets to produce combined SQUAMOUS & NON-SQUAMOUS TCGA
+# row-bind
+dat_tcga <- rbind(dat_luad, dat_lusc)
+dat_tcga$patientID <- gsub(".01", "", dat_tcga$patientID)
+# column-bind
+gex_tcga <- cbind(gex_luad, gex_lusc)
 
 ## Datasets from GEO
 library(GEOquery)
