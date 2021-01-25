@@ -165,6 +165,11 @@ tmp_lusc <- curatedTCGAData::curatedTCGAData("LUSC", c("RNASeq2GeneNorm"), FALSE
 ## use curatedTCGAData instead:
 gex_luad <- tmp_luad[[1]]@assays$data@listData[[1]]
 gex_lusc <- tmp_lusc[[1]]@assays$data@listData[[1]]
+# Generate easier unique colnames
+colnames(gex_luad) <- substr(colnames(gex_luad), 1, 12)
+colnames(gex_lusc) <- substr(colnames(gex_lusc), 1, 12)
+
+
 ## Generation of clinical info
 ## Specific fields
 
@@ -541,6 +546,8 @@ dat_luad[,"PFS.time"] <- ifelse(is.na(dat_luad$PFS.event), NA, omit.infinite(app
 dat_luad[is.na(dat_luad$tChemo),"tChemo"] <- 0
 dat_luad[is.na(dat_luad$tRadia),"tRadia"] <- 0
 dat_luad[is.na(dat_luad$tOther),"tOther"] <- 0
+# Shorten IDs
+rownames(dat_luad) <- dat_luad$patientID <- substr(dat_luad$patientID, 1, 12)
 
 #> head(dat_luad)
 #        patientID SEX AAGE      CRFHIST TOBACUSE ECOGPS PDL1   TMB TCR_Shannon TCR_Richness TCR_Evenness BCR_Shannon BCR_Richness BCR_Evenness PFS.time PFS.event OS.time OS.event Responder
@@ -586,6 +593,8 @@ dat_lusc[,"PFS.time"] <- ifelse(is.na(dat_lusc$PFS.event), NA, omit.infinite(app
 dat_lusc[is.na(dat_lusc$tChemo),"tChemo"] <- 0
 dat_lusc[is.na(dat_lusc$tRadia),"tRadia"] <- 0
 dat_lusc[is.na(dat_lusc$tOther),"tOther"] <- 0
+# Shorten IDs
+rownames(dat_lusc) <- dat_lusc$patientID <- substr(dat_lusc$patientID, 1, 12)
 
 #> head(dat_lusc)
 #        patientID SEX AAGE  CRFHIST TOBACUSE ECOGPS PDL1       TMB TCR_Shannon TCR_Richness TCR_Evenness BCR_Shannon BCR_Richness BCR_Evenness PFS.time PFS.event OS.time OS.event Responder
@@ -599,9 +608,22 @@ dat_lusc[is.na(dat_lusc$tOther),"tOther"] <- 0
 # Combine datasets to produce combined SQUAMOUS & NON-SQUAMOUS TCGA
 # row-bind
 dat_tcga <- rbind(dat_luad, dat_lusc)
-dat_tcga$patientID <- gsub(".01", "", dat_tcga$patientID)
-# column-bind
+# column-bind and transpose gene expression
 gex_tcga <- cbind(gex_luad, gex_lusc)
+# Matching rownames, everything's looking good!
+#> sum(rownames(gex_tcga) %in% rownames(dat_tcga))
+#[1] 1128
+#> sum(!rownames(gex_tcga) %in% rownames(dat_tcga))
+#[1] 0
+#> sum(!rownames(dat_tcga) %in% rownames(gex_tcga))
+#[1] 0
+
+# Save TCGA temporary datasets
+setwd("./RData")
+save(dat_tcga, file="dat_tcga.RData")
+save(gex_tcga, file="gex_tcga.RData")
+setwd("..")
+
 
 ## Datasets from GEO
 library(GEOquery)
@@ -876,12 +898,106 @@ cli_chen <- cli_chen[pat_chen,,drop=FALSE]
 
 
 
+###
+#
+# Cherry-pick key genes from the clinic or other sources (even if mutation status is used in clinic rather than gex)
+# Note aliases! Like PDL1 <-> CD274
+#
+###
+
+keyGenes <- c(
+	"CD274", "PDL1", # PD-L1
+	"PDCD1", "CD279"
+	"EGFR",   # T790M mutation in particular, separate drugs used for squamous
+	"ALK",    # Mutation often seen in non-smoker, young, adenocarcinoma subtype
+	"ROS1",   # Adenocarcinoma, often negative for ALK, KRAS and EGFR muts
+	"BRAF",   # Mutation helps tumor to grow
+	"RET",    # Mutation helps tumor to grow
+	"MET",    # Mutation helps tumor to grow
+	"NTRK",   # Mutation helps tumor to grow
+	"HER2",   # NSLungCa PeerView podcast
+	"KRAS",   # NSLungCa PeerView podcast
+	"NRG1",    # NSLungCa PeerView podcast
+	# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7542663/
+	# Antigen processing and presentation machinery
+	# Score itself: "The APMS (sum of the log2 z-scores for each gene)"
+	## Omit and include only the antigen presentation machinery score
+	#"B2M",
+	#"CALR",
+	#"NLRC5",
+	#"PSMB9",
+	#"PSME1",
+	#"PSME3",
+	#"RFX5",
+	#"HSP90AB1",
+	# Mikko's slides, anything related; https://www.frontiersin.org/articles/10.3389/fonc.2016.00112/full
+	"VEGF",
+	"HER1",
+	"HER2",
+	"HER3",
+	"HER4",
+	"PTEN",
+	"PI3K",
+	"RAS",
+	"MEK",
+	"ERK",
+	"CDK4",
+	"CDK6",
+	"mTOR",
+	"PDK-1"
+	"AKT",
+	# Mikko NGS syöpäpaneeli 1 lisäyksiä
+	"PIK3CA",
+	"KIT",
+	"NRAS",
+	"PDGFRA"
+)
+
+###
+#
+# Lung IO specific "scores", and filtering out 
+#
+###
+
+# Interferon gamma response score
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5531419/
+# Might be too melanoma specific, albeit covering a multitude of other cancers too
+# Calculation
+# "After performance of quantile normalization, a log10 transformation was applied, 
+# and signature scores were calculated by averaging of the included genes for the IFN-gamma (6-gene) and expanded immune (18-gene) signatures."
+# ... although ...
+# "Logistic regression modeling was used to conduct the hypothesis testing associated with best overall response (BOR), and a Cox model was used for testing of PFS and OS."
+IFNGscore1 <- function(gex){
+	genes <- c("IDO1", "CXCL10", "CXCL9", "HLA-DRA", "STAT1", "IFNG")
+
+}
+# "The final 18-gene profile was derived through a cross-validated penalized regression modeling strategy in a large cohort of pembrolizumab-treated patients across 9 different tumor types."
+IFNGscore2 <- function(gex){
+	genes <- c("CD3D", "IDO1", "CIITA", "CD3E", "CCL5", "GZMK", "CD2", "HLA-DRA", "CXCL13", "IL2RG", "NKG7", "HLA-E", "CXCR6", "LAG3", "TAGAP", "CXCL10", "STAT1", "GZMB")
+
+}
+
+# Antigen processing and presentation machinery
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7542663/
+# Score itself: "The APMS (sum of the log2 z-scores for each gene)"
+APMscore <- function(gex){
+	genes <- c("B2M", "CALR", "NLRC5", "PSMB9", "PSME1", "PSME3", "RFX5", "HSP90AB1")
+}
 
 
-
-
-
-
+# Tumor inflammatory signature (160 genes)
+# https://ascopubs.org/doi/abs/10.1200/JCO.2020.38.5_suppl.47
+# "TIS, algorithmically defined as the mean mRNA expression of the 160 genes was developed with each tumor assigned into a weak, moderate or strong inflammation group"
+# ... using Damotte et al. instead
+# Inflammation was observed differently in varying PD-L1 expressed tumors
+# "Strongly inflamed tumors presented with improved ORR to ICI in NSCLC"
+# Possibly differing criteria for "response" from what DREAM uses: "clinical benefit was defined as complete or partial RECIST response while stable and progressive disease were defined as lack of clinical benefit."
+TISscore <- function(gex){
+	# Taken from Fig 1 panel d in the publ.
+	# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6829827/#MOESM2
+	genes <- c("CD276", "HLA-DQA1", "CD274", "IDO1", "HLA-DRB1", "HLA-E", "CMKLR1", "PDCD1LG2", "PSMB10", "LAG3", "CXCL9", "STAT1", "CD8A", "CCL5", "NKG7", "TIGIT", "CD27", "CXCR6")
+	
+}
 
 
 ###
@@ -908,16 +1024,23 @@ gmt_synthetic <- rbind(
 	GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_c7)	# Immunology
 )
 # TCGA
-gmt_luad <- rbind(
-	GSVA::gsva(gex_luad, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_luad, gmt_c6),	# Oncogenic
-	GSVA::gsva(gex_luad, gmt_c7)	# Immunology
+#gmt_luad <- rbind(
+#	GSVA::gsva(gex_luad, gmt_h),	# Hallmarks
+#	GSVA::gsva(gex_luad, gmt_c6),	# Oncogenic
+#	GSVA::gsva(gex_luad, gmt_c7)	# Immunology
+#)
+#gmt_lusc <- rbind(
+#	GSVA::gsva(gex_lusc, gmt_h),	# Hallmarks
+#	GSVA::gsva(gex_lusc, gmt_c6),	# Oncogenic
+#	GSVA::gsva(gex_lusc, gmt_c7)	# Immunology
+#)
+## Combined (gex transposed)
+gmt_tcga <- rbind(
+	GSVA::gsva(gex_tcga, gmt_h),	# Hallmarks
+	GSVA::gsva(gex_tcga, gmt_c6),	# Oncogenic
+	GSVA::gsva(gex_tcga, gmt_c7)	# Immunology
 )
-gmt_lusc <- rbind(
-	GSVA::gsva(gex_lusc, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_lusc, gmt_c6),	# Oncogenic
-	GSVA::gsva(gex_lusc, gmt_c7)	# Immunology
-)
+
 # TIDEs
 gmt_lauss <- rbind(
 	GSVA::gsva(gex_lauss, gmt_h),	# Hallmarks
