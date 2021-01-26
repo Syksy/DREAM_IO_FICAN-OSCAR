@@ -131,7 +131,13 @@ gex_synthetic_refseq105_isoforms_tpm <- read.csv(".\\CM_026_formatted_synthetic_
 
 ## Non-comforming dimensions, except when normalized count -> tpm
 
-
+# '-' symbols may require some sanitizing along the way (?), e.g. manual replacement with '.'?
+#> grep("HLA", rownames(gex_synthetic_refseq105_genes_tpm), value=TRUE)
+# [1] "SCHLAP1"      "HHLA3"        "HLA-V"        "HLA-DPA1"     "HLA-B"        "HLA-G"        "HLA-DMA"     
+# [8] "HLA-L"        "HLA-DRB1"     "HLA-DQB1"     "HLA-E"        "HLA-A"        "HLA-DOA"      "HLA-DMB"     
+#[15] "HLA-DQA2"     "HHLA2"        "HLA-DPB1"     "HLA-DQB1-AS1" "HLA-DRB6"     "HLA-DRB5"     "HLA-DQB2"    
+#[22] "HLA-J"        "HLA-DPB2"     "HLA-F"        "HLA-F-AS1"    "HLA-C"        "HLA-DOB"      "HHLA1"       
+#[29] "HLA-DRA"      "HLA-H"        "HLA-DQA1"
 
 
 ### Corresponding datasets from TCGA
@@ -536,9 +542,11 @@ dat_luad <- data.frame(
 	# Reported chemotherapy therapy
 	tChemo = as.integer(apply(cli_luad[,grep("therapy_type", colnames(cli_luad), value=TRUE)], MARGIN=1, FUN=function(z) { any(z == "chemotherapy") })),
 	# Reported radiation therapy
-	tRadia = as.integer(cli_luad$radiation_therapy == "yes"),
+	#tRadia = as.integer(cli_luad$radiation_therapy == "yes"),
+	tRadia = as.integer(apply(cli_luad[,grep("radiation_therapy|radiation_treatment_ongoing", colnames(cli_luad), value=TRUE)], MARGIN=1, FUN=function(x) { any(x == "yes") })),	
 	# Reported other therapy
-	tOther = as.integer(apply(cli_luad[,grep("therapy_type", colnames(cli_luad), value=TRUE)], MARGIN=1, FUN=function(z) { any(!z == "chemotherapy") }))
+	#tOther = as.integer(apply(cli_luad[,grep("therapy_type", colnames(cli_luad), value=TRUE)], MARGIN=1, FUN=function(z) { any(!z == "chemotherapy") }))
+	tOther = apply(cli_luad[,grep("therapy_type|targeted_molecular_therapy", colnames(cli_luad), value=TRUE)], MARGIN=1, FUN=function(z) { as.integer(!all(z %in% c("chemotherapy", "no", NA))) })
 )
 # PFS times missing for patients that did not have a reported progression, filling with the longest known survival in those cases
 dat_luad[,"PFS.time"] <- ifelse(is.na(dat_luad$PFS.event), NA, omit.infinite(apply(dat_luad[,c("PFS.time", "OS.time")], MARGIN=1, FUN=function(x) { min(x, na.rm=TRUE) })))
@@ -582,9 +590,11 @@ dat_lusc <- data.frame(
 	# Reported chemotherapy therapy
 	tChemo = as.integer(apply(cli_lusc[,grep("therapy_type", colnames(cli_lusc), value=TRUE)], MARGIN=1, FUN=function(z) { any(z == "chemotherapy") })),
 	# Reported radiation therapy
-	tRadia = as.integer(cli_lusc$radiation_therapy == "yes"),
+	#tRadia = as.integer(cli_lusc$radiation_therapy == "yes"),
+	tRadia = as.integer(apply(cli_lusc[,grep("radiation_therapy|radiation_treatment_ongoing", colnames(cli_lusc), value=TRUE)], MARGIN=1, FUN=function(x) { any(x == "yes") })),
 	# Reported other therapy
-	tOther = as.integer(apply(cli_lusc[,grep("therapy_type", colnames(cli_lusc), value=TRUE)], MARGIN=1, FUN=function(z) { any(!z == "chemotherapy") }))
+	#tOther = as.integer(apply(cli_lusc[,grep("therapy_type", colnames(cli_lusc), value=TRUE)], MARGIN=1, FUN=function(z) { any(!z == "chemotherapy") }))
+	tOther = apply(cli_lusc[,grep("therapy_type|targeted_molecular_therapy", colnames(cli_lusc), value=TRUE)], MARGIN=1, FUN=function(z) { as.integer(!all(z %in% c("chemotherapy", "no", NA))) })
 	
 )	
 # PFS times missing for patients that did not have a reported progression, filling with the longest known survival in those cases
@@ -950,12 +960,17 @@ keyGenes <- c(
 	"PIK3CA",
 	"KIT",
 	"NRAS",
-	"PDGFRA"
+	"PDGFRA",
+	# Other interesting? Cytokines, chemokines
+	"CLCL10",
+	"CSCL11",
+	
+	
 )
 
 ###
 #
-# Lung IO specific "scores", and filtering out 
+# Lung IO specific "scores", and filtering out genes not present
 #
 ###
 
@@ -969,12 +984,16 @@ keyGenes <- c(
 # "Logistic regression modeling was used to conduct the hypothesis testing associated with best overall response (BOR), and a Cox model was used for testing of PFS and OS."
 IFNGscore1 <- function(gex){
 	genes <- c("IDO1", "CXCL10", "CXCL9", "HLA-DRA", "STAT1", "IFNG")
-
+	# > all(c("IDO1", "CXCL10", "CXCL9", "HLA-DRA", "STAT1", "IFNG") %in% rownames(gex_synthetic_refseq105_genes_tpm))
+	# [1] TRUE
+	
 }
 # "The final 18-gene profile was derived through a cross-validated penalized regression modeling strategy in a large cohort of pembrolizumab-treated patients across 9 different tumor types."
 IFNGscore2 <- function(gex){
 	genes <- c("CD3D", "IDO1", "CIITA", "CD3E", "CCL5", "GZMK", "CD2", "HLA-DRA", "CXCL13", "IL2RG", "NKG7", "HLA-E", "CXCR6", "LAG3", "TAGAP", "CXCL10", "STAT1", "GZMB")
-
+	#> all(c("CD3D", "IDO1", "CIITA", "CD3E", "CCL5", "GZMK", "CD2", "HLA-DRA", "CXCL13", "IL2RG", "NKG7", "HLA-E", "CXCR6", "LAG3", "TAGAP", "CXCL10", "STAT1", "GZMB") %in% rownames(gex_synthetic_refseq105_genes_tpm))
+	#[1] TRUE
+	
 }
 
 # Antigen processing and presentation machinery
@@ -982,8 +1001,10 @@ IFNGscore2 <- function(gex){
 # Score itself: "The APMS (sum of the log2 z-scores for each gene)"
 APMscore <- function(gex){
 	genes <- c("B2M", "CALR", "NLRC5", "PSMB9", "PSME1", "PSME3", "RFX5", "HSP90AB1")
+	#> all(c("B2M", "CALR", "NLRC5", "PSMB9", "PSME1", "PSME3", "RFX5", "HSP90AB1") %in% rownames(gex_synthetic_refseq105_genes_tpm))
+	#[1] TRUE
+	
 }
-
 
 # Tumor inflammatory signature (160 genes)
 # https://ascopubs.org/doi/abs/10.1200/JCO.2020.38.5_suppl.47
@@ -996,9 +1017,10 @@ TISscore <- function(gex){
 	# Taken from Fig 1 panel d in the publ.
 	# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6829827/#MOESM2
 	genes <- c("CD276", "HLA-DQA1", "CD274", "IDO1", "HLA-DRB1", "HLA-E", "CMKLR1", "PDCD1LG2", "PSMB10", "LAG3", "CXCL9", "STAT1", "CD8A", "CCL5", "NKG7", "TIGIT", "CD27", "CXCR6")
+	#> all(c("CD276", "HLA-DQA1", "CD274", "IDO1", "HLA-DRB1", "HLA-E", "CMKLR1", "PDCD1LG2", "PSMB10", "LAG3", "CXCL9", "STAT1", "CD8A", "CCL5", "NKG7", "TIGIT", "CD27", "CXCR6") %in% rownames(gex_synthetic_refseq105_genes_tpm))
+	#[1] TRUE
 	
 }
-
 
 ###
 #
