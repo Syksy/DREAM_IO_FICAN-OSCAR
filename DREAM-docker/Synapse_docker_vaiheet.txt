@@ -1,0 +1,27 @@
+Docker-vaiheet:
+HUOM! 
+Oletetaan, että working directory on asetettu kansioon, missä on Dockerfile
+ja muut tarvittavat tiedostot (esim R)
+Oletetaan, että data on working directoryssä /data-nimisessä kansiossa.
+Lisäksi oletetaan, että working directoryssä on /output-niminen kansio
+
+
+sudo docker build -t testijee .
+
+sudo docker run -v $(pwd)/data/:/data:ro -v $(pwd)/output:/output:rw testijee
+
+
+Docker-pushaus:
+
+sudo docker tag testijee docker.synapse.org/syn24180900/testijee:v1
+
+sudo docker login docker.synapse.org
+
+sudo docker push docker.synapse.org/syn24180900/testijee:v1
+
+(sudo docker logout docker.synapse.org)
+
+
+Mene Synapseen ja valkkaa Docker repository tools
+sieltä Submit Docker repository to challenge
+jne jne.
