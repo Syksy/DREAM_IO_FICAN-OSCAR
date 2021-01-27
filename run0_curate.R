@@ -628,6 +628,27 @@ gex_tcga <- cbind(gex_luad, gex_lusc)
 #> sum(!rownames(dat_tcga) %in% rownames(gex_tcga))
 #[1] 0
 
+## Updated: subset TCGA cohort to only patients that have been reportedly treated with chemo:
+#
+#> table(Chemo = dat_tcga$tChemo, Squamous = dat_tcga$CRFHIST, useNA="ifany")
+#     Squamous
+#Chemo NON-SQUAMOUS SQUAMOUS
+#    0          342      361
+#    1          174      140
+#
+## Relatively well represented in both cohorts
+## Subsetting based on binary chemo indicator
+gex_tcga <- gex_tcga[,rownames(dat_tcga[which(dat_tcga[,"tChemo"]==1),])]
+#> dim(gex_tcga)
+#[1] 20501  1128
+#> gex_tcga <- gex_tcga[,rownames(dat_tcga[which(dat_tcga[,"tChemo"]==1),])]
+#> dim(gex_tcga)
+#[1] 20501   314
+## N down to 314
+dat_tcga <- dat_tcga[which(dat_tcga[,"tChemo"]==1),]
+#> dim(dat_tcga)
+#[1] 314  22
+
 # Save TCGA temporary datasets
 setwd("./RData")
 save(dat_tcga, file="dat_tcga.RData")
