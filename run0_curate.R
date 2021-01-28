@@ -1003,14 +1003,14 @@ keyGenes <- c(
 # and signature scores were calculated by averaging of the included genes for the IFN-gamma (6-gene) and expanded immune (18-gene) signatures."
 # ... although ...
 # "Logistic regression modeling was used to conduct the hypothesis testing associated with best overall response (BOR), and a Cox model was used for testing of PFS and OS."
-IFNGscore1 <- function(gex){
+IFNGscore1 <- function(gex, columns=TRUE){
 	genes <- c("IDO1", "CXCL10", "CXCL9", "HLA-DRA", "STAT1", "IFNG")
 	# > all(c("IDO1", "CXCL10", "CXCL9", "HLA-DRA", "STAT1", "IFNG") %in% rownames(gex_synthetic_refseq105_genes_tpm))
 	# [1] TRUE
 	
 }
 # "The final 18-gene profile was derived through a cross-validated penalized regression modeling strategy in a large cohort of pembrolizumab-treated patients across 9 different tumor types."
-IFNGscore2 <- function(gex){
+IFNGscore2 <- function(gex, columns=TRUE){
 	genes <- c("CD3D", "IDO1", "CIITA", "CD3E", "CCL5", "GZMK", "CD2", "HLA-DRA", "CXCL13", "IL2RG", "NKG7", "HLA-E", "CXCR6", "LAG3", "TAGAP", "CXCL10", "STAT1", "GZMB")
 	#> all(c("CD3D", "IDO1", "CIITA", "CD3E", "CCL5", "GZMK", "CD2", "HLA-DRA", "CXCL13", "IL2RG", "NKG7", "HLA-E", "CXCR6", "LAG3", "TAGAP", "CXCL10", "STAT1", "GZMB") %in% rownames(gex_synthetic_refseq105_genes_tpm))
 	#[1] TRUE
@@ -1020,7 +1020,7 @@ IFNGscore2 <- function(gex){
 # Antigen processing and presentation machinery
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7542663/
 # Score itself: "The APMS (sum of the log2 z-scores for each gene)"
-APMscore <- function(gex){
+APMscore <- function(gex, columns=TRUE){
 	genes <- c("B2M", "CALR", "NLRC5", "PSMB9", "PSME1", "PSME3", "RFX5", "HSP90AB1")
 	#> all(c("B2M", "CALR", "NLRC5", "PSMB9", "PSME1", "PSME3", "RFX5", "HSP90AB1") %in% rownames(gex_synthetic_refseq105_genes_tpm))
 	#[1] TRUE
@@ -1034,7 +1034,7 @@ APMscore <- function(gex){
 # Inflammation was observed differently in varying PD-L1 expressed tumors
 # "Strongly inflamed tumors presented with improved ORR to ICI in NSCLC"
 # Possibly differing criteria for "response" from what DREAM uses: "clinical benefit was defined as complete or partial RECIST response while stable and progressive disease were defined as lack of clinical benefit."
-TISscore <- function(gex){
+TISscore <- function(gex, columns=TRUE){
 	# Taken from Fig 1 panel d in the publ.
 	# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6829827/#MOESM2
 	genes <- c("CD276", "HLA-DQA1", "CD274", "IDO1", "HLA-DRB1", "HLA-E", "CMKLR1", "PDCD1LG2", "PSMB10", "LAG3", "CXCL9", "STAT1", "CD8A", "CCL5", "NKG7", "TIGIT", "CD27", "CXCR6")
