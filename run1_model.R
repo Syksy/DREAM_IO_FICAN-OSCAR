@@ -218,19 +218,25 @@ curateX <- function(
 	# Hallmarks
 	if(1 %in% gmts){
 		print("Hallmarks")
-		X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_h))) # Hallmarks
-		# Omit selected hallmarks based on a priori knowledge or educated guesses
-		X <- X[,-grep("CHOLESTEROL|ESTROGEN|ANDROGEN|FATTY_ACID|OXIDATIVE|GLYCOLYSIS|REACTIVE_OXYGEN|UV_RESPONSE|BILE_ACID|ALLOGRAFT|SPERMATOGENESIS|PANCREAS", colnames(X))]
+		try({
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_h, verbose=FALSE))) # Hallmarks
+			# Omit selected hallmarks based on a priori knowledge or educated guesses
+			X <- X[,-grep("CHOLESTEROL|ESTROGEN|ANDROGEN|FATTY_ACID|OXIDATIVE|GLYCOLYSIS|REACTIVE_OXYGEN|UV_RESPONSE|BILE_ACID|ALLOGRAFT|SPERMATOGENESIS|PANCREAS", colnames(X))]
+		})
 	}
 	# Oncogenic
 	if(2 %in% gmts){
 		print("Oncogenic")
-		X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c6))) # Oncogenic
+		try({
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c6, verbose=FALSE))) # Oncogenic
+		})
 	}
 	# Immunology
 	if(3 %in% gmts){
 		print("Immunology")
-		X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c7))) # Immunology
+		try({
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c7, verbose=FALSE))) # Immunology
+		})
 	}
 
 	## Immune deconvolution
@@ -329,9 +335,28 @@ OS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(OS_tcga),], y = OS_tcga[!is.na(O
 #RESP_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(RESP_tcga),], y = RESP_tcga[!is.na(RESP_tcga)], family = "logistic", kmax=20, verb=1)
 RESP_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(RESP_tcga),], y = RESP_tcga[!is.na(RESP_tcga)], family = "logistic", verb=1)
 
+# Manual bugfix from earlier runs for AIC
+#> OS_tcga_oscar@AIC <- unlist(lapply(OS_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] }))
+#> PFS_tcga_oscar@AIC <- unlist(lapply(PFS_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] }))
+#> RESP_tcga_oscar@AIC <- unlist(lapply(RESP_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] }))
+
 save(PFS_tcga_oscar, file=".\\RData\\PFS_tcga_oscar.RData")
 save(OS_tcga_oscar, file=".\\RData\\OS_tcga_oscar.RData")
 save(RESP_tcga_oscar, file=".\\RData\\RESP_tcga_oscar.RData")
+
+par(mfrow=c(1,2))
+plot(OS_tcga_oscar)
+plot(OS_tcga_oscar@AIC, type="l", xlab="Cardinality 'k'", ylab="AIC", main="Overall survival, TCGA")
+
+par(mfrow=c(1,2))
+plot(PFS_tcga_oscar)
+plot(PFS_tcga_oscar@AIC, type="l", xlab="Cardinality 'k'", ylab="AIC", main="Progression free survival, TCGA")
+
+par(mfrow=c(1,2))
+plot(RESP_tcga_oscar)
+plot(RESP_tcga_oscar@AIC, type="l", xlab="Cardinality 'k'", ylab="AIC", main="Responder, TCGA")
+
+
 
 # LUSC
 set.seed(1)
@@ -407,11 +432,23 @@ RESP_hugo <- as.integer(dat_hugo$Responder)
 OS_hugo_oscar <- oscar::oscar(x = X_hugo[!is.na(OS_hugo),], y = OS_hugo[!is.na(OS_hugo)], family = "cox", verb=1)
 RESP_hugo_oscar <- oscar::oscar(x = X_hugo[!is.na(RESP_hugo),], y = RESP_hugo[!is.na(RESP_hugo)], family = "logistic", verb=1)
 
+# Manual bugfix for the older version of oscar AIC
+#> OS_hugo_oscar@AIC <- unlist(lapply(OS_hugo_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] }))
+#> RESP_hugo_oscar@AIC <- unlist(lapply(RESP_hugo_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] }))
+
+par(mfrow=c(1,2))
+plot(OS_hugo_oscar, main="Overall survival, Hugo et al.")
+plot(OS_hugo_oscar@AIC, type="l", xlab="Cardinality 'k'", ylab="AIC", main="Overall survival, Hugo et al.")
+
+par(mfrow=c(1,2))
+plot(RESP_hugo_oscar, main="Responder, Hugo et al.")
+plot(RESP_hugo_oscar@AIC, type="l", xlab="Cardinality 'k'", ylab="AIC", main="Responder, Hugo et al.")
+
 save(OS_hugo_oscar, file=".\\RData\\OS_hugo_oscar.RData")
 save(RESP_hugo_oscar, file=".\\RData\\RESP_hugo_oscar.RData")
 
-OS_tcga_cv_oscar <- oscar::cv.oscar(fit = OS_tcga_oscar, fold=5, seed=1, verb=0)
-RESP_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_tcga_oscar, fold=5, seed=2, verb=0)
+OS_hugo_cv_oscar <- oscar::cv.oscar(fit = OS_hugo_oscar, fold=5, seed=1, verb=0)
+RESP_hugo_cv_oscar <- oscar::cv.oscar(fit = RESP_hugo_oscar, fold=5, seed=2, verb=0)
 
 save(OS_hugo_cv_oscar, file=".\\RData\\OS_hugo_cv_oscar.RData")
 save(RESP_hugo_cv_oscar, file=".\\RData\\RESP_hugo_cv_oscar.RData")
@@ -444,11 +481,25 @@ RESP_prat <- as.integer(dat_prat$Responder)
 PFS_prat_oscar <- oscar::oscar(x = X_prat[!is.na(PFS_prat),], y = PFS_prat[!is.na(PFS_prat)], family = "cox", verb=1)
 RESP_prat_oscar <- oscar::oscar(x = X_prat[!is.na(RESP_prat),], y = RESP_prat[!is.na(RESP_prat)], family = "logistic", verb=1)
 
+PFS_prat_oscar@AIC <- unlist(lapply(PFS_prat_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] }))
+RESP_prat_oscar@AIC <- unlist(lapply(RESP_prat_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] }))
+
 save(PFS_prat_oscar, file=".\\RData\\PFS_prat_oscar.RData")
 save(RESP_prat_oscar, file=".\\RData\\RESP_prat_oscar.RData")
 
-PFS_tcga_cv_oscar <- oscar::cv.oscar(fit = PFS_tcga_oscar, fold=5, seed=1, verb=0)
-RESP_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_tcga_oscar, fold=5, seed=2, verb=0)
+
+par(mfrow=c(1,2))
+plot(PFS_prat_oscar, main="Overall survival, Hugo et al.")
+plot(PFS_prat_oscar@AIC, type="l", xlab="Cardinality 'k'", ylab="AIC", main="Progression free survival, Prat et al.")
+
+par(mfrow=c(1,2))
+plot(RESP_prat_oscar, main="Responder, Hugo et al.")
+plot(RESP_prat_oscar@AIC, type="l", xlab="Cardinality 'k'", ylab="AIC", main="Responder, Prat et al.")
+
+
+
+PFS_prat_cv_oscar <- oscar::cv.oscar(fit = PFS_prat_oscar, fold=5, seed=1, verb=0)
+RESP_prat_cv_oscar <- oscar::cv.oscar(fit = RESP_prat_oscar, fold=5, seed=2, verb=0)
 
 save(PFS_prat_cv_oscar, file=".\\RData\\PFS_prat_cv_oscar.RData")
 save(RESP_prat_cv_oscar, file=".\\RData\\RESP_prat_cv_oscar.RData")
