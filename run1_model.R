@@ -5,7 +5,7 @@
 ###
 
 # Load temporary files (not stored in git due to size)
-load("temp.RData")
+#load("temp.RData")
 
 # For a given dataset, generate the finalized data matrix X where:
 # Columns:
@@ -247,14 +247,18 @@ curateX <- function(
 	# xCell
 	if(1 %in% idcs){
 		print("xCell")
-		tmp <- rename_idc(immunedeconv::deconvolute(gex, method="xcell"), method="xce")
-		X <- cbind(X, t(tmp))
+		try({
+			tmp <- rename_idc(immunedeconv::deconvolute(gex, method="xcell"), method="xce")
+			X <- cbind(X, t(tmp))
+		})
 	}
 	# MCP counter
 	if(2 %in% idcs){
 		print("MCP counter")
-		tmp <- rename_idc(immunedeconv::deconvolute(gex, method="mcp_counter"), method="mcp")
-		X <- cbind(X, t(tmp))
+		try({
+			tmp <- rename_idc(immunedeconv::deconvolute(gex, method="mcp_counter"), method="mcp")
+			X <- cbind(X, t(tmp))
+		})
 	}
 	
 	# Sanitize '+' symbol
@@ -264,11 +268,17 @@ curateX <- function(
 	as.matrix(X)
 }
 
-
+# Omit redundant columns that are either full of one single value or all NAs
+omit.reducols <- function(mat){
+	mat <- mat[,-which(apply(mat, MARGIN=2, FUN=function(x) { all(x==unique(x)[1] | is.na(x)) }))]
+}
+# Omit any columns that include any amount of NAs
+omit.nacols <- function(mat){
+	mat <- mat[,-which(apply(mat, MARGIN=2, FUN=function(x) { any(is.na(x)) }))]
+}
 
 library(survival)
 library(oscar)
-
 
 
 ###
@@ -282,33 +292,92 @@ load(".\\RData\\dat_tcga.RData")
 # Create X for TCGA
 X_tcga <- curateX(gex=gex_tcga, dat=dat_tcga)
 # Remove redundant columns; should be added to oscar as debugging
-X_tcga <- X_tcga[,-which(apply(X_tcga, MARGIN=2, FUN=function(x) { all(x==unique(x)[1]) }))]
+#X_tcga <- X_tcga[,-which(apply(X_tcga, MARGIN=2, FUN=function(x) { all(x==unique(x)[1]) }))]
+X_tcga <- omit.reducols(X_tcga)
+
 # 3 columns get omitted
 #> dim(X_tcga)
 #[1] 314 117
 
+# Model lusc and luad separately
+X_lusc_tcga <- X_tcga[which(X_tcga[,"isSquamous"] == 1),]
+X_lusc_tcga <- omit.reducols(X_lusc_tcga)
+X_luad_tcga <- X_tcga[which(X_tcga[,"isSquamous"] == 0),]
+X_luad_tcga <- omit.reducols(X_luad_tcga)
+
+# Whole cohort responses
 PFS_tcga <- survival::Surv(time = dat_tcga$PFS.time, event = dat_tcga$PFS.event)
 OS_tcga <- survival::Surv(time = dat_tcga$OS.time, event = dat_tcga$OS.event)
 RESP_tcga <- as.integer(dat_tcga$Responder)
 
+# LUSC
+PFS_lusc_tcga <- survival::Surv(time = dat_tcga$PFS.time, event = dat_tcga$PFS.event)[which(X_tcga[,"isSquamous"] == 1)]
+OS_lusc_tcga <- survival::Surv(time = dat_tcga$OS.time, event = dat_tcga$OS.event)[which(X_tcga[,"isSquamous"] == 1)]
+RESP_lusc_tcga <- as.integer(dat_tcga$Responder)[which(X_tcga[,"isSquamous"] == 1)]
+
+# LUAD
+PFS_luad_tcga <- survival::Surv(time = dat_tcga$PFS.time, event = dat_tcga$PFS.event)[which(X_tcga[,"isSquamous"] == 0)]
+OS_luad_tcga <- survival::Surv(time = dat_tcga$OS.time, event = dat_tcga$OS.event)[which(X_tcga[,"isSquamous"] == 0)]
+RESP_luad_tcga <- as.integer(dat_tcga$Responder)[which(X_tcga[,"isSquamous"] == 0)]
+
+# Whole cohort
 set.seed(1)
 #PFS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(PFS_tcga),], y = PFS_tcga[!is.na(PFS_tcga)], family = "cox", kmax=20, verb=1)
 PFS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(PFS_tcga),], y = PFS_tcga[!is.na(PFS_tcga)], family = "cox", verb=1)
 #OS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(OS_tcga),], y = OS_tcga[!is.na(OS_tcga)], family = "cox", kmax=20, verb=1)
+OS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(OS_tcga),], y = OS_tcga[!is.na(OS_tcga)], family = "cox", verb=1)
 #RESP_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(RESP_tcga),], y = RESP_tcga[!is.na(RESP_tcga)], family = "logistic", kmax=20, verb=1)
+RESP_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(RESP_tcga),], y = RESP_tcga[!is.na(RESP_tcga)], family = "logistic", verb=1)
 
 save(PFS_tcga_oscar, file=".\\RData\\PFS_tcga_oscar.RData")
 save(OS_tcga_oscar, file=".\\RData\\OS_tcga_oscar.RData")
 save(RESP_tcga_oscar, file=".\\RData\\RESP_tcga_oscar.RData")
 
-par(mfrow=c(1,3))
-plot(unlist(lapply(PFS_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="PFS OSCAR")
-plot(unlist(lapply(OS_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="OS OSCAR")
-plot(unlist(lapply(RESP_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="RESP OSCAR")
+# LUSC
+set.seed(1)
+#PFS_lusc_tcga_oscar <- oscar::oscar(x = X_lusc_tcga[!is.na(PFS_lusc_tcga),], y = PFS_lusc_tcga[!is.na(PFS_lusc_tcga)], family = "cox", kmax=20, verb=1)
+PFS_lusc_tcga_oscar <- oscar::oscar(x = X_lusc_tcga[!is.na(PFS_lusc_tcga),], y = PFS_lusc_tcga[!is.na(PFS_lusc_tcga)], family = "cox", verb=1)
+#OS_lusc_tcga_oscar <- oscar::oscar(x = X_lusc_tcga[!is.na(OS_lusc_tcga),], y = OS_lusc_tcga[!is.na(OS_lusc_tcga)], family = "cox", kmax=20, verb=1)
+OS_lusc_tcga_oscar <- oscar::oscar(x = X_lusc_tcga[!is.na(OS_lusc_tcga),], y = OS_lusc_tcga[!is.na(OS_lusc_tcga)], family = "cox", verb=1)
+#RESP_lusc_tcga_oscar <- oscar::oscar(x = X_lusc_tcga[!is.na(RESP_lusc_tcga),], y = RESP_lusc_tcga[!is.na(RESP_lusc_tcga)], family = "logistic", kmax=20, verb=1)
+RESP_lusc_tcga_oscar <- oscar::oscar(x = X_lusc_tcga[!is.na(RESP_lusc_tcga),], y = RESP_lusc_tcga[!is.na(RESP_lusc_tcga)], family = "logistic", verb=1)
+
+save(PFS_lusc_tcga_oscar, file=".\\RData\\PFS_lusc_tcga_oscar.RData")
+save(OS_lusc_tcga_oscar, file=".\\RData\\OS_lusc_tcga_oscar.RData")
+save(RESP_lusc_tcga_oscar, file=".\\RData\\RESP_lusc_tcga_oscar.RData")
+
+# LUAD 
+set.seed(1)
+#PFS_luad_tcga_oscar <- oscar::oscar(x = X_luad_tcga[!is.na(PFS_luad_tcga),], y = PFS_luad_tcga[!is.na(PFS_luad_tcga)], family = "cox", kmax=20, verb=1)
+PFS_luad_tcga_oscar <- oscar::oscar(x = X_luad_tcga[!is.na(PFS_luad_tcga),], y = PFS_luad_tcga[!is.na(PFS_luad_tcga)], family = "cox", verb=1)
+#OS_luad_tcga_oscar <- oscar::oscar(x = X_luad_tcga[!is.na(OS_luad_tcga),], y = OS_luad_tcga[!is.na(OS_luad_tcga)], family = "cox", kmax=20, verb=1)
+OS_luad_tcga_oscar <- oscar::oscar(x = X_luad_tcga[!is.na(OS_luad_tcga),], y = OS_luad_tcga[!is.na(OS_luad_tcga)], family = "cox", verb=1)
+#RESP_luad_tcga_oscar <- oscar::oscar(x = X_luad_tcga[!is.na(RESP_luad_tcga),], y = RESP_luad_tcga[!is.na(RESP_luad_tcga)], family = "logistic", kmax=20, verb=1)
+RESP_luad_tcga_oscar <- oscar::oscar(x = X_luad_tcga[!is.na(RESP_luad_tcga),], y = RESP_luad_tcga[!is.na(RESP_luad_tcga)], family = "logistic", verb=1)
+
+save(PFS_luad_tcga_oscar, file=".\\RData\\PFS_luad_tcga_oscar.RData")
+save(OS_luad_tcga_oscar, file=".\\RData\\OS_luad_tcga_oscar.RData")
+save(RESP_luad_tcga_oscar, file=".\\RData\\RESP_luad_tcga_oscar.RData")
+
+
+#par(mfrow=c(1,3))
+#plot(unlist(lapply(PFS_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="PFS OSCAR")
+#plot(unlist(lapply(OS_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="OS OSCAR")
+#plot(unlist(lapply(RESP_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="RESP OSCAR")
 
 #PFS_tcga_cv_oscar <- oscar::cv.oscar(fit = PFS_tcga_oscar, fold=5, seed=1, verb=0)
 #OS_tcga_cv_oscar <- oscar::cv.oscar(fit = OS_tcga_oscar, fold=5, seed=2, verb=0)
 #RESP_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_tcga_oscar, fold=5, seed=3, verb=0)
+
+PFS_luad_tcga_cv_oscar <- oscar::cv.oscar(fit = PFS_luad_tcga_oscar, fold=5, seed=1, verb=0)
+OS_luad_tcga_cv_oscar <- oscar::cv.oscar(fit = OS_luad_tcga_oscar, fold=5, seed=1, verb=0)
+RESP_luad_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_luad_tcga_oscar, fold=5, seed=1, verb=0)
+
+PFS_lusc_tcga_cv_oscar <- oscar::cv.oscar(fit = PFS_lusc_tcga_oscar, fold=5, seed=1, verb=0)
+OS_lusc_tcga_cv_oscar <- oscar::cv.oscar(fit = OS_lusc_tcga_oscar, fold=5, seed=1, verb=0)
+RESP_lusc_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_lusc_tcga_oscar, fold=5, seed=1, verb=0)
+
+
 
 
 
@@ -326,7 +395,8 @@ load(".\\RData\\dat_hugo.RData")
 # Create X for Hugo et al.
 X_hugo <- curateX(gex=gex_hugo, dat=dat_hugo)
 # Remove redundant columns; should be added to oscar as debugging
-X_hugo <- X_hugo[,-which(apply(X_hugo, MARGIN=2, FUN=function(x) { all(x==unique(x)[1] | is.na(x)) }))]
+#X_hugo <- X_hugo[,-which(apply(X_hugo, MARGIN=2, FUN=function(x) { all(x==unique(x)[1] | is.na(x)) }))]
+X_hugo <- omit.reducols(X_hugo)
 # from 120, 11 variables are omitted
 #> dim(X_hugo)
 #[1]  27 109
@@ -345,6 +415,43 @@ RESP_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_tcga_oscar, fold=5, seed=2, ver
 
 save(OS_hugo_cv_oscar, file=".\\RData\\OS_hugo_cv_oscar.RData")
 save(RESP_hugo_cv_oscar, file=".\\RData\\RESP_hugo_cv_oscar.RData")
+
+
+
+###
+#
+# Prat et al., small amount of measured genes but relevant phenotypes
+#
+###
+library(survival); library(oscar)
+# Load premade data 
+load(".\\RData\\gex_prat.RData")
+load(".\\RData\\dat_prat.RData")
+# Create X for Hugo et al.
+X_prat <- curateX(gex=gex_prat, dat=dat_prat)
+# Remove redundant columns; should be added to oscar as debugging
+X_prat <- omit.reducols(X_prat)
+# A lot of variables that could not be estimated
+#> dim(X_prat)
+#[1] 65 62
+X_prat <- omit.nacols(X_prat)
+#> dim(X_prat)
+#[1] 65 61
+
+PFS_prat <- survival::Surv(time = dat_prat$PFS.time, event = dat_prat$PFS.event)
+RESP_prat <- as.integer(dat_prat$Responder)
+
+PFS_prat_oscar <- oscar::oscar(x = X_prat[!is.na(PFS_prat),], y = PFS_prat[!is.na(PFS_prat)], family = "cox", verb=1)
+RESP_prat_oscar <- oscar::oscar(x = X_prat[!is.na(RESP_prat),], y = RESP_prat[!is.na(RESP_prat)], family = "logistic", verb=1)
+
+save(PFS_prat_oscar, file=".\\RData\\PFS_prat_oscar.RData")
+save(RESP_prat_oscar, file=".\\RData\\RESP_prat_oscar.RData")
+
+PFS_tcga_cv_oscar <- oscar::cv.oscar(fit = PFS_tcga_oscar, fold=5, seed=1, verb=0)
+RESP_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_tcga_oscar, fold=5, seed=2, verb=0)
+
+save(PFS_prat_cv_oscar, file=".\\RData\\PFS_prat_cv_oscar.RData")
+save(RESP_prat_cv_oscar, file=".\\RData\\RESP_prat_cv_oscar.RData")
 
 
 

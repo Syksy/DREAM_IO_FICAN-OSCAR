@@ -767,7 +767,50 @@ sup_riaz4 <- read.csv(gsub(".gz", "", rownames(sup_riaz)[4]))
 gpl_riaz <- getGEO('GPL9052', destdir=".")
 
 # GSE93157 - Programmed death 1 receptor blockade and immune-related gene expression profiling in non-small cell lung carcinoma, head and neck squamous cell carcinoma and melanoma
+# Very small gene panel ("A minimum of 100 ng of total RNA was used to measure the expression of 105 breast cancer-related genes and 5 house-keeping genes (ACTB, MRPL19, PSMC4, RLP0 and SF3A1)")
 gse_prat <- GEOquery::getGEO("GSE93157", GSEMatrix = TRUE)
+#sup_prat <- GEOquery::getGEOSuppFiles("GSE93157")
+#GEOquery::gunzip(rownames(sup_prat)[1])
+#gex_prat <- read.table("GSE93157\GSE93157_raw_data_values.txt")
+gex_prat <- as.matrix(exprs(gse_prat[[1]]))
+gex_prat <- gex_prat[-which(apply(gex_prat, MARGIN=1, FUN=function(z) { all(is.na(z)) })),]
+#> dim(gex_prat)
+#[1] 725  65
+cli_prat <- pData(gse_prat[[1]])
+# Study:
+# Twenty-three immune-related genes or signatures were linked to response. The intra- and inter-biopsy variability of PD1, PDL1, CD8A and CD4 mRNA.
+dat_prat <- data.frame(
+	#patientID = cli_prat[,"title"],
+	patientID = rownames(cli_prat),
+	#SEX = factor(ifelse(cli_prat[,"characteristics_ch1.9"] == "Sex: M", "M", "F")),
+	SEX = factor(cli_prat[,"Sex:ch1"]),
+	AAGE = as.integer(cli_prat[,"age:ch1"]),
+	CRFHIST = factor(ifelse(cli_prat[,"source_name_ch1"]=="SQUAMOUS LUNG CANCER", "SQUAMOUS", ifelse(cli_prat[,"source_name_ch1"]=="LUNG NON-SQUAMOUS CANCER", "NON-SQUAMOUS", NA)), levels=c("NON-SQUAMOUS", "SQUAMOUS")),
+	TOBACUSE = c("NEVER", "FORMER", "CURRENT")[match(cli_prat[,"characteristics_ch1.7"], c("smoking: NS", "smoking: FS", "smoking: CS"))],
+	ECOGPS = c(0,1,2)[match(cli_prat[,"characteristics_ch1.8"], c("ecog: 0", "ecog: 1", "ecog: 2"))],
+	PDL1 = as.integer(NA),
+	TMB = as.numeric(NA),
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),	
+	#PFS.event = as.integer(ifelse(cli_prat[,"characteristics_ch1.13"]=="pfse: 1")),
+	PFS.event = as.integer(cli_prat[,"pfse:ch1"]),
+	#PFS.time = as.integer(gsub("pfs: ", "", cli_prat[,"characteristics_ch1.14"])),
+	PFS.time = as.numeric(cli_prat[,"pfs:ch1"]),
+	Responder = as.integer(cli_prat[,"characteristics_ch1.11"] %in% c("best.resp: CR", "best.resp: PR")),
+	Type = cli_prat[,"source_name_ch1"],
+	#Drug = factor(gsub("drug: ", "", cli_prat[,"characteristics_ch1.10"]))
+	Drug = cli_prat[,"drug:ch1"],
+	LungCa = ifelse(cli_prat[,"source_name_ch1"] %in% c("LUNG NON-SQUAMOUS CANCER", "SQUAMOUS LUNG CANCER"), 1, 0)
+)
+rownames(dat_prat) <- dat_prat$patientID
+#> all(rownames(dat_prat) == colnames(gex_prat))
+#[1] TRUE
+save(gex_prat, file="./RData/gex_prat.RData")
+save(dat_prat, file="./RData/dat_prat.RData")
 
 # Examine main characteristics of the reported phenodata
 head(pData(gse_auslander[[1]]))[1:2,]
