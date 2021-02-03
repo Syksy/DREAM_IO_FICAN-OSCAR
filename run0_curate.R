@@ -688,6 +688,46 @@ gse_hugo <-  GEOquery::getGEO("GSE78220", GSEMatrix = TRUE)
 sup_hugo <- GEOquery::getGEOSuppFiles("GSE78220")
 sup_hugo <- readxl::read_excel(rownames(sup_hugo)[1])
 # sup_hugo -> tibble table, cast to matrix preferably
+gex_hugo <- as.matrix(sup_hugo)
+rownames(gex_hugo) <- gex_hugo[,"Gene"]
+gex_hugo <- gex_hugo[,-1]
+class(gex_hugo) <- "numeric"
+# Clinical data
+cli_hugo <- pData(gse_hugo[[1]])
+# Omit patient who had already been on treatment
+cli_hugo <- cli_hugo[-grep("on-treatment", cli_hugo[,"biopsy time:ch1"]),]
+gex_hugo <- gex_hugo[,-grep("OnTx", colnames(gex_hugo))]
+colnames(gex_hugo) <- gsub(".baseline", "", colnames(gex_hugo))
+# Create a dat info frame
+dat_hugo <- data.frame(
+	patientID = cli_hugo[,"title"],
+	SEX = as.factor(cli_hugo[,"gender:ch1"]),
+	AAGE = as.integer(cli_hugo[,"age (yrs):ch1"]),
+	CRFHIST = factor(NA, levels=c("NON-SQUAMOUS", "SQUAMOUS")),
+	TOBACUSE = factor("UNKNOWN", levels = c("CURRENT", "FORMER", "NEVER", "UNKNOWN")),
+	ECOGPS = as.integer(NA),
+	PDL1 = as.integer(NA),
+	TMB = as.numeric(NA),
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),	
+	PFS.time = NA,
+	PFS.event = NA,
+	OS.time = as.integer(cli_hugo[,"overall survival (days):ch1"]),
+	OS.event = as.integer(cli_hugo[,"vital status:ch1"]=="Dead"),
+	Responder = as.integer(cli_hugo[,"anti-pd-1 response:ch1"] %in% c("Complete Response", "Partial Response")),
+	MetasLocation = cli_hugo[,"anatomical location:ch1"]
+)
+rownames(dat_hugo) <- dat_hugo$patientID
+# > all(colnames(gex_hugo) == rownames(dat_hugo))
+# [1] TRUE
+# Save RDatas
+save(gex_hugo, file="./RData/gex_hugo.RData")
+save(dat_hugo, file="./RData/dat_hugo.RData")
+
 
 # GSE52562 - Gene expression profiling of tumor biopsies before and after pidilizumab therapy in patients with relapsed follicular lymphoma grade 1 or grade 2.
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE52562
@@ -1063,8 +1103,8 @@ gmt_c7 <- GSEABase::getGmt(".\\MSigDB\\c7.all.v7.2.symbols.gmt")
 # Synthetic
 gmt_synthetic <- rbind(
 	GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_h),	# Hallmarks
-	GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_c6),	# Oncogenic
-	GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_c7)	# Immunology
+	GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_c6)#,	# Oncogenic
+	#GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_c7)	# Immunology
 )
 # TCGA
 #gmt_luad <- rbind(
@@ -1080,25 +1120,25 @@ gmt_synthetic <- rbind(
 ## Combined (gex transposed)
 gmt_tcga <- rbind(
 	GSVA::gsva(gex_tcga, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_tcga, gmt_c6),	# Oncogenic
-	GSVA::gsva(gex_tcga, gmt_c7)	# Immunology
+	GSVA::gsva(gex_tcga, gmt_c6)#,	# Oncogenic
+	#GSVA::gsva(gex_tcga, gmt_c7)	# Immunology
 )
 
 # TIDEs
 gmt_lauss <- rbind(
 	GSVA::gsva(gex_lauss, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_lauss, gmt_c6),	# Oncogenic
-	GSVA::gsva(gex_lauss, gmt_c7)	# Immunology
+	GSVA::gsva(gex_lauss, gmt_c6)#,	# Oncogenic
+	#GSVA::gsva(gex_lauss, gmt_c7)	# Immunology
 )
 gmt_kim <- rbind(
 	GSVA::gsva(gex_kim, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_kim, gmt_c6),	# Oncogenic
-	GSVA::gsva(gex_kim, gmt_c7)	# Immunology
+	GSVA::gsva(gex_kim, gmt_c6)#,	# Oncogenic
+	#GSVA::gsva(gex_kim, gmt_c7)	# Immunology
 )
 gmt_chen <- rbind(
 	GSVA::gsva(gex_chen, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_chen, gmt_c6),	# Oncogenic
-	GSVA::gsva(gex_chen, gmt_c7)	# Immunology
+	GSVA::gsva(gex_chen, gmt_c6)#,	# Oncogenic
+	#GSVA::gsva(gex_chen, gmt_c7)	# Immunology
 )
 
 

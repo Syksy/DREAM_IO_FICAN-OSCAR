@@ -4,9 +4,8 @@
 #
 ###
 
-# Road pre-curated datasets for use
-load(".\\RData\\gex_tcga.RData")
-load(".\\RData\\dat_tcga.RData")
+# Load temporary files (not stored in git due to size)
+load("temp.RData")
 
 # For a given dataset, generate the finalized data matrix X where:
 # Columns:
@@ -258,35 +257,94 @@ curateX <- function(
 		X <- cbind(X, t(tmp))
 	}
 	
+	# Sanitize '+' symbol
+	colnames(X) <- gsub("\\+", "plus", colnames(X))
 	
 	# Return X with newly derived variables
 	as.matrix(X)
 }
 
+
+
+library(survival)
+library(oscar)
+
+
+
+###
+#
+# TCGA (luad and lusc), chemo arm
+#
+###
+# Load premade data 
+load(".\\RData\\gex_tcga.RData")
+load(".\\RData\\dat_tcga.RData")
 # Create X for TCGA
 X_tcga <- curateX(gex=gex_tcga, dat=dat_tcga)
 # Remove redundant columns; should be added to oscar as debugging
 X_tcga <- X_tcga[,-which(apply(X_tcga, MARGIN=2, FUN=function(x) { all(x==unique(x)[1]) }))]
 # 3 columns get omitted
-
 #> dim(X_tcga)
-#[1] 314 120
-library(survival)
-library(oscar)
+#[1] 314 117
 
 PFS_tcga <- survival::Surv(time = dat_tcga$PFS.time, event = dat_tcga$PFS.event)
 OS_tcga <- survival::Surv(time = dat_tcga$OS.time, event = dat_tcga$OS.event)
 RESP_tcga <- as.integer(dat_tcga$Responder)
 
 set.seed(1)
-PFS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(PFS_tcga),], y = PFS_tcga[!is.na(PFS_tcga)], family = "cox", kmax=20, verb=1)
-OS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(OS_tcga),], y = OS_tcga[!is.na(OS_tcga)], family = "cox", kmax=20, verb=1)
-RESP_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(RESP_tcga),], y = RESP_tcga[!is.na(RESP_tcga)], family = "logistic", kmax=20, verb=1)
+#PFS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(PFS_tcga),], y = PFS_tcga[!is.na(PFS_tcga)], family = "cox", kmax=20, verb=1)
+PFS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(PFS_tcga),], y = PFS_tcga[!is.na(PFS_tcga)], family = "cox", verb=1)
+#OS_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(OS_tcga),], y = OS_tcga[!is.na(OS_tcga)], family = "cox", kmax=20, verb=1)
+#RESP_tcga_oscar <- oscar::oscar(x = X_tcga[!is.na(RESP_tcga),], y = RESP_tcga[!is.na(RESP_tcga)], family = "logistic", kmax=20, verb=1)
 
-PFS_tcga_cv_oscar <- oscar::cv.oscar(fit = PFS_tcga_oscar, fold=10, seed=1, verb=0)
-OS_tcga_cv_oscar <- oscar::cv.oscar(fit = OS_tcga_oscar, fold=10, seed=2, verb=0)
-RESP_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_tcga_oscar, fold=10, seed=3, verb=0)
+save(PFS_tcga_oscar, file=".\\RData\\PFS_tcga_oscar.RData")
+save(OS_tcga_oscar, file=".\\RData\\OS_tcga_oscar.RData")
+save(RESP_tcga_oscar, file=".\\RData\\RESP_tcga_oscar.RData")
 
+par(mfrow=c(1,3))
+plot(unlist(lapply(PFS_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="PFS OSCAR")
+plot(unlist(lapply(OS_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="OS OSCAR")
+plot(unlist(lapply(RESP_tcga_oscar@fits, FUN=function(z) { stats::extractAIC(z)[2] })), type="l", xlab="k", ylab="AIC", main="RESP OSCAR")
+
+#PFS_tcga_cv_oscar <- oscar::cv.oscar(fit = PFS_tcga_oscar, fold=5, seed=1, verb=0)
+#OS_tcga_cv_oscar <- oscar::cv.oscar(fit = OS_tcga_oscar, fold=5, seed=2, verb=0)
+#RESP_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_tcga_oscar, fold=5, seed=3, verb=0)
+
+
+
+
+
+###
+#
+# Hugo et al., melanoma metas
+#
+###
+library(survival); library(oscar)
+# Load premade data 
+load(".\\RData\\gex_hugo.RData")
+load(".\\RData\\dat_hugo.RData")
+# Create X for Hugo et al.
+X_hugo <- curateX(gex=gex_hugo, dat=dat_hugo)
+# Remove redundant columns; should be added to oscar as debugging
+X_hugo <- X_hugo[,-which(apply(X_hugo, MARGIN=2, FUN=function(x) { all(x==unique(x)[1] | is.na(x)) }))]
+# from 120, 11 variables are omitted
+#> dim(X_hugo)
+#[1]  27 109
+
+OS_hugo <- survival::Surv(time = dat_hugo$OS.time, event = dat_hugo$OS.event)
+RESP_hugo <- as.integer(dat_hugo$Responder)
+
+OS_hugo_oscar <- oscar::oscar(x = X_hugo[!is.na(OS_hugo),], y = OS_hugo[!is.na(OS_hugo)], family = "cox", verb=1)
+RESP_hugo_oscar <- oscar::oscar(x = X_hugo[!is.na(RESP_hugo),], y = RESP_hugo[!is.na(RESP_hugo)], family = "logistic", verb=1)
+
+save(OS_hugo_oscar, file=".\\RData\\OS_hugo_oscar.RData")
+save(RESP_hugo_oscar, file=".\\RData\\RESP_hugo_oscar.RData")
+
+OS_tcga_cv_oscar <- oscar::cv.oscar(fit = OS_tcga_oscar, fold=5, seed=1, verb=0)
+RESP_tcga_cv_oscar <- oscar::cv.oscar(fit = RESP_tcga_oscar, fold=5, seed=2, verb=0)
+
+save(OS_hugo_cv_oscar, file=".\\RData\\OS_hugo_cv_oscar.RData")
+save(RESP_hugo_cv_oscar, file=".\\RData\\RESP_hugo_cv_oscar.RData")
 
 
 
