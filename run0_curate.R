@@ -970,6 +970,33 @@ gex_lauss <- do.call("rbind", by(gex_lauss, INDICES=gex_lauss[,1], FUN=function(
 pat_lauss <- intersect(rownames(cli_lauss), colnames(gex_lauss))
 gex_lauss <- gex_lauss[,pat_lauss]
 cli_lauss <- cli_lauss[pat_lauss,]
+# Create dat_lauss
+dat_lauss <- data.frame(
+	patientID = rownames(cli_lauss),
+	SEX = NA,
+	AAGE = NA,
+	CRFHIST = NA,
+	TOBACUSE = NA,
+	ECOGPS = as.integer(NA),
+	PDL1 = as.integer(NA),
+	TMB = as.numeric(NA),
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),	
+	PFS.time = as.integer(cli_lauss[,"PFS"]),
+	PFS.event = as.integer(cli_lauss[,"PFS.Event"]),
+	OS.time = as.integer(cli_lauss[,"OS"]),
+	OS.event = as.integer(cli_lauss[,"OS.Event"]),
+	Responder = as.integer(cli_lauss[,"Response"])
+)
+rownames(dat_lauss) <- dat_lauss$patientID
+#> all(colnames(gex_lauss) == rownames(dat_lauss))
+#[1] TRUE
+save(gex_lauss, file="./RData/gex_lauss.RData")
+save(dat_lauss, file="./RData/dat_lauss.RData")
 
 # Kim et al., Nat Medicine 2018
 # (Pembrolizumab)
@@ -989,6 +1016,33 @@ cli_kim <- cli_kim[,-1,drop=FALSE]
 pat_kim <- intersect(rownames(cli_kim), colnames(gex_kim))
 gex_kim <- gex_kim[,pat_kim]
 cli_kim <- cli_kim[pat_kim,,drop=FALSE]
+# Create dat_kim
+dat_kim <- data.frame(
+	patientID = rownames(cli_kim),
+	SEX = NA,
+	AAGE = NA,
+	CRFHIST = NA,
+	TOBACUSE = NA,
+	ECOGPS = as.integer(NA),
+	PDL1 = as.integer(NA),
+	TMB = as.numeric(NA),
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),	
+	PFS.time = as.integer(NA),
+	PFS.event = as.integer(NA),
+	OS.time = as.integer(NA),
+	OS.event = as.integer(NA),
+	Responder = as.integer(cli_kim[,"Response"])
+)
+rownames(dat_kim) <- dat_kim$patientID
+#> all(colnames(gex_kim) == rownames(dat_kim))
+#[1] TRUE
+save(gex_kim, file="./RData/gex_kim.RData")
+save(dat_kim, file="./RData/dat_kim.RData")
 
 
 # Chen et al., Cancer Discov 2016
@@ -1007,6 +1061,33 @@ cli_chen <- cli_chen[,-1,drop=FALSE]
 pat_chen <- intersect(rownames(cli_chen), colnames(gex_chen))
 gex_chen <- gex_chen[,pat_chen]
 cli_chen <- cli_chen[pat_chen,,drop=FALSE]
+# Create dat_chen
+dat_chen <- data.frame(
+	patientID = rownames(cli_chen),
+	SEX = NA,
+	AAGE = NA,
+	CRFHIST = NA,
+	TOBACUSE = NA,
+	ECOGPS = as.integer(NA),
+	PDL1 = as.integer(NA),
+	TMB = as.numeric(NA),
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),	
+	PFS.time = as.integer(NA),
+	PFS.event = as.integer(NA),
+	OS.time = as.integer(NA),
+	OS.event = as.integer(NA),
+	Responder = as.integer(cli_chen[,"Response"])
+)
+rownames(dat_chen) <- dat_chen$patientID
+#> all(colnames(gex_chen) == rownames(dat_chen))
+#[1] TRUE
+save(gex_chen, file="./RData/gex_chen.RData")
+save(dat_chen, file="./RData/dat_chen.RData")
 
 
 

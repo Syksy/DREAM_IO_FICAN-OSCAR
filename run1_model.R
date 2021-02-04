@@ -44,7 +44,6 @@ curateX <- function(
 		"ERK",
 		"CDK4",
 		"CDK6",
-		"mTOR",
 		"PDK-1",
 		"AKT",
 		# Mikko NGS syöpäpaneeli 1 lisäyksiä
@@ -57,14 +56,14 @@ curateX <- function(
 		"CSCL11"
 	),
 	normfunc = function(input) { input }, # Function for normalizing gene values to be used as variables - could be e.g. z-score within sample? log-transform if normalized count data >0?
-	gmts = 1,
+	gmts = c(1,2,4), # Hallmarks, oncology & custom self-made GMTs
 	idcs = 1:2,
 	clinvars = c("Age", "Smoking", "ECOG", "Squamous", "TMB", "SEX", "PDL1"),
 	scores = c( # Included scoring metrics (preferably IO and lung cancer related)
-		"TIS", # Tumor inflammatory score
-		"MSI", # Microsatellite instability
-		"APM", # Antigen processing / presentation machinery
-		"IFN"  # Interferon gamma signalling
+		#"TIS", # Tumor inflammatory score
+		#"MSI", # Microsatellite instability
+		#"APM", # Antigen processing / presentation machinery
+		#"IFN"  # Interferon gamma signalling
 	)
 ){
 	# Format data matrix X
@@ -213,6 +212,8 @@ curateX <- function(
 	gmt_c6 <- GSEABase::getGmt(".\\MSigDB\\c6.all.v7.2.symbols.gmt")
 	# Immunogenic
 	gmt_c7 <- GSEABase::getGmt(".\\MSigDB\\c7.all.v7.2.symbols.gmt")
+	# Immunogenic
+	gmt_custom <- GSEABase::getGmt(".\\MSigDB\\selfmade.gmt")
 
 	# Create selected gmt-variables
 	# Hallmarks
@@ -238,13 +239,20 @@ curateX <- function(
 			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c7, verbose=FALSE))) # Immunology
 		})
 	}
+	# Custom self made GMTs
+	if(4 %in% gmts){
+		print("Selfmade GMTs")
+		try({
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE))) # Custom self made GMTs
+		})
+	}
 
 	## Immune deconvolution
 	#install.packages("remotes")
 	#remotes::install_github("icbi-lab/immunedeconv")
 	library(immunedeconv)
 	rename_idc <- function(x, method="idc_"){
-		tmp <- gsub(" ", "_", gsub("\\-", ".", c(x[,1])[[1]]))
+		tmp <- gsub(" ", "_", gsub("\\-", "minus", c(x[,1])[[1]]))
 		x <- as.matrix(x[,-1])
 		rownames(x) <- paste(method, "_", tmp, sep="")
 		x
@@ -259,6 +267,7 @@ curateX <- function(
 		})
 	}
 	# MCP counter
+	# NOTE: MCP counter is not functioning properly inside the cloud via Docker; it attempts to download latest 
 	if(2 %in% idcs){
 		print("MCP counter")
 		try({
