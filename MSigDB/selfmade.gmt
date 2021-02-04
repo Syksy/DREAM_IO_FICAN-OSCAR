@@ -1,0 +1,5 @@
+CUSTOM_APM	Antigen processing and presentation machinery; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7542663/	B2M	CALR	NLRC5	PSMB9	PSME1	PSME3	RFX5	HSP90AB1
+CUSTOM_TIS	Tumor inflammatory signature; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6829827/	CD276	HLA-DQA1	CD274	IDO1	HLA-DRB1	HLA-E	CMKLR1	PDCD1LG2	PSMB10	LAG3	CXCL9	STAT1	CD8A	CCL5	NKG7	TIGIT	CD27	CXCR6
+CUSTOM_INFG1	Interferon gamma response score 1; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5531419/	IDO1	CXCL10	CXCL9	HLA-DRA	STAT1	IFNG
+CUSTOM_INFG2	Interferon gamma response score 2; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5531419/	CD3D	IDO1	CIITA	CD3E	CCL5	GZMK	CD2	HLA-DRA	CXCL13	IL2RG	NKG7	HLA-E	CXCR6	LAG3	TAGAP	CXCL10	STAT1	GZMB
+CUSTOM_MSI	Microsatellite instability; https://pubmed.ncbi.nlm.nih.gov/32257050/; https://github.com/WangX-Lab/PreMSIm	DDX27	EPM2AIP1	HENMT1	LYG1	MLH1	MSH4	NHLRC1	NOL4L	RNLS	RPL22L1	RTF2	SHROOM4	SMAP1	TTC30A	ZSWIM3
