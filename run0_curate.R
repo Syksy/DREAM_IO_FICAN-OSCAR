@@ -675,12 +675,15 @@ gse_auslander <- GEOquery::getGEO("GSE115821", GSEMatrix = TRUE)
 sup_auslander <- GEOquery::getGEOSuppFiles("GSE115821")
 GEOquery::gunzip(rownames(sup_auslander)[1])
 sup_auslander <- read.csv("GSE115821/GSE115821_MGH_counts.csv")
+## -> Only one responder, rest are non-responders
 
 # GSE121810 - Neoadjuvant anti-PD-1 immunotherapy promotes a survival benefit with intratumoral and systemic immune responses in recurrent glioblastoma
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE121810
 gse_cloughesy <- GEOquery::getGEO("GSE121810", GSEMatrix = TRUE)
 sup_cloughesy <- GEOquery::getGEOSuppFiles("GSE121810")
 sup_cloughesy <- readxl::read_excel(rownames(sup_cloughesy)[1])
+pData(gse_cloughesy[[1]])
+## -> No endpoints available??
 
 # GSE78220 - mRNA expressions in pre-treatment melanomas undergoing anti-PD-1 checkpoint inhibition therapy
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE78220
@@ -736,6 +739,53 @@ gse_westin <-  GEOquery::getGEO("GSE52562", GSEMatrix = TRUE, getGPL = TRUE)
 # Mapping/collapsing:
 # gse_westin[[1]]@featureData@data[1:2,]
 # column "ID" <-> "ILMN_Gene"
+cli_westin <- pData(gse_westin[[1]])
+# Quantile normalized signals
+gex_westin <- as.matrix(exprs(gse_westin[[1]]))
+gpl_westin <- read.table("./Annotations/GPL10558-50081.txt", sep="\t", skip=30, quote="§", comment="§", header=TRUE)
+gpl_westin <- gpl_westin[,c("ID", "Transcript", "ILMN_Gene", "RefSeq_ID", "Unigene_ID")]
+#> all(rownames(gex_westin) %in% gpl_westin[,"ID"])
+#[1] TRUE
+## Rather old bead array; issues in detecting with probes, mapping to gene symbols
+gpl_westin <- gpl_westin[match(rownames(gex_westin), gpl_westin[,"ID"]),]
+gex_westin <- gex_westin[!gpl_westin[,"ILMN_Gene"]=="",]
+gpl_westin <- gpl_westin[!gpl_westin[,"ILMN_Gene"]=="",]
+rownames(gex_westin) <- gpl_westin[,"ILMN_Gene"]
+gex_westin <- gex_westin[order(rownames(gex_westin)),]
+gex_westin <- gex_westin[-grep("-Mar|-Dec", rownames(gex_westin)),]
+# Collapse same symbols using mean expression for probes
+gex_westin <- do.call("rbind", by(gex_westin, INDICES=rownames(gex_westin), FUN=function(z){ apply(z, MARGIN=2, FUN=mean) }))
+# Create dat
+dat_westin <- data.frame(
+	patientID = cli_westin[,"title"],
+	SEX = as.factor(cli_westin[,"gender:ch1"]),
+	AAGE = as.integer(cli_westin[,"age:ch1"]),
+	CRFHIST = factor(NA, levels=c("NON-SQUAMOUS", "SQUAMOUS")),
+	TOBACUSE = factor("UNKNOWN", levels = c("CURRENT", "FORMER", "NEVER", "UNKNOWN")),
+	ECOGPS = as.integer(NA),
+	PDL1 = as.integer(NA),
+	TMB = as.numeric(NA),
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),	
+	PFS.time = as.integer(cli_westin[,"pfs.days:ch1"]),
+	PFS.event = as.integer(cli_westin[,"pfs.status.censorship:ch1"]),
+	OS.time = as.integer(NA),
+	OS.event = as.integer(NA),
+	Responder = as.integer(NA)
+)
+rownames(dat_westin) <- rownames(cli_westin)
+# Only pick pre-treatment samples
+gex_westin <- gex_westin[,grep("pre", dat_westin[,"patientID"])]
+dat_westin <- dat_westin[grep("pre", dat_westin[,"patientID"]),]
+#> all(colnames(gex_westin) == rownames(dat_westin))
+#[1] TRUE
+# Save RDatas
+save(gex_westin, file="./RData/gex_westin.RData")
+save(dat_westin, file="./RData/dat_westin.RData")
 
 # GSE79691 - Transcriptional mechanisms of resistance to anti-PD-1 therapy
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE67501
@@ -812,15 +862,6 @@ rownames(dat_prat) <- dat_prat$patientID
 save(gex_prat, file="./RData/gex_prat.RData")
 save(dat_prat, file="./RData/dat_prat.RData")
 
-# Examine main characteristics of the reported phenodata
-head(pData(gse_auslander[[1]]))[1:2,]
-head(pData(gse_cloughesy[[1]]))[1:2,]
-head(pData(gse_hugo[[1]]))[1:2,]
-head(pData(gse_westin[[1]]))[1:2,]
-head(pData(gse_ascierto[[1]]))[1:2,]
-head(pData(gse_ascierto2[[1]]))[1:2,]
-head(pData(gse_riaz[[1]]))[1:2,]
-head(pData(gse_prat[[1]]))[1:2,]
 # Response abbreviations:
 #
 # From e.g. Hugo et al.
@@ -929,24 +970,6 @@ gex_riaz <- DESeq2::DESeqDataSetFromMatrix(countData=sup_riaz2,
 gex_riaz <- estimateSizeFactors(gex_riaz)
 gex_riaz <- counts(gex_riaz, normalized=TRUE)
 ## Clinical info
-
-
-##
-## Prat et al.
-##
-gex_prat <- exprs(gse_prat[[1]])
-#> dim(gex_prat)
-#[1] 765  65
-gex_prat <- as.matrix(gex_prat)
-# Removing NA-rows with no values observed
-gex_prat <- gex_prat[-which(apply(gex_prat, MARGIN=1, FUN=function(z) { all(is.na(z)) })),]
-#> dim(gex_prat)
-#[1] 725  65
-#> sum(is.na(gex_prat))
-#[1] 0
-## Clinical info
-cli_prat <- pData(gse_prat[[1]])
-
 
 setwd("..")
 

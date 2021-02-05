@@ -350,6 +350,11 @@ load(".\\RData\\dat_prat.RData")
 X_prat <- omit.reducols(curateX(gex=gex_prat, dat=dat_prat))
 PFS_prat <- survival::Surv(time = dat_prat$PFS.time, event = dat_prat$PFS.event)
 RESP_prat <- as.integer(dat_prat$Responder)
+# Westin et al. (GEO)
+load(".\\RData\\gex_westin.RData")
+load(".\\RData\\dat_westin.RData")
+X_westin <- omit.reducols(curateX(gex=gex_westin, dat=dat_westin))
+PFS_westin <- survival::Surv(time = dat_westin$PFS.time, event = dat_westin$PFS.event)
 # Lauss et al. (TIDE)
 load(".\\RData\\gex_lauss.RData")
 load(".\\RData\\dat_lauss.RData")
@@ -392,6 +397,10 @@ RESP_lauss_oscar <- oscar::oscar(x = X_lauss, y = RESP_lauss, family="logistic")
 PFS_cv_lauss <- oscar::cv.oscar(PFS_lauss_oscar, fold=5, seed=1)
 OS_cv_lauss <- oscar::cv.oscar(OS_lauss_oscar, fold=5, seed=2)
 RESP_cv_lauss <- oscar::cv.oscar(RESP_lauss_oscar, fold=5, seed=3)
+
+# Westin et al. (GEO)
+# OSCAR
+PFS_westin_oscar <- oscar::oscar(x = X_westin, y = PFS_westin, family="cox")
 
 
 
