@@ -72,8 +72,7 @@ curateX <- function(
 		# https://www.nature.com/articles/nm.3909
 		"KLRB1",
 		"CD161",
-		"FOXM1"
-		
+		"FOXM1"		
 	)),
 	normfunc = function(input) { input }, # Function for normalizing gene values to be used as variables - could be e.g. z-score within sample? log-transform if normalized count data >0?
 	gmts = c(1,2,4,5), # Hallmarks, oncology, custom self-made GMTs, filtered curated pathways from e.g. KEGG
@@ -375,13 +374,77 @@ RESP_chen <- dat_chen[,"Responder"]
 # Save image containing the GEXs, DATs, Xs, and various y-responses
 save.image("temp.RData")
 
+
+
+
+# LASSO benchmarking
+library(glmnet)
+# TCGA
+PFS_lasso_tcga <- glmnet(x=X_tcga[!is.na(PFS_tcga),], y=PFS_tcga[!is.na(PFS_tcga)], family="cox")
+PFS_cv_lasso_tcga <- cv.glmnet(x=X_tcga[!is.na(PFS_tcga),], y=PFS_tcga[!is.na(PFS_tcga)], family="cox", nfolds=3)
+colnames(X_tcga)[predict(PFS_lasso_tcga, type="nonzero", s=PFS_cv_lasso_tcga$lambda.min)[,1]]
+
+OS_lasso_tcga <- glmnet(x=X_tcga[!is.na(OS_tcga),], y=OS_tcga[!is.na(OS_tcga)], family="cox")
+OS_cv_lasso_tcga <- cv.glmnet(x=X_tcga[!is.na(OS_tcga),], y=OS_tcga[!is.na(OS_tcga)], family="cox", nfolds=3)
+colnames(X_tcga)[predict(OS_lasso_tcga, type="nonzero", s=OS_cv_lasso_tcga$lambda.min)[,1]]
+
+RESP_lasso_tcga <- glmnet(x=X_tcga[!is.na(RESP_tcga),], y=RESP_tcga[!is.na(RESP_tcga)], family="binomial")
+RESP_cv_lasso_tcga <- cv.glmnet(x=X_tcga[!is.na(RESP_tcga),], y=RESP_tcga[!is.na(RESP_tcga)], family="binomial", nfolds=3)
+colnames(X_tcga)[predict(RESP_lasso_tcga, type="nonzero", s=RESP_cv_lasso_tcga$lambda.min)[,1]]
+
+# Hugo
+OS_lasso_hugo <- glmnet(x=X_hugo[!is.na(OS_hugo),], y=OS_hugo[!is.na(OS_hugo)], family="cox")
+OS_cv_lasso_hugo <- cv.glmnet(x=X_hugo[!is.na(OS_hugo),], y=OS_hugo[!is.na(OS_hugo)], family="cox", nfolds=3)
+colnames(X_hugo)[predict(OS_lasso_hugo, type="nonzero", s=OS_cv_lasso_hugo$lambda.min)[,1]]
+
+RESP_lasso_hugo <- glmnet(x=X_hugo[!is.na(RESP_hugo),], y=RESP_hugo[!is.na(RESP_hugo)], family="binomial")
+RESP_cv_lasso_hugo <- cv.glmnet(x=X_hugo[!is.na(RESP_hugo),], y=RESP_hugo[!is.na(RESP_hugo)], family="binomial", nfolds=3)
+colnames(X_hugo)[predict(RESP_lasso_hugo, type="nonzero", s=RESP_cv_lasso_hugo$lambda.min)[,1]]
+
+
+# Prat
+PFS_lasso_prat <- glmnet(x=X_prat[!is.na(PFS_prat) & as.matrix(PFS_prat)[,1]>0,], y=PFS_prat[!is.na(PFS_prat) & as.matrix(PFS_prat)[,1]>0], family="cox")
+PFS_cv_lasso_prat <- cv.glmnet(x=X_prat[!is.na(PFS_prat) & as.matrix(PFS_prat)[,1]>0,], y=PFS_prat[!is.na(PFS_prat) & as.matrix(PFS_prat)[,1]>0], family="cox", nfolds=3)
+colnames(X_prat)[predict(PFS_lasso_prat, type="nonzero", s=PFS_cv_lasso_prat$lambda.min)[,1]]
+
+RESP_lasso_prat <- glmnet(x=X_prat[!is.na(RESP_prat),], y=RESP_prat[!is.na(RESP_prat)], family="binomial")
+RESP_cv_lasso_prat <- cv.glmnet(x=X_prat[!is.na(RESP_prat),], y=RESP_prat[!is.na(RESP_prat)], family="binomial", nfolds=3)
+colnames(X_prat)[predict(RESP_lasso_prat, type="nonzero", s=RESP_cv_lasso_prat$lambda.min)[,1]]
+
+# Westin
+PFS_lasso_westin <- glmnet(x=X_westin[!is.na(PFS_westin) & as.matrix(PFS_westin)[,1]>0,], y=PFS_westin[!is.na(PFS_westin) & as.matrix(PFS_westin)[,1]>0], family="cox")
+PFS_cv_lasso_westin <- cv.glmnet(x=X_westin[!is.na(PFS_westin) & as.matrix(PFS_westin)[,1]>0,], y=PFS_westin[!is.na(PFS_westin) & as.matrix(PFS_westin)[,1]>0], family="cox", nfolds=3)
+colnames(X_westin)[predict(PFS_lasso_westin, type="nonzero", s=PFS_cv_lasso_westin$lambda.min)[,1]]
+
+
+# Lauss et al.
+PFS_lasso_lauss <- glmnet(x=X_lauss[!is.na(PFS_lauss),], y=PFS_lauss[!is.na(PFS_lauss)], family="cox")
+PFS_cv_lasso_lauss <- cv.glmnet(x=X_lauss[!is.na(PFS_lauss),], y=PFS_lauss[!is.na(PFS_lauss)], family="cox", nfolds=3)
+colnames(X_lauss)[predict(PFS_lasso_lauss, type="nonzero", s=PFS_cv_lasso_lauss$lambda.min)[,1]]
+
+OS_lasso_lauss <- glmnet(x=X_lauss[!is.na(OS_lauss),], y=OS_lauss[!is.na(OS_lauss)], family="cox")
+OS_cv_lasso_lauss <- cv.glmnet(x=X_lauss[!is.na(OS_lauss),], y=OS_lauss[!is.na(OS_lauss)], family="cox", nfolds=3)
+colnames(X_lauss)[predict(OS_lasso_lauss, type="nonzero", s=OS_cv_lasso_lauss$lambda.min)[,1]]
+
+RESP_lasso_lauss <- glmnet(x=X_lauss[!is.na(RESP_lauss),], y=RESP_lauss[!is.na(RESP_lauss)], family="binomial")
+RESP_cv_lasso_lauss <- cv.glmnet(x=X_lauss[!is.na(RESP_lauss),], y=RESP_lauss[!is.na(RESP_lauss)], family="binomial", nfolds=3)
+colnames(X_lauss)[predict(RESP_lasso_lauss, type="nonzero", s=RESP_cv_lasso_lauss$lambda.min)[,1]]
+
+
+
+
+
+
+
+
+
 ## MODEL DATA
 
 # TCGA
 # OSCAR
-PFS_tcga_oscar <- oscar::oscar(x = X_tcga, y = PFS_tcga, family="cox")
-OS_tcga_oscar <- oscar::oscar(x = X_tcga, y = OS_tcga, family="cox")
-RESP_tcga_oscar <- oscar::oscar(x = X_tcga, y = RESP_tcga, family="logistic")
+PFS_tcga_oscar <- oscar::oscar(x = X_tcga, y = PFS_tcga, family="cox", start=1, verb=1)
+OS_tcga_oscar <- oscar::oscar(x = X_tcga, y = OS_tcga, family="cox", start=1, verb=1)
+RESP_tcga_oscar <- oscar::oscar(x = X_tcga, y = RESP_tcga, family="logistic", start=1, verb=1)
 # OSCAR CV
 PFS_cv_tcga <- oscar::cv.oscar(PFS_tcga_oscar, fold=5, seed=1)
 OS_cv_tcga <- oscar::cv.oscar(OS_tcga_oscar, fold=5, seed=2)
@@ -400,7 +463,7 @@ RESP_cv_lauss <- oscar::cv.oscar(RESP_lauss_oscar, fold=5, seed=3)
 
 # Westin et al. (GEO)
 # OSCAR
-PFS_westin_oscar <- oscar::oscar(x = X_westin, y = PFS_westin, family="cox")
+PFS_westin_oscar <- oscar::oscar(x = X_westin, y = PFS_westin, family="cox", start=1)
 
 
 
@@ -627,6 +690,9 @@ RESP_prat_cv_oscar <- oscar::cv.oscar(fit = RESP_prat_oscar, fold=5, seed=2, ver
 
 save(PFS_prat_cv_oscar, file=".\\RData\\PFS_prat_cv_oscar.RData")
 save(RESP_prat_cv_oscar, file=".\\RData\\RESP_prat_cv_oscar.RData")
+
+
+
 
 
 
