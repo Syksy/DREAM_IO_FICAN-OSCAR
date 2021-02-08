@@ -328,6 +328,17 @@ omit.nacols <- function(mat){
 
 ## LOAD DATA
 
+###
+#
+# SYNTHETIC
+#
+###
+gex_synthetic <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\GRCh37ERCC_refseq105_genes_tpm.csv", row.names=1)
+gex_synthetic <- gex_synthetic[order(rownames(gex_synthetic)),]
+gex_synthetic <- as.matrix(gex_synthetic)
+dat_synthetic <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\clinical_data.csv", row.names=1)
+X_synthetic <- curateX(gex=gex_synthetic, dat=dat_synthetic)
+
 # Load premade GEX / DAT and generate X matrix
 # Whole TCGA
 load(".\\RData\\gex_tcga.RData")
@@ -401,7 +412,6 @@ RESP_lasso_hugo <- glmnet(x=X_hugo[!is.na(RESP_hugo),], y=RESP_hugo[!is.na(RESP_
 RESP_cv_lasso_hugo <- cv.glmnet(x=X_hugo[!is.na(RESP_hugo),], y=RESP_hugo[!is.na(RESP_hugo)], family="binomial", nfolds=3)
 colnames(X_hugo)[predict(RESP_lasso_hugo, type="nonzero", s=RESP_cv_lasso_hugo$lambda.min)[,1]]
 
-
 # Prat
 PFS_lasso_prat <- glmnet(x=X_prat[!is.na(PFS_prat) & as.matrix(PFS_prat)[,1]>0,], y=PFS_prat[!is.na(PFS_prat) & as.matrix(PFS_prat)[,1]>0], family="cox")
 PFS_cv_lasso_prat <- cv.glmnet(x=X_prat[!is.na(PFS_prat) & as.matrix(PFS_prat)[,1]>0,], y=PFS_prat[!is.na(PFS_prat) & as.matrix(PFS_prat)[,1]>0], family="cox", nfolds=3)
@@ -415,7 +425,6 @@ colnames(X_prat)[predict(RESP_lasso_prat, type="nonzero", s=RESP_cv_lasso_prat$l
 PFS_lasso_westin <- glmnet(x=X_westin[!is.na(PFS_westin) & as.matrix(PFS_westin)[,1]>0,], y=PFS_westin[!is.na(PFS_westin) & as.matrix(PFS_westin)[,1]>0], family="cox")
 PFS_cv_lasso_westin <- cv.glmnet(x=X_westin[!is.na(PFS_westin) & as.matrix(PFS_westin)[,1]>0,], y=PFS_westin[!is.na(PFS_westin) & as.matrix(PFS_westin)[,1]>0], family="cox", nfolds=3)
 colnames(X_westin)[predict(PFS_lasso_westin, type="nonzero", s=PFS_cv_lasso_westin$lambda.min)[,1]]
-
 
 # Lauss et al.
 PFS_lasso_lauss <- glmnet(x=X_lauss[!is.na(PFS_lauss),], y=PFS_lauss[!is.na(PFS_lauss)], family="cox")
