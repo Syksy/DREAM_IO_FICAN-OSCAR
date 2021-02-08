@@ -23,7 +23,7 @@ predictX <- function(
 	class(X) <- "numeric"
 	# Subset to make the dimension fit for beta
 	if(any(!names(b) %in% colnames(X))){
-		warning(paste("Warning! Variables not found in X but present in beta (will be omitted):", b[!b %in% colnames(X)]), collapse=", ")
+		warning(paste("Warning! Variables not found in X but present in beta (will be omitted):", b[!names(b) %in% colnames(X)]), collapse=", ")
 		# NOTE! 
 		# INSIDE DOCKER FOR DREAM IO
 		# THESE ERROR MESSAGES ARE NOT RETURNED
