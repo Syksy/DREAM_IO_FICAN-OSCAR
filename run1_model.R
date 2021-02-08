@@ -92,10 +92,10 @@ curateX <- function(
 	# Pick genes that are present, warn of non-present symbols, column bind into variables
 	warning(paste("Following key gene symbols not found from gex: ", paste(keygenes[which(!keygenes %in% rownames(gex))], collapse=", ")), sep="")
 	keygenes <- keygenes[which(keygenes %in% rownames(gex))]
-	X <- cbind(X, do.call("cbind", lapply(keygenes, FUN=function(z){
+	X <- cbind(X, t(do.call("rbind", lapply(keygenes, FUN=function(z){
 		print(paste(z, "..."))
 		normfunc(gex[z,])
-	})))
+	}))))
 	# Rename
 	colnames(X) <- keygenes
 
