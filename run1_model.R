@@ -72,7 +72,9 @@ curateX <- function(
 		# https://www.nature.com/articles/nm.3909
 		"KLRB1",
 		"CD161",
-		"FOXM1"		
+		"FOXM1",
+		# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6487502/
+		"SERPINB9"
 	)),
 	normfunc = function(input) { input }, # Function for normalizing gene values to be used as variables - could be e.g. z-score within sample? log-transform if normalized count data >0?
 	gmts = c(1,2,4,5), # Hallmarks, oncology, custom self-made GMTs, filtered curated pathways from e.g. KEGG
@@ -343,8 +345,8 @@ X_synthetic <- curateX(gex=gex_synthetic, dat=dat_synthetic)
 # Whole TCGA
 load(".\\RData\\gex_tcga.RData")
 load(".\\RData\\dat_tcga.RData")
-X_tcga <- curateX(gex=gex_tcga, dat=dat_tcga)
-X_tcga <- omit.reducols(X_tcga)
+X_tcga <- omit.reducols(curateX(gex=gex_tcga, dat=dat_tcga))
+X_xce_tcga <- X_tcga[,grep("xce_", colnames(X_tcga))]
 PFS_tcga <- survival::Surv(time = dat_tcga$PFS.time, event = dat_tcga$PFS.event)
 OS_tcga <- survival::Surv(time = dat_tcga$OS.time, event = dat_tcga$OS.event)
 RESP_tcga <- as.integer(dat_tcga$Responder)
@@ -352,23 +354,27 @@ RESP_tcga <- as.integer(dat_tcga$Responder)
 load(".\\RData\\gex_hugo.RData")
 load(".\\RData\\dat_hugo.RData")
 X_hugo <- omit.reducols(curateX(gex=gex_hugo, dat=dat_hugo))
+X_xce_hugo <- X_hugo[,grep("xce_", colnames(X_hugo))]
 OS_hugo <- survival::Surv(time = dat_hugo$OS.time, event = dat_hugo$OS.event)
 RESP_hugo <- as.integer(dat_hugo$Responder)
 # Prat et al. (GEO)
 load(".\\RData\\gex_prat.RData")
 load(".\\RData\\dat_prat.RData")
 X_prat <- omit.reducols(curateX(gex=gex_prat, dat=dat_prat))
+X_xce_prat <- X_prat[,grep("xce_", colnames(X_prat))]
 PFS_prat <- survival::Surv(time = dat_prat$PFS.time, event = dat_prat$PFS.event)
 RESP_prat <- as.integer(dat_prat$Responder)
 # Westin et al. (GEO)
 load(".\\RData\\gex_westin.RData")
 load(".\\RData\\dat_westin.RData")
 X_westin <- omit.reducols(curateX(gex=gex_westin, dat=dat_westin))
+X_xce_westin <- X_westin[,grep("xce_", colnames(X_westin))]
 PFS_westin <- survival::Surv(time = dat_westin$PFS.time, event = dat_westin$PFS.event)
 # Lauss et al. (TIDE)
 load(".\\RData\\gex_lauss.RData")
 load(".\\RData\\dat_lauss.RData")
 X_lauss <- omit.reducols(curateX(gex=gex_lauss, dat=dat_lauss))
+X_xce_lauss <- X_lauss[,grep("xce_", colnames(X_lauss))]
 PFS_lauss <- survival::Surv(time=dat_lauss[,"PFS.time"], event=dat_lauss[,"PFS.event"])
 OS_lauss <- survival::Surv(time=dat_lauss[,"OS.time"], event=dat_lauss[,"OS.event"])
 RESP_lauss <- dat_lauss[,"Responder"]
@@ -376,14 +382,65 @@ RESP_lauss <- dat_lauss[,"Responder"]
 load(".\\RData\\gex_kim.RData")
 load(".\\RData\\dat_kim.RData")
 X_kim <- omit.reducols(curateX(gex=gex_kim, dat=dat_kim))
+X_xce_kim <- X_kim[,grep("xce_", colnames(X_kim))]
 RESP_kim <- dat_kim[,"Responder"]
 # Chen et al. (TIDE)
 load(".\\RData\\gex_chen.RData")
 load(".\\RData\\dat_chen.RData")
 X_chen <- omit.reducols(curateX(gex=gex_chen, dat=dat_chen))
+X_xce_chen <- X_chen[,grep("xce_", colnames(X_chen))]
 RESP_chen <- dat_chen[,"Responder"]
 # Save image containing the GEXs, DATs, Xs, and various y-responses
 save.image("temp.RData")
+
+
+
+## OSCAR for xce
+
+# TCGA Chemo control arm
+PFS_xce_tcga_oscar <- oscar::oscar(x = X_xce_tcga, y = PFS_tcga, family="cox", verb=1)
+OS_xce_tcga_oscar <- oscar::oscar(x = X_xce_tcga, y = OS_tcga, family="cox", verb=1)
+RESP_xce_tcga_oscar <- oscar::oscar(x = X_xce_tcga, y = RESP_tcga, family="logistic", verb=1)
+# OSCAR CV
+PFS_xce_cv_tcga <- oscar::cv.oscar(PFS_xce_tcga_oscar, fold=5, seed=1)
+OS_xce_cv_tcga <- oscar::cv.oscar(OS_xce_tcga_oscar, fold=5, seed=2)
+RESP_xce_cv_tcga <- oscar::cv.oscar(RESP_xce_tcga_oscar, fold=5, seed=3)
+# Hugo et al.
+OS_xce_hugo_oscar <- oscar::oscar(x = X_xce_hugo, y = OS_hugo, family="cox")
+RESP_xce_hugo_oscar <- oscar::oscar(x = X_xce_hugo, y = RESP_hugo, family="logistic")
+# OSCAR CV
+OS_xce_cv_hugo <- oscar::cv.oscar(OS_xce_hugo_oscar, fold=5, seed=2)
+RESP_xce_cv_hugo <- oscar::cv.oscar(RESP_xce_hugo_oscar, fold=5, seed=3)
+# Prat et al.
+PFS_xce_prat_oscar <- oscar::oscar(x = X_xce_prat, y = PFS_prat, family="cox")
+RESP_xce_prat_oscar <- oscar::oscar(x = X_xce_prat, y = RESP_prat, family="logistic")
+# OSCAR CV
+PFS_xce_cv_prat <- oscar::cv.oscar(PFS_xce_prat_oscar, fold=5, seed=1)
+RESP_xce_cv_prat <- oscar::cv.oscar(RESP_xce_prat_oscar, fold=5, seed=3)
+# Westin et al.
+PFS_xce_westin_oscar <- oscar::oscar(x = X_xce_westin, y = PFS_westin, family="cox")
+# OSCAR CV
+PFS_xce_cv_westin <- oscar::cv.oscar(PFS_xce_westin_oscar, fold=5, seed=1)
+# Lauss et al.
+PFS_xce_lauss_oscar <- oscar::oscar(x = X_xce_lauss, y = PFS_lauss, family="cox")
+OS_xce_lauss_oscar <- oscar::oscar(x = X_xce_lauss, y = OS_lauss, family="cox")
+RESP_xce_lauss_oscar <- oscar::oscar(x = X_xce_lauss, y = RESP_lauss, family="logistic")
+# OSCAR CV
+PFS_xce_cv_lauss <- oscar::cv.oscar(PFS_xce_lauss_oscar, fold=5, seed=1)
+OS_xce_cv_lauss <- oscar::cv.oscar(OS_xce_lauss_oscar, fold=5, seed=2)
+RESP_xce_cv_lauss <- oscar::cv.oscar(RESP_xce_lauss_oscar, fold=5, seed=3)
+# Kim et al.
+RESP_xce_kim_oscar <- oscar::oscar(x = X_xce_kim, y = RESP_kim, family="logistic")
+# OSCAR CV
+RESP_xce_cv_kim <- oscar::cv.oscar(RESP_xce_kim_oscar, fold=5, seed=3)
+# Chen et al.
+RESP_xce_chen_oscar <- oscar::oscar(x = X_xce_chen, y = RESP_chen, family="logistic")
+# OSCAR CV
+RESP_xce_cv_chen <- oscar::cv.oscar(RESP_xce_chen_oscar, fold=5, seed=3)
+
+
+
+
 
 
 

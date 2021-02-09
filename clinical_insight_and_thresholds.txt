@@ -1,0 +1,457 @@
+(Response Evaluation Criteria in Solid Tumors (RECIST))
+ORR = Overall Response Rate
+(m)PFS = (median) Progression Free Survival
+(m)OS = (median) Overall Survival
+
+...
+https://jamanetwork.com/journals/jama/fullarticle/2730114
+JAMA. 2019;321(14):1391-1399. doi:10.1001/jama.2019.3241
+FoundationOne:
+"TMB (in mutations/Mb) was significantly higher among smokers vs nonsmokers (8.7 [IQR, 4.4-14.8] 
+vs 2.6 [IQR, 1.7-5.2]; P < .001) and significantly lower among patients with vs without an alteration 
+in EGFR (3.5 [IQR, 1.76-6.1] vs 7.8 [IQR, 3.5-13.9]; P < .001), ALK (2.1 [IQR, 0.9-4.0] vs 7.0 
+[IQR, 3.5-13.0]; P < .001), RET (4.6 [IQR, 1.7-8.7] vs 7.0 [IQR, 2.6-13.0]; P = .004), or ROS1 
+(4.0 [IQR, 1.2-9.6] vs 7.0 [IQR, 2.6-13.0]; P = .03). In patients treated with anti–PD-1/PD-L1 
+therapies (n = 1290, 31.7%), TMB of 20 or more was significantly associated with improved OS from 
+therapy initiation (16.8 months [95% CI, 11.6-24.9] vs 8.5 months [95% CI, 7.6-9.7]; P < .001), 
+longer time receiving therapy (7.8 months [95% CI, 5.5-11.1] vs 3.3 months [95% CI, 2.8-3.7]; 
+P < .001), and increased clinical benefit rate (80.7% vs 56.7%; P < .001) vs TMB less than 20."
+(77.6% n=3153 patients were non-squamous, 17.9% n=726 were squamous)
+...
+"For example, EGFR, ALK, and MET alterations were enriched in nonsquamous pathologies (nonsquamous 
+vs squamous: 91.6% vs 5.9%, P < .001 for EGFR mutant; 93% vs 3.9%, P < .001 for ALK mutant; and 
+86.4% vs 10%, P = .009 for MET mutant). Patients with EGFR mutations were more often Asian (mutant 
+vs WT: 8.4% vs 2.0%; P < .001), female (62.8% vs 49.6%; P < .001), and never smokers (46.9% vs 14.8%; 
+P < .001). Those with ALK translocations were more often younger (mutant vs WT: 58.0 vs 67.0 years old;
+P < .001) and never smokers (57.0% vs 19.2%; P < .001). Patients with MET alterations were more often 
+older (mutant vs WT: 71.0 vs 66.0 years old; P < .001)."
+...
+"Never smokers (n = 661) had longer overall survival from advanced diagnosis than those with a 
+smoking history (n = 2564) (median overall survival, 15.2 months [95% CI, 12.9-18.4] vs 9.6 
+months [95% CI, 9.1-10.2]; difference, 5.5 [95% CI, 3.4-8.4]; P < .001), and patients with 
+nonsquamous pathology (n = 2556) had longer overall survival than patients with squamous 
+(n = 558) or not otherwise specified (n = 140) pathologies (median overall survival, 10.7 
+months [95% CI, 10.1-11.5] vs 9.6 months [95% CI, 8.7-11.3] vs 6.4 months [95% CI, 4.4-8.8]"
+...
+"In the anti–PD-1/PD-L1–treated group, TMB-H was associated with significantly longer overall 
+survival from start of treatment (median overall survival, 16.8 months [95% CI, 11.6-24.9], 
+n = 161 vs 8.5 months [95% CI, 7.6-9.7], n = 1116; difference, 8.3 [95% CI, 2.1-15.6]; P < .001) 
+and duration on anti–PD-1/PD-L1 therapy (median time receiving therapy, 7.8 months [95% CI, 
+5.5-11.1], n = 162 vs 3.3 months [95% CI, 2.8-3.7], n = 1127; difference, 4.5 [95% CI, 2.1-7.9]; 
+P < .001) than TMB-L/I"
+HOWEVER...
+"In PD-L1–negative patients, TMB-H was not significantly associated with increased time receiving 
+therapy or overall survival from start of therapy compared with TMB-L/I"
+...
+
+"A total of 482 patients had positive or negative results and received anti–PD-1/PD-L1 therapy. 
+Median TMB did not significantly differ in the PD-L1–positive (n = 289) vs –negative (n = 662) 
+groups (median, 6.95 mutations/Mb [IQR, 3.5-14.0] in each group), consistent with prior reports 
+(Figure 4A)"
+"In a multivariable Cox proportional hazard analysis, higher TMB was associated with a 
+significantly lower risk of discontinuing therapy (hazard ratio [HR], 0.78 for every additional 
+10 mutations/Mb [95% CI, 0.65-0.95]; P = .01), while receipt of anti–PD-1/PD-L1 therapy in 
+second line or later (HR, 1.19 for every additional line after first [95% CI, 1.04-1.36]; 
+P = .01) was associated with increased risk of discontinuing therapy"
+
+
+------->
+>> TMB cutoff > 20 mt/Mb improved OS and DCR in patients treated with anti-PD-1/L1 drug (FoundationOne)
+Stratify smokers vs non-smokers? Base TMB is higher in smokers vs. non-smokers
+(EGFR, ROS1 etc base mutations also found significant)
+-> TMB>20 resulted in almost doubling OS (16.8m vs 8.5 months)
+-> TMB>20 received therapy longer (7.8m vs 3.3)
+-> TMB>20 increased clinical benefit rate (80.7% vs. 56.7%)
+--> Almost guaranteed marker for OS and RESP, but maybe not PFS?
+>> Never smoking ought to be an indicator for OS, with ~60-80% increased median survival time
+--> Never smoking == 1 for OS benefit
+>> Nonsquamous patients had longer median survival time
+--> isSquamous == 0 for OS benefit
+
+
+https://clincancerres.aacrjournals.org/content/25/16/5015
+Comprehensive Genomic Profiling Identifies Novel Genetic Predictors of Response to Anti–PD-(L)1 Therapies in Non–Small Cell Lung Cancer
+Wenfeng Fang, Yuxiang Ma, Jiani C. Yin, Shaodong Hong, Huaqiang Zhou, Ao Wang, Fufeng Wang, Hua Bao, Xue Wu, Yunpeng Yang, Yan Huang, Hongyun Zhao, Yang W. Shao and Li Zhang
+Clinical Cancer Research
+(N=47 non-squamous, N=24 squamous; N=73 anti-PD-1 and N=5 anti-PD-L1; half smokers half never smokers)
+
+"In addition to validation of tumor mutation burden (TMB) as a predictive biomarker for clinical 
+outcomes, we identified novel genomic features that jointly with TMB refine the prediction of 
+patients' response to immunotherapy. Specifically, FAT1 mutations correlated with responsiveness 
+to therapy, whereas mutations in EGFR/ERBB2 and loss of chemokine receptor pathway genes and 
+specific chromosome 3p segments predicted poor clinical outcome."
+...
+"The overall rate of DCB, defined as patients who achieved partial response (PR) or had prolonged 
+stable disease (SD) for at least 6 months, was 26.9%, and the remaining were classified as 
+non-durable benefit (NDB) group."
+...
+"The median progression-free survival (mPFS) was 63 days. No difference in PFS was observed 
+among the four anti–PD-(L)1 agents (Supplementary Fig. S3)."
+...
+"median TMB was relatively lower, which might result from a higher rate of never-smokers in our cohort"
+...
+"Based on WES-assessed TMB results, DCB rate and mPFS were both significantly increased in patients 
+with high TMB (top 33%, cutoff = 157 mutations; DCB rate, 44.0% vs. 18.8%, Fisher's exact test P = 0.03; 
+mPFS, 130 vs. 60.5 days, log rank P = 0.0018, HR, 0.43; 95% confidence interval (CI), 0.25–0.74; 
+Fig. 1B and C]. Similarly, results from Panel assessment also demonstrated increased DCB rate and
+mPFS in TMB-high patients (top 33%, cutoff = 10 mutations; DCB rate, 46.2% vs. 18.4%, Fisher's 
+exact test P = 0.02; mPFS, 116 vs. 60 days, log rank P = 0.0025, HR, 0.45; 95% CI, 0.27–0.76; 
+Fig. 1B and D)."
+...
+"Although TMB has a relatively good predictive value regarding patients' response, the DCB and 
+ORR rates only reached approximately 46% and 28%, respectively, within the TMB-high cohort, 
+whereas 14% to 18% of TMB-low patients might also respond to immunotherapy. "
+...
+-> Somatic mutation searching
+...
+"PR, partial response; SD, stable disease; PD, progressive disease; 
+CR, complete response; DCB, durable clinical benefit; NDB, non-durable benefit."
+...
+"Consistent with previous reports (17–19, 31), activating mutations in EGFR were exclusively 
+identified in the NDB group (Fig. 2), which were associated with reduced mPFS compared with 
+the rest of the cohort"
+...
+"As activating mutations in cancer-driver genes were often associated with never smokers, 
+and consequently low TMB (32), we assessed the impact of driver mutations (EGFR/ERBB2/ALK) 
+on TMB in non-smokers. Of note, we found no difference in TMB or PFS between driver-negative 
+and driver-positive non-smokers"
+...
+"We found that EGFR/ERBB2 activating mutations were associated with reduced survival in NSCLC in
+both datasets"
+"Combined analysis of the three NSCLC cohorts further confirmed the negative effects of EGFR and 
+ERBB2 activation on patient survival"
+"verall, we found that copy number gain events were relatively rare compared with deletions, 
+and none was found to be associated with response to ICIs. At the focal level, we found that 
+loss of tumor-suppressor genes, such as integrin a9 (ITGA9) and phospholipase Cd1 (PLCD1), 
+were among the top individual CNA events that significantly correlated with a worse outcome 
+following anti–PD-(L)1 treatment"
+"Specifically, none of the ITGA9-loss patients experienced ORR or DCB"
+--> ITGA9 low expression as a marker for copy number loss?
+" The reduced mPFS in our cohort of patients carrying ITGA9 loss (36.5 vs. 64 days, HR, 9.09; 95% 
+CI, 2.91–27.78; FDR < 0.05; Fig. 4B) was also recapitulated using the lung cancer data from Miao 
+and colleagues (Supplementary Fig. S7A), as well as other cancer types"
+...
+"Alterations in immune-related genes, through their impact on antigen processing, presentation, 
+MHC expression and immune cell infiltration, among others, have been implicated in resistance to 
+immunotherapy (34). Indeed, when analyzing the impact of copy number loss in immune pathway genes 
+on ICI response (Supplementary Tables S5 and S6), we observed a strong trend of reduced mPFS in 
+patients with interferon-gamma (IFN-gamma) pathway gene loss compared with other patients 
+(Supplementary Fig. S7B), and significantly shorter mPFS in patients with JAK2 loss compared 
+with wild-type patients (FDR < 0.05; Supplementary Fig. S7C), which were consistent with 
+previous reports showing copy number loss in IFN-gamma pathway genes and JAK2 as predictive factors 
+of poor immunotherapy response (23, 35, 36). All of the five JAK2-loss patients had NDB and 
+low TMB (Fig. 2). Similarly, Loss of IFNE, which encodes a type I interferon epsilon, was 
+also associated with poor clinical outcome (FDR < 0.05; Fig. 2; Supplementary Fig. S7D), 
+likely due to its immuno-modulatory functions."
+...
+"Our data further revealed a strong association between copy-number loss of chemokine receptor 
+(CCR) pathway genes and unfavorable immunotherapy outcome (mPFS, 51 vs. 64.5 days, HR, 2.78; 
+95% CI, 0.83–9.09; Fig. 4D; Supplementary Table S6). A similar reduction in mPFS was also seen 
+in Miao and colleagues in lung cancer patients with CCR pathway gene loss (Supplementary Fig. S7E) 
+and also across multiple cancer types (Fig. 4E). Importantly, a strong gene-dosage effect of the 
+CCR pathway loss on survival was observed in both our cohort and Miao and colleagues (Fig. 4F and 
+G; Supplementary Fig. S7F), indicating that patients' response to immunotherapy might be a direct 
+result of the combined actions of the CCR pathway."
+...
+"We also noted that many CCR pathway and tumor-suppressor genes clustered on chromosome 3p 
+(Fig. 4A; Supplementary Fig. S8A), which is frequently deleted in NSCLC (37, 38). 
+Common eliminated regions on 3p include 3p22 (AP20), 3p21 (CER1, CER2 and LUCA), 3p12 
+(ROBO1) and 3p14 (FHIT). When examining patients with copy number losses at these 4 regions 
+in our cohort, we observed a significant reduction of survival in these patients compared 
+with wild-type patients (mPFS, 61.5 vs. 65 days; survival rates at day 180, 0% vs. 31%, 
+log rank P = 0.012, HR, 2.08; 95% CI, 1.09–4.00; Fig. 5A). The deleterious effect of 3p 
+segment loss on PFS was also evident in Miao and colleagues 
+
+-> 3p loss (AP20, CER1, CER2, LUCA, ROBO1, FHIT) resulting reduction in survival (mPFS + OS)
+
+----->
+>> Fig1: HZ TMB-H for mPFS estimate 0.43 (0.25-0.74) (panel C) or 0.45 (0.27-0.76) (panel D)
+--> Significant for X but not for ORR (panel E)
+>> ITGA9 loss = low expression as a marker?
+>> APM, MHC expression, immune cell infiltration 
+>> Fig5 3p loss reduced mPFS (HR = 2.08) and mOS (HR = 2.92)
+>> interferon-gamma pathway gene loss resulted in strong trend of reduced mPFS (median Progress Free Survival)
+>> JAK2 loss as a predictor
+>> Chemokine receptor pathway genes loss resulting in unfavorable immunotherapy outcome (mPFS, HR 2.78)
+
+
+
+
+https://biomarkerres.biomedcentral.com/articles/10.1186/s40364-020-00209-0#ref-CR27
+...
+PD-L1 expression
+"Given that multiple studies in a variety of tumors have demonstrated a positive correlation between 
+PD-L1 expression and response to ICIs or OS, even in first-line combination therapy [63,64,65], 
+pembrolizumab is currently approved by the FDA for use in patients with PD-L1+ (PD-L1 = 50% of tumor 
+cells in first-line treatment and = 1% in second-line treatment) NSCLC and PD-L1 immunohistochemistry 
+(IHC) as a companion diagnostic for anti-PD-1 therapy in NSCLC patients [66, 67]."
+HOWEVER
+"However, some studies have not detected a significant correlation between PD-L1 expression and 
+response to ICIs [5, 13, 68], and PD-L1 negative patients can still benefit clinically with treatment 
+with ICI or combination treatment with ICIs [69], with ORRs ranging from 11 to 20%. Therefore, 
+PD-L1 cannot yet be a comprehensive and independent biomarker in clinical practice in assessing 
+efficacy, with following challenges still existing."
+...
+"And the predictive value of PD-L1 at different biopsy sites for the benefit of ICIs in NSCLC may 
+vary: higher PD-L1 in lung or distant metastasis specimens was significantly associated with higher 
+response rate, PFS and OS, while PD-L1 in lymph node metastasis biopsy was not associated with 
+either response or survival [72]. Thirdly, positive score and cut-off value of PD-L1 expression 
+is not standardized [71]. At present, PD-L1 positive score mainly focuses on the PD-L1 expression 
+level of tumor cells, that is, tumor proportion score (TPS). But PD-L1 is also expressed on immune 
+cells such as lymphocytes and macrophages and stromal cells, thus the investigators introduce the 
+concept of combined positive score (CPS), which is the proportion score of the sum of PD-L1 expressed 
+by tumor cells and tumor-associated immune cells. In addition, PD-L1 expression on immune cells is 
+also considered separately as one of the biomarkers to distinguish the benefit population, called 
+immune positive score (IPS). Herbst et al. [73] showed that response to atezolizumab treatment was 
+significantly associated with high levels of PD-L1 expression on the surface of TILs before treatment,
+but not with PD-L1 expression on tumor cells (p = 0.079). Finally, other inhibitory immune pathways 
+may affect the response to ICIs therapy, including T cell immunoglobulin-3 (TIM-3), lymphocyte 
+activation gene-3 (LAG-3), and V-domain Ig suppressor of T-cell activation (VISTA), which can be 
+used as potential biomarkers for ICIs response."
+...
+"The pattern of tumor immune infiltration can be broadly classified into immune-inflamed, 
+immune-excluded and immune-desert [74]. Immune-inflamed is characterized by the presence of 
+CD8+ and CD4+ T cells in the tumor parenchyma accompanied by the expression of immune checkpoint
+molecules [75], indicating a potential anti-tumor immune response to ICIs treatment [73]; 
+immune-excluded is characterized by the presence of different immune cell types in the aggressive 
+margin or stroma of tumor, but cannot infiltration into tumor parenchyma [74, 76]. Analysis of 
+pre-treatment samples for anti-PD-1/PD-L1 revealed a relatively high abundance of CD8+T cells at 
+the invasive margin in responders, and serial sampling during treatment showed an increased 
+infiltration of CD8+T cells into tumor parenchyma [77]; while immune-desert phenotype is characterized 
+by the absence of abundant T cells in the parenchyma or stroma of tumors and poor response to 
+ICI-treatment [73]. Recently, immunoscore has been proposed as a valid marker for characterizing 
+the immune status of tumor microenvironment (TME), classifying tumors, as well as predicting treatment 
+response and prognosis [78], which involves the density of two lymphocyte populations (CD8+ and 
+memory [CD45RO+] T cells) in the center and invading margin of tumor [79]. Mlecnik et al. [80] 
+evaluated immunoscore in 599 specimens of stage I–IV colorectal tumor and confirmed that it was 
+significantly associated with PFS, DFS, and OS, and multivariate analysis also showed the superiority 
+of immunoscore in predicting disease recurrence and survival. The value of immunoscore to predicting 
+ICIs efficacy is being validated internationally in clinical trials of melanoma and NSCLC [78]."
+...
+"(Ascierto et al. recurrent breast cancer) - - five genes (IGK, GBP1, STAT1, IGLL5, and OCLN) 
+were highly overexpressed in patients with recurrence-free survival."
+"In addition, IFN-gamma-induced immune gene signatures may be effective biomarkers for predicting the 
+clinical benefit of treatment with ICIs. The study developed IFN-gamma scores combining multiple immune 
+variables based on 10 gene signatures, which were then extended to 28 gene signatures in a validation 
+set of 62 melanoma patients, including genes encoding IFN-gamma, granzymes A/B, perforin 1, IDO1, and 
+other immune-related genes. Both gene scores showed significant associations with best overall 
+response rate and PFS."
+...
+"The fact of very low level of CD39 expression on CD8+TILs in 50% of EGFR-mutant NSCLC is consistent 
+with their low response rate to anti-PD-1 immunotherapy."
+...
+Conflicting information regarding repertoire effects:
+"Effective T cell responses involve the activation and expansion of specific antigen-reactive T cell 
+clones, so diversity of immune repertoire in intratumoral or peripheral may correlate with ICIs 
+responses and can be quantified as richness and clonality [16]. However, the results seem to be 
+complex, with some studies finding a positive correlation between TIL clonality and the response 
+to ICIs before [90] or after [91] treatment, while others showing that only an increase in TIL 
+clonality during treatment is associated with the response to anti-PD-1 [16, 92]; others show that 
+intratumoral T cell clonality is not associated with survival, while peripheral T cell clonality is 
+inversely associated with PFS and OS [93]. - - The viewpoints of T cell diversity and TCR clonality 
+as markers of ICIs efficacy need to be further validated in a large patient population."
+...
+"- -in another study of melanoma or NSCLS treated with anti-PD-1, the expression of PD-1 mRNA 
+in the exosomes was higher at baseline and significantly decreased after treatment in patients 
+with response, while it was stable in patients with stable disease and increased in patients 
+with progressive disease after treatment [112]. Therefore, protein and transcripts of exosomal 
+PD-L1 may provide contradictory information on the response to ICIs and require large-scale 
+prospective studies for validation. In addition, RNA sequencing analysis of PD-L1 inhibitor-
+resistant NSCLC patients revealed the presence of PD-L1 variant fragments (v242 and v229, 
+which retain the PD-1 binding domain) in vivo and in peripheral blood and pleural effusion, 
+resistant patients with variant had much higher sPD-L1 concentrations. Experiments in vitro 
+and vivo have confirmed the inhibitory effect of PD-L1 variant fragments on T cell activity [113], 
+indicating a poor efficacy response."
+...
+"Weber et al. [118] analyzed baseline levels of CRP and IL-6 in serum from patients with melanoma 
+who participated in 3 different clinical trials and levels above baseline median were found to be 
+significantly associated with poor response and shorter survival after nivolumab treatment, 
+and similar results were found with ipilimumab and combination therapy. In vitro studies revealed 
+that purified CRP significantly inhibited T cell activation and proliferation at concentrations 
+> 10 mug/mL [118]. Studies have also demonstrated that IL-6 has an immunosuppressive effect under 
+certain conditions, including induction of myeloid-derived suppressor cells (MDSCs), which may 
+explain the above phenomenon [119]. Besides, two retrospective studies involving approximately 
+3000 patients found that high baseline levels of plasma IL-8 were significantly associated with 
+poor prognosis with PD-1/L1 inhibitors therapy and may be a driver of resistance to ICIs [120, 121]. 
+scRNA-seq of the immune compartment showed that IL-8 is primarily expressed in circulating and
+intratumoral myeloid cells, and had an inhibitory effect on adaptive immunity. High IL-8 levels 
+were associated with higher tumor neutrophil/monocyte infiltration, poorer antitumor activity of 
+effector T cells, as well as weaker antigen presentation. Patients with both a higher T cell effect 
+profile score and lower plasma IL-8 levels can obtain the greatest benefit from ICIs therapy."
+-> CRP, IL-6 and IL-8 associated with poor prognosis? Resistance to ICIs
+...
+"Studies have shown that gender differences are associated with the responsiveness to anti-tumor 
+immune. A meta-analysis including 20 randomized controlled trials (RCTs) of ICIs (n = 11,351) 
+reported that gender difference in the efficacy ICIs was significant (p = 0.0019), with pooled 
+OS hazard ratio being 0.72(95%CI 0.65–0.79) in male patients and 0.86(95%CI 0.79–0.93) in female 
+patients [122]. In another meta-analysis of a large number of melanoma and NSCLC patients treated
+with ICIs, both PFS and OS were significantly longer in male patients than in female patients, and 
+this difference was more pronounced in melanoma patients and anti-CTLA-4 antibodies [123]. Aging 
+is associated with restricted immune function with significant effects on both innate and adaptive 
+immune responses [124]. A preclinical study showed that aged mice had significantly increased tumor 
+responses to anti-PD-1 agents compared with young mice, considered to be associated with a lower 
+proportion of Tregs in aged mice [125]. Consistently, melanoma patients over 60 years old have a 
+significantly higher tumor response to pembrolizumab than patients under 60, and the likelihood of 
+response increases with age [125]. However, different results have also been reported by Nishijima 
+et al. with an association between age less than 75 years and better ORR in patients treated with 
+ICIs [126]. The Checkmate-171 trial showed that patients =70 years of age had comparable tolerability 
+and efficacy to the overall population [127]. However, at present, the inclusion and representativeness 
+of the elderly in clinical studies are still insufficient."
+-> PFS and OS significantly longer in male than female
+-> Aging possibly linked to poor immune function, but inconclusive results
+...
+ "studies of the effect of performance status (PS) on the efficacy of ICIs have shown that good PS are 
+ associated with lower tumor burden and a predominance of immune cell function in TME. 
+ In the Checkmate-171, patients with PS =2 had inferior efficacy to the overall population [127], 
+ and real-world data in Israel again suggested that patients with PS =2 had inferior efficacy to 
+ the overall population [128]
+...
+specificity in anti-PD-1 vs anti-CTLA-4:
+"... MHC-I expression is required for the primary response against CTLA-4 for melanoma, while 
+the primary response to anti-PD-1 is associated with pre-existing IFN-gamma-mediated immune activation."
+--> Interferon gamma signaling specific for anti-PD-1 therapies
+...
+"Rizvi et al. [153] found that TMB and PD-L1 were two independent factors affecting the efficacy of 
+immunotherapy, while patients with both high levels of TMB and positive PD-L1 had the highest duration 
+of benefit rate; another study showed that NSCLC patients with both high TIL density and high PD-L1 
+expression treated with PD-L1 inhibitor had the highest positive predictive value of ORR and the 
+longest PFS [154]; and Yu et al. [155] further demonstrated that the comprehensive variables of three 
+predictive markers, CD8+TIL, PD-L1 expression, and TMB, were associated with improved OS and PFS 
+compared with a single biomarker or two of the three biomarkers. Furthermore, the use of big data 
+analysis to predict markers of immunotherapy efficacy helps to establish a new framework for precise 
+treatment of tumors. A study of 4 groups of clinical trials covering 22 cancer types and more than 
+300 patients evaluated the relationship between biomarkers and best overall responses (BOR), PFS. 
+It was found that TMB, T cell-inflamed GEPs were associated with the efficacy of clinical immunotherapy,
+and the higher TMB, the higher ORR [156]."
+
+
+---->
+>> CD8+ and CD4+ T cells expression invading the tumor a positive marker for PFS, DFS and OS
+>> Combined immunescore even superior for recurrence and survival, response to therapy remains to be validated
+>> Low CD39 as an indicator for low chance of response?
+>> CRP, IL-6, IL-8 associated with poor prognosis and resistance to ICIs
+>> Male -> Better OS/PFS? 
+>> Aging -> poor immune function?
+>> ECOGPS >= 2 predictor of inferior efficacy of ICIs
+>> IFN-gamma for anti-PD-1 in particular
+
+https://pubmed.ncbi.nlm.nih.gov/31343662/
+JAMA Oncol. 2019 Jul 25;5(10):1481-1485. doi: 10.1001/jamaoncol.2019.
+Prognostic Value of the Lung Immune Prognostic Index for Patients Treated for Metastatic Non-Small Cell Lung Cancer
+Dickran Kazandjian 1 2, Yutao Gong 1, Patricia Keegan 1, Richard Pazdur 1, Gideon M Blumenthal 1
+
+"Previous studies have suggested the importance of the baseline derived neutrophil to 
+lymphocyte ratio (dNLR) and lactate dehydrogenase (LDH) level as prognostic markers. 
+The lung immune prognostic index (LIPI) was shown to be associated with progression-free 
+survival (PFS) and overall survival (OS) among patients with metastatic non-small cell 
+lung cancer (mNSCLC) treated with immune checkpoint inhibitors (ICIs) but not cytotoxic 
+chemotherapy (CCT)."
+
+--->
+>> Neutrophil / Lymphocyte ratio (dNLR) as a specific marker in metastatic NSCLC (not predictive in chemo)
+>> LIPI score worked for both PFS and OS, but requires peripheral blood LDH levels
+
+
+
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6487502/
+Nat Med. 2018 Oct; 24(10): 1550–1558.
+Signatures of T cell dysfunction and exclusion predict cancer immunotherapy response
+Peng Jiang,#1,2 Shengqing Gu,#3 Deng Pan,#4,5 Jingxin Fu,6 Avinash Sahu,1,2 Xihao Hu,1,2 Ziyi Li,6 Nicole Traugh,3 Xia Bu,3 Bo Li,1,2,9 Jun Liu,7 Gordon J. Freeman,3 Myles A. Brown,3,8 Kai W. Wucherpfennig,4,5,11,* and X. Shirley Liu1,2,6,8,11,*
+(Not trained on NSCLC, but tested on lung ca)
+"For the pre-treatment transcriptome of each tumor, the Pearson correlation with either T cell 
+dysfunction (in CTL-high tumors) or exclusion (in CTL-low tumors) signatures was defined as the 
+TIDE prediction score (Fig. 4a–c). Correlations with T cell dysfunction or exclusion signatures 
+may have different distributions (Supplementary Fig. 4c). Thus, when merging the prediction scores 
+from two tumor CTL categories, we normalized the correlations by their standard deviations in the 
+TCGA data. Finally, all tumors were ranked by their TIDE scores to predict their ICB response"
+
+
+>> CTL (Cytotoxic T cell score based on CD8A, CD8B, GZMA, GZMB and PRF1) worked but only if TGFB1 has a low expression (OS effect)
+--> CTL-high if all 5 genes had expression higher than mean in study; otherwise CTL-low
+--> Suggestion that patients with CTL-low tumors might derive clinical benefits fro immunotherapies
+>> TIDE score, interactions with gene expression to better predict
+>> SERPINB9 as novel GEP to follow
+>> Benchmarked by biomarkers IFNG, CD8, PDL1 (CD274?), CRMA4
+
+
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5531419/
+- IFN-gamma and expanded immune gene signatures, incorporated as custom gmts
+
+
+
+https://www.nejm.org/doi/10.1056/NEJMoa1613493?url_ver=Z39.88-2003&rfr_id=ori%3Arid%3Acrossref.org&rfr_dat=cr_pub++0pubmed
+First-Line Nivolumab in Stage IV or Recurrent Non–Small-Cell Lung Cancer
+David P. Carbone, M.D., Ph.D., Martin Reck, M.D., Ph.D., Luis Paz-Ares, M.D., Benjamin Creelan, M.D., Leora Horn, M.D., Martin Steins, M.D., Ph.D., Enriqueta Felip, M.D., Michel M. van den Heuvel, M.D., Tudor-Eliade Ciuleanu, M.D., Firas Badin, M.D., Neal Ready, M.D., T. Jeroen N. Hiltermann, M.D., et al., for the CheckMate 026 Investigators
+
+"Among the 423 patients with a PD-L1 expression level of 5% or more, the median progression-free survival was 4.2 months 
+with nivolumab versus 5.9 months with chemotherapy (hazard ratio for disease progression or death, 1.15; 95% confidence 
+interval [CI], 0.91 to 1.45; P=0.25), and the median overall survival was 14.4 months versus 13.2 months (hazard ratio for 
+death, 1.02; 95% CI, 0.80 to 1.30)"
+...
+"Among the patients with a high tumor-mutation burden, the response rate was higher in the nivolumab group 
+than in the chemotherapy group (47% vs. 28%), and progression-free survival was longer (median, 9.7 vs. 5.8 months; 
+hazard ratio for disease progression or death, 0.62; 95% CI, 0.38 to 1.00) (Figure 2C). Overall survival was similar 
+between groups regardless of the tumor-mutation burden. However, 68% of the patients with a high tumor-mutation burden 
+in the chemotherapy group received subsequent nivolumab because of treatment crossover, access to nivolumab after the
+trial, or both. There was no significant association between tumor-mutation burden and PD-L1 expression level 
+(Pearson’s correlation coefficient=0.059). However, in the nivolumab group, patients with both a high tumor-mutation 
+burden and a PD-L1 expression level of 50% or more had a higher response rate (75%) than those with only one of these 
+factors (32% among patients with a high tumor-mutation burden only and 34% among those with a PD-L1 expression level 
+of =50% only) or neither factor (16%). However, this comparison was not powered for statistical analysis"
+
+
+
+
+
+
+
+
+"advanced NSCLC" -> paikallisia metastaaseja vähintään
+
+heavy smokers -> squamous tyypillisesti
+assosiaatio tupakkaan
+
+squamous tulee yleensä keuhkoputken metaplastisesta muutoksesta
+epiteeli joka verhoaa keuhkoputkia pyrkii suojautumaan tupakalta ja muuttuu levyepiteeliksi joka kestää paremmin
+
+non-squamous erilainen lähtökohta solutasolla (broncy)
+non-sq metastasoi herkemmin ja yleensä aikaisemmin
+
+chrom 3p erittäin tavallinen > 70% yleinen deleetio
+
+ROS1 yliekspressio on usein indikaattori (kinaasireitit?)
+
+MSI potilaat pitäisi respondoida hyvin ICI hoitoihin
+sytotoksiset T solut tuo PD-1 ligandeja tuumorille
+
+- Korkea PD-L1
+- Interferoni gamma yhdessä PD-L1
+- Sytotoksiset T-solut
+
+-> Premeditated arvio esim. klusteroinnin ls
+
+TTF1 downreguloituu jos on KRAS-mutantti
+CDX2 jos selkeesti positiviinen niin myös KRAS-mutantti todnäk kyseessä
+- KRAS mutantit tyypillisesti respondoi huonosti ylipäätänsä IO hoitoihin
+
+Zone of origin estimation from gene expression
+
+Surfaktanttiproteiinit
+SKA1, SKA2
+
+SOX10 hyvä melanoomamarkkeri
+
+Surfaktanttiproteiinit SFTP-alkusia, A1, A2, B, C, D
+Huonosti erilaistuneissa IO olisi parempi chänce toimia
+
+Immunogeenisinia neuraalipinta
+Immunogeenisia epiteelisyövissä heavy smokereissa normaalistikin paljon mutaatioita
+
+Strooma vs. epiteeli näytteessä
+
+Kiinnostavia markkereita (Anni):
+MCP-4 
+NRAS mutatoituneet respondoi eri tavoin IO:hon
+
+
+
