@@ -1,0 +1,17 @@
+CUSTOM_APM	Antigen processing and presentation machinery; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7542663/	B2M	CALR	NLRC5	PSMB9	PSME1	PSME3	RFX5	HSP90AB1
+CUSTOM_TIS	Tumor inflammatory signature; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6829827/	CD276	HLA-DQA1	CD274	IDO1	HLA-DRB1	HLA-E	CMKLR1	PDCD1LG2	PSMB10	LAG3	CXCL9	STAT1	CD8A	CCL5	NKG7	TIGIT	CD27	CXCR6
+CUSTOM_INFG1	Interferon gamma response score 1; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5531419/	IDO1	CXCL10	CXCL9	HLA-DRA	STAT1	IFNG
+CUSTOM_INFG2	Interferon gamma response score 2; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5531419/	CD3D	IDO1	CIITA	CD3E	CCL5	GZMK	CD2	HLA-DRA	CXCL13	IL2RG	NKG7	HLA-E	CXCR6	LAG3	TAGAP	CXCL10	STAT1	GZMB
+CUSTOM_MSI	Microsatellite instability; https://pubmed.ncbi.nlm.nih.gov/32257050/; https://github.com/WangX-Lab/PreMSIm	DDX27	EPM2AIP1	HENMT1	LYG1	MLH1	MSH4	NHLRC1	NOL4L	RNLS	RPL22L1	RTF2	SHROOM4	SMAP1	TTC30A	ZSWIM3
+CUSTOM_IFNG3	IFN-related genes in https://www.cell.com/cancer-cell/pdfExtended/S1535-6108(19)30037-6	STAT1	IRF1	TNF	IFNG	CD8A	CD8B	ITGAE	CD103	PDCD1	PD-1	CCL5	CXCL13	IL2
+CUSTOM_CTL	Cytotoxic T cell score in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6487502/	CD8A	CD8B	GZMA	GZMB	PRF1
+CUSTOM_MCP_T.CELL	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	CD28	CD3D	CD3G	CD5	CD6	CHRM3-AS2	CTLA4	FLT3LG	ICOS	MAL	MGC40069	PBX4	SIRPG	THEMIS	TNFRSF25	TRAT1	CD8B
+CUSTOM_MCP_CYTOTOXIC.LYMPHOCYTES	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	CD8A	EOMES	FGFBP2	GNLY	KLRC3	KLRC4	KLRD1
+CUSTOM_MCP_B.LINEAGE	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	BANK1	CD19	CD22	CD79A	CR2	FCRL2	IGKC	MS4A1	PAX5
+CUSTOM_MCP_NK.CELLS	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	CD160	KIR2DL1	KIR2DL3	KIR2DL4	KIR3DL1	KIR3DS1	NCR1	PTGDR	SH2D1B
+CUSTOM_MCP_MONOCYTIC.LINEAGE	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	ADAP2	CSF1R	FPR3	KYNU	PLA2G7	RASSF4
+CUSTOM_MCP_MYELOID.DENDRITIC.CELLS	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	CD1A	CD1B	CD1E	CLEC10A	CLIC2	WFDC21P
+CUSTOM_MCP_NEUTROPHILS	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	CA4	CEACAM3	CXCR1	CXCR2	CYP4F3	FCGR3B	HAL	KCNJ15	MEGF9	SLC25A37	STEAP4	TECPR2	TLE3	TNFRSF10C	VNN3
+CUSTOM_MCP_ENDOTHELIAL.CELLS	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	ACVRL1	APLN	BCL6B	BMP6	BMX	CDH5	CLEC14A	DIPK2B	EDN1	ADGRL4	EMCN	ESAM	ESM1	FAM124B	HECW2	HHIP	KDR	MMRN1	MMRN2	MYCT1	PALMD	PEAR1	PGF	PLXNA2	PTPRB	ROBO4	C	SHANK3	SHE	TEK	TIE1	VEPH1	VWF
+CUSTOM_MCP_FIBROBLASTS	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	COL1A1	COL3A1	COL6A1	COL6A2	DCN	GREM1	PAMR1	TAGLN
+CUSTOM_CHROM3p_LOSS	Loss in chromosome arm 3p from https://clincancerres.aacrjournals.org/content/25/16/5015	AP20	CER1	CER2	LUCA	ROBO1	FHIT
