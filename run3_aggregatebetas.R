@@ -398,6 +398,10 @@ survival::coxph(OS_hugo ~ ., data = as.data.frame(X_hugo[,c("BASE_CD274", "xce_E
 #n= 26, number of events= 11 
 #   (1 observation deleted due to missingness)
    
+
+
+#### TCGA
+
 # Chemo-arm
 survival::coxph(PFS_tcga ~ ., data = as.data.frame(Xz_tcga))
 #> survival::coxph(PFS_tcga ~ ., data = as.data.frame(Xz_tcga))

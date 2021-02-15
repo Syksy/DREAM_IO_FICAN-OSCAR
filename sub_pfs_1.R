@@ -39,7 +39,7 @@ aggregateX <- function(
 	X <- cbind(X, CD274 = logz(gex["CD274",]))
 	
 	# GSVA for CUSTOM_IFNG3
-	gmt_custom <- GSEABase::getGmt(".\\selfmade.gmt")
+	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
 	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE)) # Custom GMTs
 	X <- cbind(X, IFNG = res_gsva[,grep("CUSTOM_IFNG3", colnames(res_gsva))])
 	

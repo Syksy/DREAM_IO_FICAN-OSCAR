@@ -675,6 +675,7 @@ gse_auslander <- GEOquery::getGEO("GSE115821", GSEMatrix = TRUE)
 sup_auslander <- GEOquery::getGEOSuppFiles("GSE115821")
 GEOquery::gunzip(rownames(sup_auslander)[1])
 sup_auslander <- read.csv("GSE115821/GSE115821_MGH_counts.csv")
+pData(gse_auslander[[1]])
 ## -> Only one responder, rest are non-responders
 
 # GSE121810 - Neoadjuvant anti-PD-1 immunotherapy promotes a survival benefit with intratumoral and systemic immune responses in recurrent glioblastoma
@@ -815,6 +816,61 @@ sup_riaz3 <- read.csv(gsub(".gz", "", rownames(sup_riaz)[3]))
 sup_riaz4 <- read.csv(gsub(".gz", "", rownames(sup_riaz)[4]))
 # sup_riaz2 are raw counts, using those with DESeq2
 gpl_riaz <- getGEO('GPL9052', destdir=".")
+##
+## Riaz et al.
+##
+#rownames(sup_riaz2) <- genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]
+#> table(table(genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]))
+#
+#    1     2     3   217 
+#20584    25     1     1
+#
+# 20584 had unique hugo symbol mapping, filtering the rest ("" occurred 217 times)
+sup_riaz2[,1] <- genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]
+sup_riaz2 <- sup_riaz2[-which(sup_riaz2[,1] %in% names(table(sup_riaz2[,1])>1)[which(table(sup_riaz2[,1])>1)]),]
+sup_riaz2 <- sup_riaz2[-which(is.na(sup_riaz2[,1])),]
+rownames(sup_riaz2) <- sup_riaz2[,1]
+sup_riaz2 <- sup_riaz2[,-1]
+# Substrata
+str_riaz <- pData(gse_riaz[[1]])$`characteristics_ch1`
+# DESeq2
+gex_riaz <- DESeq2::DESeqDataSetFromMatrix(countData=sup_riaz2,
+	colData = data.frame("str_riaz" = str_riaz),
+	design = ~ str_riaz)
+gex_riaz <- estimateSizeFactors(gex_riaz)
+gex_riaz <- counts(gex_riaz, normalized=TRUE)
+gex_riaz <- gex_riaz[order(rownames(gex_riaz)),]
+## Clinical info
+cli_riaz <- pData(gse_riaz[[1]])
+rownames(cli_riaz) <- gsub("-", ".", cli_riaz[,1])
+cli_riaz <- cli_riaz[match(colnames(gex_riaz), rownames(cli_riaz)),]
+cli_riaz <- cli_riaz[grep("Pre", colnames(gex_riaz)),]
+gex_riaz <- gex_riaz[,grep("Pre", colnames(gex_riaz))]
+# Omit patients for whom responder status was unknown
+gex_riaz <- gex_riaz[,-which(cli_riaz[,"response:ch1"]=="UNK")]
+cli_riaz <- cli_riaz[,-which(cli_riaz[,"response:ch1"]=="UNK")]
+# Genereta patient data frame
+dat_riaz <- data.frame(
+	patientID = rownames(cli_riaz),
+	SEX = NA,
+	AAGE = NA,
+	CRFHIST = NA,
+	TOBACUSE = NA,
+	ECOGPS = NA,
+	PDL1 = NA,
+	TMB = NA,
+	TCR_Shannon = NA,
+	TCR_Richness = NA,
+	TCR_Evenness = NA,
+	BCR_Shannon = NA,
+	BCR_Richness = NA,
+	BCR_Evenness = NA,
+	Responder = as.integer(cli_riaz[,"response:ch1"] == "PRCR") # Partial/complete response, other options PD (progressive dis) or SD (stable dis)
+)
+setwd("..")
+save(gex_riaz, file="./RData/gex_riaz.RData")
+save(dat_riaz, file="./RData/dat_riaz.RData")
+setwd("GEO")
 
 # GSE93157 - Programmed death 1 receptor blockade and immune-related gene expression profiling in non-small cell lung carcinoma, head and neck squamous cell carcinoma and melanoma
 # Very small gene panel ("A minimum of 100 ng of total RNA was used to measure the expression of 105 breast cancer-related genes and 5 house-keeping genes (ACTB, MRPL19, PSMC4, RLP0 and SF3A1)")
@@ -946,32 +1002,7 @@ grep("PRE", cli_auslander$`treatment state:ch1`)
 ##
 
 
-##
-## Riaz et al.
-##
-#rownames(sup_riaz2) <- genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]
-#> table(table(genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]))
-#
-#    1     2     3   217 
-#20584    25     1     1
-#
-# 20584 had unique hugo symbol mapping, filtering the rest ("" occurred 217 times)
-sup_riaz2[,1] <- genes[match(sup_riaz2[,1], genes[,"entrezgene_id"]),"hgnc_symbol"]
-sup_riaz2 <- sup_riaz2[-which(sup_riaz2[,1] %in% names(table(sup_riaz2[,1])>1)[which(table(sup_riaz2[,1])>1)]),]
-sup_riaz2 <- sup_riaz2[-which(is.na(sup_riaz2[,1])),]
-rownames(sup_riaz2) <- sup_riaz2[,1]
-sup_riaz2 <- sup_riaz2[,-1]
-# Substrata
-str_riaz <- pData(gse_riaz[[1]])$`characteristics_ch1`
-# DESeq2
-gex_riaz <- DESeq2::DESeqDataSetFromMatrix(countData=sup_riaz2,
-	colData = data.frame("str_riaz" = str_riaz),
-	design = ~ str_riaz)
-gex_riaz <- estimateSizeFactors(gex_riaz)
-gex_riaz <- counts(gex_riaz, normalized=TRUE)
-## Clinical info
-
-setwd("..")
+#setwd("..")
 
 
 
