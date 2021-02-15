@@ -44,7 +44,14 @@ aggregateX <- function(
 	# GSVA for CUSTOM_IFNG3
 	gmt_custom <- GSEABase::getGmt(".\\selfmade.gmt")
 	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE)) # Custom GMTs
-	X <- cbind(X, IFNG = res_gsva[,grep("CUSTOM_IFNG3", colnames(res_gsva))])
+	#X <- cbind(X, IFNG = res_gsva[,grep("CUSTOM_IFNG3", colnames(res_gsva))])
+	X <- cbind(X, res_gsva)
+	
+	# GSVA for Hallmarks
+	gmt_hallmarks <- GSEABase::getGmt(".\\h.all.v7.2.symbols.gmt")
+	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_hallmarks, verbose=FALSE)) # Custom GMTs
+	#X <- cbind(X, IFNG = res_gsva[,grep("CUSTOM_IFNG3", colnames(res_gsva))])
+	X <- cbind(X, res_gsva)
 	
 	# Epithelial cell expression as reported by xCell
 	tmp <- immunedeconv::deconvolute(gex, method="xcell")
@@ -52,7 +59,7 @@ aggregateX <- function(
 	rownames(tmp) <- paste("xce_", gsub(" ", "_", tmp[,1]), sep="")
 	tmp <- tmp[,-1]
 	class(tmp) <- "numeric"
-	X <- cbind(X, xce_Endothelial_cell = t(tmp)[,"xce_Endothelial_cell"])	
+	X <- cbind(X, t(tmp))	
 	
 	# Return X as a matrix
 	as.matrix(X)
@@ -67,6 +74,7 @@ load("tempspace_3.RData")
 load("tempspace_4.RData")
 load("tempspace_5.RData")
 load("tempspace_6.RData")
+load("tempspace_7.RData")
 
 # Plot various gene expression distributions to see if Cox PH coefficients would generalize between studies
 
@@ -92,6 +100,7 @@ gexplot(gex_kim, main="GEX Kim et al. (orig.)")
 gexplot(gex_lauss, main="GEX Lauss et al. (orig.)")
 gexplot(gex_hugo, main="GEX Prat et al. (orig.)")
 gexplot(gex_westin, main="GEX Westin et al. (orig.)")
+gexplot(gex_riaz, main="GEX Riaz et al. (orig.)")
 dev.off()
 
 logz <- function(x) { 
@@ -124,6 +133,7 @@ gexplot(gex_kim, main="GEX Kim et al. (orig.)")
 gexplot(gex_lauss, main="GEX Lauss et al. (orig.)")
 gexplot(gex_prat, main="GEX Prat et al. (orig.)")
 gexplot(apply(gex_westin, MARGIN=1, FUN=logz), main="GEX Westin et al. (log-z)")
+gexplot(apply(gex_riaz, MARGIN=1, FUN=logz), main="GEX Riaz et al. (log-z)")
 dev.off()
 
 # Same the log-z standardized gene expression patterns
@@ -135,11 +145,13 @@ gxz_hugo <- t(apply(gex_hugo, MARGIN=1, FUN=logz))
 rownames(gxz_hugo) <- rownames(gex_hugo)
 gxz_westin <- t(apply(gex_westin, MARGIN=1, FUN=logz))
 rownames(gxz_westin) <- rownames(gex_westin)
+gxz_riaz <- t(apply(gex_riaz, MARGIN=1, FUN=logz))
+rownames(gxz_riaz) <- rownames(gex_riaz)
 
 # Aggregate X matrices
 # PFS:	(Prat et al. &) Lauss et al. & Westin et al.
 # OS:	Hugo et al. & Lauss et al.
-# RESP	Hugo et a. & Prat et al. & Lauss et al. & Kim et al. & Chen et al.
+# RESP:	Hugo et a. & Prat et al. & Lauss et al. & Kim et al. & Chen et al. & Riaz et al.
 
 # Chemo-arm
 Xz_tcga <- aggregateX(gex=gxz_tcga, dat=dat_tcga)
@@ -150,10 +162,10 @@ Xz_lauss <- aggregateX(gex=gex_lauss, dat=dat_lauss)
 Xz_westin <- aggregateX(gex=gxz_westin, dat=dat_westin)
 Xz_kim <- aggregateX(gex=gex_kim, dat=dat_kim)
 #Xz_chen <- aggregateX(gex=gex_chen, dat=dat_chen)
+Xz_riaz <- aggregateX(gex=gex_riaz, dat=dat_riaz)
 
 
 # Combine studies to generate aggregate HR estimates
-
 combcols <- c("CD274", "IFNG", "xce_Endothelial_cell")
 
 # xCell fails for Prat et al. due to too narrow gene panel
@@ -162,10 +174,10 @@ library(survival)
 ## NOTE!
 # Responses not necessarily in same unit; e.g. Hugo et al. OS in days, Lauss in months
 PFS2_westin <- PFS_westin
-PFS2_westin[,1] <- PFS2_westin[,1]/30.5
+PFS2_westin[,1] <- round(PFS2_westin[,1]/30.5,0)
 
 OS2_hugo <- OS_hugo
-OS2_hugo[,1] <- OS2_hugo[,1]/30.5
+OS2_hugo[,1] <- round(OS2_hugo[,1]/30.5,0)
 
 # Coefficient for linear combination for Carbone et al.
 # for tumor high burden (based on absolute tumor mutation count)
@@ -211,9 +223,17 @@ survival::coxph(Yz_OS ~ ., data = as.data.frame(Xz_OS))
    
 ######### COMBINED RESPONSE ########
 
-Xz_RESP <- rbind(Xz_hugo[,combcols], Xz_lauss[,combcols], Xz_kim[,combcols])
-Yz_RESP <- c(RESP_hugo, RESP_lauss, RESP_kim)
+#RESPcols <- c("CUSTOM_MCP_ENDOTHELIAL.CELLS", "CUSTOM_IFNG3", "xce_Myeloid_dendritic_cell", "HALLMARK_INTERFERON_GAMMA_RESPONSE", "CUSTOM_MCP_MYELOID.DENDRITIC.CELLS")
+RESPcols <- c("CUSTOM_MCP_ENDOTHELIAL.CELLS", "CUSTOM_IFNG3", "xce_Myeloid_dendritic_cell")
+
+#Xz_RESP <- rbind(Xz_hugo[,combcols], Xz_lauss[,combcols], Xz_kim[,combcols], Xz_riaz[,combcols])
+Xz_RESP <- rbind(Xz_hugo[,RESPcols], Xz_lauss[,RESPcols], Xz_kim[,RESPcols], Xz_riaz[,RESPcols])
+Yz_RESP <- c(RESP_hugo, RESP_lauss, RESP_kim, RESP_riaz)
 summary(stats::glm(Yz_RESP ~ ., data = as.data.frame(Xz_RESP), family="binomial"))
+### Updated with more variable and Riaz et al.
+
+
+### OLD MODEL
 #> summary(stats::glm(Yz_RESP ~ ., data = as.data.frame(Xz_RESP), family="binomial"))
 #
 #Call:
@@ -432,6 +452,39 @@ survival::coxph(OS_tcga ~ ., data = as.data.frame(Xz_tcga))
 #n= 311, number of events= 41 
 #   (3 observations deleted due to missingness)
 summary(stats::glm(RESP_tcga ~ ., data = as.data.frame(Xz_tcga), family="binomial"))
+### NEW VARS
+summary(stats::glm(RESP_tcga ~ ., data = as.data.frame(Xz_tcga[,RESPcols]), family="binomial"))
+#> summary(stats::glm(RESP_tcga ~ ., data = as.data.frame(Xz_tcga[,RESPcols]), family="binomial"))
+#
+#Call:
+#stats::glm(formula = RESP_tcga ~ ., family = "binomial", data = as.data.frame(Xz_tcga[, 
+#    RESPcols]))
+#
+#Deviance Residuals: 
+#    Min       1Q   Median       3Q      Max  
+#-2.1884   0.4653   0.6066   0.7067   1.0939  
+#
+#Coefficients:
+#                                   Estimate Std. Error z value Pr(>|z|)  
+#(Intercept)                          0.9070     0.4573   1.983   0.0473 *
+#CUSTOM_MCP_ENDOTHELIAL.CELLS        -0.6622     0.4895  -1.353   0.1761  
+#CUSTOM_IFNG3                         0.2560     0.6666   0.384   0.7009  
+#xce_Myeloid_dendritic_cell           2.4199     2.5203   0.960   0.3370  
+#HALLMARK_INTERFERON_GAMMA_RESPONSE  -1.5045     1.0232  -1.470   0.1415  
+#CUSTOM_MCP_MYELOID.DENDRITIC.CELLS  -0.3224     0.7705  -0.418   0.6756  
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#
+#(Dispersion parameter for binomial family taken to be 1)
+#
+#    Null deviance: 165.52  on 159  degrees of freedom
+#Residual deviance: 159.19  on 154  degrees of freedom
+#  (154 observations deleted due to missingness)
+#AIC: 171.19
+#
+#Number of Fisher Scoring iterations: 4
+
+### OLD MODEL
 #> summary(stats::glm(RESP_tcga ~ ., data = as.data.frame(Xz_tcga), family="binomial"))
 #
 #Call:

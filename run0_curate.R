@@ -867,6 +867,7 @@ dat_riaz <- data.frame(
 	BCR_Evenness = NA,
 	Responder = as.integer(cli_riaz[,"response:ch1"] == "PRCR") # Partial/complete response, other options PD (progressive dis) or SD (stable dis)
 )
+rownames(dat_riaz) <- dat_riaz[,1]
 setwd("..")
 save(gex_riaz, file="./RData/gex_riaz.RData")
 save(dat_riaz, file="./RData/dat_riaz.RData")

@@ -702,6 +702,10 @@ if(FALSE){
 	visu(RESP_cus_hugo_oscar, y="AIC", main="AIC RESP, Custom GMTs, Hugo et al.")
 	cv.visu(RESP_cus_cv_hugo, main="Cross-validated RESP, Custom GMTs, Hugo et al.", ylab="Accuracy")
 
+
+	visu(RESP_cus_riaz_oscar, y="AIC", main="AIC RESP, Custom GMTs, Riaz et al.")
+	cv.visu(RESP_cus_cv_riaz, main="Cross-validated RESP, Custom GMTs, Riaz et al.", ylab="Accuracy")
+
 	# cat for printing out features at various ks
 	# cat(paste(names(feat(OS_xce_hugo_oscar, k=3)), ", "), "\n")
 
