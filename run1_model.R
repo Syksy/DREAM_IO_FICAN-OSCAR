@@ -468,6 +468,26 @@ PFS_bas_cv_tcga <- oscar::cv.oscar(PFS_bas_tcga_oscar, fold=5, seed=123)
 OS_bas_cv_tcga <- oscar::cv.oscar(OS_bas_tcga_oscar, fold=5, seed=234)
 RESP_bas_cv_tcga <- oscar::cv.oscar(RESP_bas_tcga_oscar, fold=5, seed=345)
 
+# Visualize cross-validation and features as a function of k in TCGA chemo-arm
+if(FALSE){
+	cv.visu(PFS_xce_cv_tcga, main="PFS_xce_cv_tcga", ylab="C-index")
+	cv.visu(OS_xce_cv_tcga, main="OS_xce_cv_tcga", ylab="C-index")
+	cv.visu(RESP_xce_cv_tcga, main="RESP_xce_cv_tcga", ylab="Accuracy")
+	
+	cv.visu(PFS_cus_cv_tcga, main="PFS_cus_cv_tcga", ylab="C-index")
+	cv.visu(OS_cus_cv_tcga, main="OS_cus_cv_tcga", ylab="C-index")
+	cv.visu(RESP_cus_cv_tcga, main="RESP_cus_cv_tcga", ylab="Accuracy")
+
+	cv.visu(PFS_hal_cv_tcga, main="PFS_hal_cv_tcga", ylab="C-index")
+	cv.visu(OS_hal_cv_tcga, main="OS_hal_cv_tcga", ylab="C-index")
+	cv.visu(RESP_hal_cv_tcga, main="RESP_hal_cv_tcga", ylab="Accuracy")
+
+	cv.visu(PFS_bas_cv_tcga, main="PFS_bas_cv_tcga", ylab="C-index")
+	cv.visu(OS_bas_cv_tcga, main="OS_bas_cv_tcga", ylab="C-index")
+	cv.visu(RESP_bas_cv_tcga, main="RESP_bas_cv_tcga", ylab="Accuracy")
+	
+}
+
 save.image("temprun_tcga.RData")
 
 ## GEO datasets
