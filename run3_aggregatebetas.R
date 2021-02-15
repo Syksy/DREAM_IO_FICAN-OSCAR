@@ -162,10 +162,10 @@ library(survival)
 ## NOTE!
 # Responses not necessarily in same unit; e.g. Hugo et al. OS in days, Lauss in months
 PFS2_westin <- PFS_westin
-PFS2_westin[,1] <- PFS2_westin[,1]/12
+PFS2_westin[,1] <- PFS2_westin[,1]/30.5
 
 OS2_hugo <- OS_hugo
-OS2_hugo[,1] <- OS2_hugo[,1]/12
+OS2_hugo[,1] <- OS2_hugo[,1]/30.5
 
 # Coefficient for linear combination for Carbone et al.
 # for tumor high burden (based on absolute tumor mutation count)

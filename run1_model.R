@@ -20,6 +20,7 @@ curateX <- function(
 	dat, # Combined clinical and non-GEX variables (e.g. TMB, IHC-stainings, age, ...)
 	keygenes = unique(c(
 		"CD274", "PDL1", # PD-L1
+		"CD276", "B7-H3",
 		"PDCD1", "CD279",
 		"EGFR",   # T790M mutation in particular, separate drugs used for squamous
 		"ALK",    # Mutation often seen in non-smoker, young, adenocarcinoma subtype
@@ -74,7 +75,24 @@ curateX <- function(
 		"CD161",
 		"FOXM1",
 		# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6487502/
-		"SERPINB9"
+		"SERPINB9",
+		# Immuno marker, e.g. https://science.sciencemag.org/content/362/6411/eaar3593?rss=1#ref-15
+		"CD8A",
+		"CCL5",
+		"CD27",
+		"CMKLR1",
+		"CXCL9",
+		"CXCR6",
+		"HLA-D1A1","HLA.D1A1",
+		"HLA-DRB1","HLA.DRB1",
+		"HLA-E", "HLA.E",
+		"IDO1",
+		"LAG3",
+		"NKG7",
+		"PDCD1LG2","PDL2",
+		"PSMB10",
+		"STAT1",
+		"TIGIT"
 	)),
 	normfunc = function(input) { input }, # Function for normalizing gene values to be used as variables - could be e.g. z-score within sample? log-transform if normalized count data >0?
 	gmts = c(1,2,4,5), # Hallmarks, oncology, custom self-made GMTs, filtered curated pathways from e.g. KEGG
@@ -396,6 +414,15 @@ X_cus_westin <- X_westin[,grep("CUSTOM_", colnames(X_westin))]
 X_hal_westin <- X_westin[,grep("HALLMARK_", colnames(X_westin))]
 X_bas_westin <- X_westin[,grep("BASE_", colnames(X_westin))]
 PFS_westin <- survival::Surv(time = dat_westin$PFS.time, event = dat_westin$PFS.event)
+# Riaz et al. (GEO)
+load(".\\RData\\gex_riaz.RData")
+load(".\\RData\\dat_riaz.RData")
+X_riaz <- omit.reducols(curateX(gex=gex_riaz, dat=dat_riaz))
+X_xce_riaz <- X_riaz[,grep("xce_", colnames(X_riaz))]
+X_cus_riaz <- X_riaz[,grep("CUSTOM_", colnames(X_riaz))]
+X_hal_riaz <- X_riaz[,grep("HALLMARK_", colnames(X_riaz))]
+X_bas_riaz <- X_riaz[,grep("BASE_", colnames(X_riaz))]
+RESP_riaz <- dat_riaz[,"Responder"]
 # Lauss et al. (TIDE)
 load(".\\RData\\gex_lauss.RData")
 load(".\\RData\\dat_lauss.RData")
@@ -562,6 +589,23 @@ PFS_hal_cv_westin <- oscar::cv.oscar(PFS_hal_westin_oscar, fold=5, seed=19)
 PFS_bas_westin_oscar <- oscar::oscar(x = X_bas_westin, y = PFS_westin, family="cox")
 # OSCAR CV
 PFS_bas_cv_westin <- oscar::cv.oscar(PFS_bas_westin_oscar, fold=5, seed=20)
+
+# Riaz et al. xCell
+RESP_xce_riaz_oscar <- oscar::oscar(x = X_xce_riaz, y = RESP_riaz, family="logistic")
+# OSCAR CV
+RESP_xce_cv_riaz <- oscar::cv.oscar(RESP_xce_riaz_oscar, fold=5, seed=202)
+# Riaz et al. CUSTOM GMTs
+RESP_cus_riaz_oscar <- oscar::oscar(x = X_cus_riaz, y = RESP_riaz, family="logistic")
+# OSCAR CV
+RESP_cus_cv_riaz <- oscar::cv.oscar(RESP_cus_riaz_oscar, fold=5, seed=204)
+# Riaz et al. HALLMARKS
+RESP_hal_riaz_oscar <- oscar::oscar(x = X_hal_riaz, y = RESP_riaz, family="logistic")
+# OSCAR CV
+RESP_hal_cv_riaz <- oscar::cv.oscar(RESP_hal_riaz_oscar, fold=5, seed=206)
+# Riaz et al. BASE MARKERS
+RESP_bas_riaz_oscar <- oscar::oscar(x = X_bas_riaz, y = RESP_riaz, family="logistic")
+# OSCAR CV
+RESP_bas_cv_riaz <- oscar::cv.oscar(RESP_bas_riaz_oscar, fold=5, seed=208)
 
 save.image("temprun.RData")
 
