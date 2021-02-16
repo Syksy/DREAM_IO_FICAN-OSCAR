@@ -851,7 +851,7 @@ cli_riaz <- cli_riaz[grep("Pre", colnames(gex_riaz)),]
 gex_riaz <- gex_riaz[,grep("Pre", colnames(gex_riaz))]
 # Omit patients for whom responder status was unknown
 gex_riaz <- gex_riaz[,-which(cli_riaz[,"response:ch1"]=="UNK")]
-cli_riaz <- cli_riaz[,-which(cli_riaz[,"response:ch1"]=="UNK")]
+cli_riaz <- cli_riaz[-which(cli_riaz[,"response:ch1"]=="UNK"),]
 # Genereta patient data frame
 dat_riaz <- data.frame(
 	patientID = rownames(cli_riaz),
@@ -873,7 +873,7 @@ dat_riaz <- data.frame(
 	Responder = 1 - as.integer(cli_riaz[,"response:ch1"] == "PD")
 )
 rownames(dat_riaz) <- dat_riaz[,1]
-table(dat_riaz[,"Responder"])
+#table(dat_riaz[,"Responder"])
 setwd("..")
 save(gex_riaz, file="./RData/gex_riaz.RData")
 save(dat_riaz, file="./RData/dat_riaz.RData")
