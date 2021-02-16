@@ -220,11 +220,19 @@ survival::coxph(Yz_OS ~ ., data = as.data.frame(Xz_OS))
 #Likelihood ratio test=7.51  on 3 df, p=0.05726
 #n= 51, number of events= 28 
 #   (1 observation deleted due to missingness)
+
+# Anni coefs
+anniOS <- c("xce_Myeloid_dendritic_cell_activated", "xce_Common_lymphoid_progenitor", "xce_T_cell_regulatory_(Tregs)")
+
+Xz_OS <- rbind(Xz_hugo[,anniOS], Xz_lauss[,anniOS])
+Yz_OS <- c(OS2_hugo, OS_lauss)
+survival::coxph(Yz_OS ~ ., data = as.data.frame(Xz_OS))
+
    
 ######### COMBINED RESPONSE ########
 
 #RESPcols <- c("CUSTOM_MCP_ENDOTHELIAL.CELLS", "CUSTOM_IFNG3", "xce_Myeloid_dendritic_cell", "HALLMARK_INTERFERON_GAMMA_RESPONSE", "CUSTOM_MCP_MYELOID.DENDRITIC.CELLS")
-RESPcols <- c("CUSTOM_MCP_ENDOTHELIAL.CELLS", "CUSTOM_IFNG3", "xce_Myeloid_dendritic_cell")
+RESPcols <- c("CUSTOM_MCP_ENDOTHELIAL.CELLS", "CUSTOM_IFNG3")
 
 #Xz_RESP <- rbind(Xz_hugo[,combcols], Xz_lauss[,combcols], Xz_kim[,combcols], Xz_riaz[,combcols])
 Xz_RESP <- rbind(Xz_hugo[,RESPcols], Xz_lauss[,RESPcols], Xz_kim[,RESPcols], Xz_riaz[,RESPcols])
@@ -308,7 +316,7 @@ survival::coxph(OS_hugo ~ ., data = as.data.frame(Xz_hugo))
 #Likelihood ratio test=6.45  on 3 df, p=0.09156
 #n= 26, number of events= 11 
 #   (1 observation deleted due to missingness)
-survival::coxph(OS_lauss ~ ., data = as.data.frame(Xz_lauss))
+survival::coxph(OS_lauss ~ ., data = as.data.frame(Xz_lauss[,c("CD274")]))
 #> survival::coxph(OS_lauss ~ ., data = as.data.frame(Xz_lauss))
 #Call:
 #survival::coxph(formula = OS_lauss ~ ., data = as.data.frame(Xz_lauss))
