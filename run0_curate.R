@@ -722,7 +722,10 @@ dat_hugo <- data.frame(
 	PFS.event = NA,
 	OS.time = as.integer(cli_hugo[,"overall survival (days):ch1"]),
 	OS.event = as.integer(cli_hugo[,"vital status:ch1"]=="Dead"),
-	Responder = as.integer(cli_hugo[,"anti-pd-1 response:ch1"] %in% c("Complete Response", "Partial Response")),
+	#### NOTE! Only progressive disease --> 0, others -> 1
+	#Responder = as.integer(cli_hugo[,"anti-pd-1 response:ch1"] %in% c("Complete Response", "Partial Response")),
+	#Responder = as.integer(cli_hugo[,"anti-pd-1 response:ch1"] == "Complete Response"),
+	Responder = 1 - as.integer(cli_hugo[,"anti-pd-1 response:ch1"] == "Progressive Disease"),
 	MetasLocation = cli_hugo[,"anatomical location:ch1"]
 )
 rownames(dat_hugo) <- dat_hugo$patientID
@@ -865,9 +868,12 @@ dat_riaz <- data.frame(
 	BCR_Shannon = NA,
 	BCR_Richness = NA,
 	BCR_Evenness = NA,
-	Responder = as.integer(cli_riaz[,"response:ch1"] == "PRCR") # Partial/complete response, other options PD (progressive dis) or SD (stable dis)
+	#Responder = as.integer(cli_riaz[,"response:ch1"] == "PRCR") # Partial/complete response, other options PD (progressive dis) or SD (stable dis)
+	# Update! Responders should be defined as any non-progressive disease
+	Responder = 1 - as.integer(cli_riaz[,"response:ch1"] == "PD")
 )
 rownames(dat_riaz) <- dat_riaz[,1]
+table(dat_riaz[,"Responder"])
 setwd("..")
 save(gex_riaz, file="./RData/gex_riaz.RData")
 save(dat_riaz, file="./RData/dat_riaz.RData")

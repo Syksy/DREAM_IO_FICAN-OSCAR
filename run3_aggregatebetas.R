@@ -4,39 +4,37 @@ aggregateX <- function(
 	gex,
 	dat
 ){
-	# Carbone et al.
-	# For efficacy analyses, patients were grouped in thirds according to tumor-mutation burden. 
-	# The boundaries for these three
-	# groups were a tumor-mutation burden of 0 to less than 100 mutations (low burden), 100 to
-	# 242 mutations (medium burden), and 243 or more mutations (high burden)
-	# ...
-	# Among the patients with a high tumor-mutation burden, the response rate was higher in the
-	# nivolumab group than in the chemotherapy group (47% vs. 28%), and progression-free
-	# survival was longer (median, 9.7 vs. 5.8 months; hazard ratio for disease progression or
-	# death, 0.62; 95% CI, 0.38 to 1.00) (Fig. 2C).
-	# ...
-	# However, in the nivolumab group, patients with both a high
-	# tumor-mutation burden and a PD-L1 expression level of 50% or more had a higher response
-	# rate (75%) than those with only one of these factors
-	# ...
-	# Patients with both a high tumor-mutation
-	# burden and a PD-L1 expression level of 50% or more may have a greater likelihood of re
-	# sponse to nivolumab than those with only one or neither of these factors. Overall, the current
-	# findings are consistent with the hypothesis that immunotherapy may have enhanced activity
-	# in patients with a high tumor-mutation burden.14 However, because this was an exploratory
-	#
-	# ---> Fig 2
-	#TMBclass <- c("Low", "Medium", "High")[findInterval(dat[,"TMB"], c(-Inf, 100, 242, Inf)]
-	
 	library(GSVA)
 	library(immunedeconv)
 	
+	# Hard-coded Carbone et al. thresholds
 	# 242 mutations threshold for 'high' mutatation; impute NAs as if being not highly mutated
 	X <- data.frame(isTMBhigh = as.integer(dat[,"TMB"] > 242))
 	rownames(X) <- rownames(dat)
 	# Impute zero indicators if there are NA values
 	if(any(is.na(X[,"isTMBhigh"]))) X[is.na(X[,"isTMBhigh"]),"isTMBhigh"] <- 0
 	
+	# There was no significant association between tumor-mutation burden and 
+	# PD-L1 expression level (Pearson’s correlation coefficient = 0.059).	
+	# --> Complementary information
+	
+	# However, in the nivolumab group, patients with both a high tumor-mutation burden and a 
+	# PD-L1 expression level of 50% or more had a higher response rate (75%) than those with 
+	# only one of these factors (32% among patients with a high tumor-mutation burden only and 
+	# 34% among those with a PD-L1 expression level of >50% only) or neither factor (16%).
+	
+	# 75% -> 3/4
+	# 32%, 34 % ~ 1/3
+	# 16% ~ 1/7 - 1/8
+	# looks like a non-linear trend?
+	
+	# Thirds for quantiles
+	TMBq3s <- quantile(dat[,"TMB"], probs=c(0, 1/3, 2/3, 1), na.rm=TRUE)
+	dat[is.na(dat[,"TMB"]),"TMB"] <- median(dat[,"TMB"], na.rm=TRUE)
+	PDL1q3s <- quantile(dat[,"PDL1"], probs=c(0, 1/3, 2/3, 1), na.rm=TRUE)
+	X <- cbind(X, TMBq3s = findInterval(x=dat[,"TMB"], vec=TMBq3s, rightmost.closed = TRUE))
+	X <- cbind(X, PDL1q3s = findInterval(x=dat[,"PDL1"], vec=PDL1q3s, rightmost.closed = TRUE))
+	X <- cbind(X, TMB.PDL1 = X[,"TMBq3s"] * X[,"PDL1q3s"])
 	# CD274 expression level modelled as a surrogate for PD-L1 IHC
 	# Normalized expressions between various platforms and their respective distributional characteristics
 	X <- cbind(X, CD274 = gex["CD274",])
@@ -46,6 +44,12 @@ aggregateX <- function(
 	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE)) # Custom GMTs
 	#X <- cbind(X, IFNG = res_gsva[,grep("CUSTOM_IFNG3", colnames(res_gsva))])
 	X <- cbind(X, res_gsva)
+	
+	# Interaction with T-cell inflammatory signal Gene Expression Profile (GEP) and high tumor mutational burden
+	GEPq2s <- median(res_gsva[,"CUSTOM_GEP"])
+	X <- cbind(X, GEPq2s = as.integer(res_gsva[,"CUSTOM_GEP"] > GEPq2s))
+	# TMB x GEP interaction, upper tertile of TMB vs. upper median of GEP signature
+	X <- cbind(X, TMB.GEP = as.integer(X[,"TMBq3s"] == 2) * X[,"GEPq2s"])
 	
 	# GSVA for Hallmarks
 	gmt_hallmarks <- GSEABase::getGmt(".\\h.all.v7.2.symbols.gmt")
@@ -147,6 +151,17 @@ gxz_westin <- t(apply(gex_westin, MARGIN=1, FUN=logz))
 rownames(gxz_westin) <- rownames(gex_westin)
 gxz_riaz <- t(apply(gex_riaz, MARGIN=1, FUN=logz))
 rownames(gxz_riaz) <- rownames(gex_riaz)
+
+# Compute synthetic data 
+Xs_synthetic <- aggregateX(gex_synthetic, dat=dat_synthetic)
+# Test if logz has an effect
+Xz_synthetic <- aggregateX(gxz_synthetic, dat=dat_synthetic)
+
+# Some interesting fields for OS, interactions
+
+OScols <- c("TMB.PDL1", "TMB.GEP", "TMBq3s", "PDL1q3s", "GEPq2s")
+Xs_synthetic[,OScols]
+Xz_synthetic[,OScols]
 
 # Aggregate X matrices
 # PFS:	(Prat et al. &) Lauss et al. & Westin et al.
