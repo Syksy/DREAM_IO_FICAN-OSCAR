@@ -913,7 +913,8 @@ dat_prat <- data.frame(
 	PFS.event = as.integer(cli_prat[,"pfse:ch1"]),
 	#PFS.time = as.integer(gsub("pfs: ", "", cli_prat[,"characteristics_ch1.14"])),
 	PFS.time = as.numeric(cli_prat[,"pfs:ch1"]),
-	Responder = as.integer(cli_prat[,"characteristics_ch1.11"] %in% c("best.resp: CR", "best.resp: PR")),
+	#Responder = as.integer(cli_prat[,"characteristics_ch1.11"] %in% c("best.resp: CR", "best.resp: PR")),
+	Responder = 1 - as.integer(cli_prat[,"characteristics_ch1.11"] == "best.resp: PD"),
 	Type = cli_prat[,"source_name_ch1"],
 	#Drug = factor(gsub("drug: ", "", cli_prat[,"characteristics_ch1.10"]))
 	Drug = cli_prat[,"drug:ch1"],
@@ -922,8 +923,10 @@ dat_prat <- data.frame(
 rownames(dat_prat) <- dat_prat$patientID
 #> all(rownames(dat_prat) == colnames(gex_prat))
 #[1] TRUE
+setwd("..")
 save(gex_prat, file="./RData/gex_prat.RData")
 save(dat_prat, file="./RData/dat_prat.RData")
+setwd("GEO")
 
 # Response abbreviations:
 #
@@ -1031,6 +1034,15 @@ gex_lauss <- do.call("rbind", by(gex_lauss, INDICES=gex_lauss[,1], FUN=function(
 pat_lauss <- intersect(rownames(cli_lauss), colnames(gex_lauss))
 gex_lauss <- gex_lauss[,pat_lauss]
 cli_lauss <- cli_lauss[pat_lauss,]
+##
+# > table(cli_lauss$RECIST)
+#
+# 0  1  2  3 
+# 5 10  5  5
+## NOTE! 
+# TIDE database has indicated Response {0,1} differently than DREAM IO defines responders
+# DREAM IO: Responder if non-PD (i.e. RECIST >=1)
+# TIDE definition; Responder if not PD or SD (i.e. RECIST >=2)
 # Create dat_lauss
 dat_lauss <- data.frame(
 	patientID = rownames(cli_lauss),
@@ -1051,7 +1063,10 @@ dat_lauss <- data.frame(
 	PFS.event = as.integer(cli_lauss[,"PFS.Event"]),
 	OS.time = as.integer(cli_lauss[,"OS"]),
 	OS.event = as.integer(cli_lauss[,"OS.Event"]),
-	Responder = as.integer(cli_lauss[,"Response"])
+	#Responder = as.integer(cli_lauss[,"Response"])
+	# In contrast to Response-field in cli_lauss, RECIST PD = 0, SD = 1, PR = 2, CR = 3
+	# In DREAM IO responders were defined as "not PD"
+	Responder = 1-as.integer(cli_lauss[,"RECIST"]==0)
 )
 rownames(dat_lauss) <- dat_lauss$patientID
 #> all(colnames(gex_lauss) == rownames(dat_lauss))
@@ -1078,6 +1093,8 @@ pat_kim <- intersect(rownames(cli_kim), colnames(gex_kim))
 gex_kim <- gex_kim[,pat_kim]
 cli_kim <- cli_kim[pat_kim,,drop=FALSE]
 # Create dat_kim
+# NOTE! TIDE may have defined Response differently than DREAM IO
+# No RECIST info here
 dat_kim <- data.frame(
 	patientID = rownames(cli_kim),
 	SEX = NA,
@@ -1154,405 +1171,45 @@ save(dat_chen, file="./RData/dat_chen.RData")
 
 
 
-###
-#
-# Cherry-pick key genes from the clinic or other sources (even if mutation status is used in clinic rather than gex)
-# Note aliases! Like PDL1 <-> CD274
-#
-###
-
-keyGenes <- c(
-	"CD274", "PDL1", # PD-L1
-	"PDCD1", "CD279"
-	"EGFR",   # T790M mutation in particular, separate drugs used for squamous
-	"ALK",    # Mutation often seen in non-smoker, young, adenocarcinoma subtype
-	"ROS1",   # Adenocarcinoma, often negative for ALK, KRAS and EGFR muts
-	"BRAF",   # Mutation helps tumor to grow
-	"RET",    # Mutation helps tumor to grow
-	"MET",    # Mutation helps tumor to grow
-	"NTRK",   # Mutation helps tumor to grow
-	"HER2",   # NSLungCa PeerView podcast
-	"KRAS",   # NSLungCa PeerView podcast
-	"NRG1",    # NSLungCa PeerView podcast
-	# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7542663/
-	# Antigen processing and presentation machinery
-	# Score itself: "The APMS (sum of the log2 z-scores for each gene)"
-	## Omit and include only the antigen presentation machinery score
-	#"B2M",
-	#"CALR",
-	#"NLRC5",
-	#"PSMB9",
-	#"PSME1",
-	#"PSME3",
-	#"RFX5",
-	#"HSP90AB1",
-	# Mikko's slides, anything related; https://www.frontiersin.org/articles/10.3389/fonc.2016.00112/full
-	"VEGF",
-	"HER1",
-	"HER2",
-	"HER3",
-	"HER4",
-	"PTEN",
-	"PI3K",
-	"RAS",
-	"MEK",
-	"ERK",
-	"CDK4",
-	"CDK6",
-	"mTOR",
-	"PDK-1"
-	"AKT",
-	# Mikko NGS syöpäpaneeli 1 lisäyksiä
-	"PIK3CA",
-	"KIT",
-	"NRAS",
-	"PDGFRA",
-	# Other interesting? Cytokines, chemokines
-	"CLCL10",
-	"CSCL11",
-	
-	
+# Gide et al. 2019
+gex_gide <- read.table(".\\TIDE\\Gide2019_Pembrolizumab-Nivolumab_Melanoma\\ICB.Gide2019_Pembrolizumab-Nivolumab_Melanoma.self_subtract", header=TRUE, row.names=1)
+cli_gide <- read.table(".\\TIDE\\Gide2019_Pembrolizumab-Nivolumab_Melanoma\\ICB.Gide2019_Pembrolizumab-Nivolumab_Melanoma.clinical", header=TRUE, row.names=1)
+colnames(gex_gide) <- gsub("X", "ID", colnames(gex_gide))
+rownames(cli_gide) <- paste("ID", rownames(cli_gide), sep="")
+# Intersect, nto all patients have gex available
+cli_gide <- cli_gide[intersect(rownames(cli_gide), colnames(gex_gide)),]
+# Sort GEX matrix
+gex_gide <- gex_gide[,match(rownames(cli_gide), colnames(gex_gide))]
+# Map ENTREZ IDs to hugo symbols
+gex_gide <- do.call("rbind", by(gex_gide, INDICES=genes[match(rownames(gex_gide), genes$entrezgene_id),"hgnc_symbol"], FUN=function(z){ apply(z, MARGIN=2, FUN=mean) }))
+# Create dat_gide
+dat_gide <- data.frame(
+	patientID = rownames(cli_gide),
+	SEX = c("Male", "Female")[cli_gide[,"Gender"]+1],
+	AAGE = as.integer(cli_gide[,"Age"]),
+	CRFHIST = NA,
+	TOBACUSE = NA,
+	ECOGPS = as.integer(NA),
+	PDL1 = as.integer(NA),
+	TMB = as.numeric(NA),
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),	
+	PFS.time = as.integer(cli_gide[,"PFS"]),
+	PFS.event = as.integer(cli_gide[,"PFS.Event"]),
+	OS.time = as.integer(cli_gide[,"OS"]),
+	OS.event = as.integer(cli_gide[,"OS.Event"]),
+	Responder = 1-as.integer(cli_gide[,"Response"]=="PD"),
+	Site = cli_gide[,"Site"],
+	Treatment = cli_gide[,"Treatment"]	
 )
-
-###
-#
-# Lung IO specific "scores", and filtering out genes not present
-#
-###
-
-# Interferon gamma response score
-# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5531419/
-# Might be too melanoma specific, albeit covering a multitude of other cancers too
-# Calculation
-# "After performance of quantile normalization, a log10 transformation was applied, 
-# and signature scores were calculated by averaging of the included genes for the IFN-gamma (6-gene) and expanded immune (18-gene) signatures."
-# ... although ...
-# "Logistic regression modeling was used to conduct the hypothesis testing associated with best overall response (BOR), and a Cox model was used for testing of PFS and OS."
-IFNGscore1 <- function(gex, columns=TRUE){
-	genes <- c("IDO1", "CXCL10", "CXCL9", "HLA-DRA", "STAT1", "IFNG")
-	# > all(c("IDO1", "CXCL10", "CXCL9", "HLA-DRA", "STAT1", "IFNG") %in% rownames(gex_synthetic_refseq105_genes_tpm))
-	# [1] TRUE
-	
-}
-# "The final 18-gene profile was derived through a cross-validated penalized regression modeling strategy in a large cohort of pembrolizumab-treated patients across 9 different tumor types."
-IFNGscore2 <- function(gex, columns=TRUE){
-	genes <- c("CD3D", "IDO1", "CIITA", "CD3E", "CCL5", "GZMK", "CD2", "HLA-DRA", "CXCL13", "IL2RG", "NKG7", "HLA-E", "CXCR6", "LAG3", "TAGAP", "CXCL10", "STAT1", "GZMB")
-	#> all(c("CD3D", "IDO1", "CIITA", "CD3E", "CCL5", "GZMK", "CD2", "HLA-DRA", "CXCL13", "IL2RG", "NKG7", "HLA-E", "CXCR6", "LAG3", "TAGAP", "CXCL10", "STAT1", "GZMB") %in% rownames(gex_synthetic_refseq105_genes_tpm))
-	#[1] TRUE
-	
-}
-
-# Antigen processing and presentation machinery
-# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7542663/
-# Score itself: "The APMS (sum of the log2 z-scores for each gene)"
-APMscore <- function(gex, columns=TRUE){
-	genes <- c("B2M", "CALR", "NLRC5", "PSMB9", "PSME1", "PSME3", "RFX5", "HSP90AB1")
-	#> all(c("B2M", "CALR", "NLRC5", "PSMB9", "PSME1", "PSME3", "RFX5", "HSP90AB1") %in% rownames(gex_synthetic_refseq105_genes_tpm))
-	#[1] TRUE
-	
-}
-
-# Tumor inflammatory signature (160 genes)
-# https://ascopubs.org/doi/abs/10.1200/JCO.2020.38.5_suppl.47
-# "TIS, algorithmically defined as the mean mRNA expression of the 160 genes was developed with each tumor assigned into a weak, moderate or strong inflammation group"
-# ... using Damotte et al. instead
-# Inflammation was observed differently in varying PD-L1 expressed tumors
-# "Strongly inflamed tumors presented with improved ORR to ICI in NSCLC"
-# Possibly differing criteria for "response" from what DREAM uses: "clinical benefit was defined as complete or partial RECIST response while stable and progressive disease were defined as lack of clinical benefit."
-TISscore <- function(gex, columns=TRUE){
-	# Taken from Fig 1 panel d in the publ.
-	# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6829827/#MOESM2
-	genes <- c("CD276", "HLA-DQA1", "CD274", "IDO1", "HLA-DRB1", "HLA-E", "CMKLR1", "PDCD1LG2", "PSMB10", "LAG3", "CXCL9", "STAT1", "CD8A", "CCL5", "NKG7", "TIGIT", "CD27", "CXCR6")
-	#> all(c("CD276", "HLA-DQA1", "CD274", "IDO1", "HLA-DRB1", "HLA-E", "CMKLR1", "PDCD1LG2", "PSMB10", "LAG3", "CXCL9", "STAT1", "CD8A", "CCL5", "NKG7", "TIGIT", "CD27", "CXCR6") %in% rownames(gex_synthetic_refseq105_genes_tpm))
-	#[1] TRUE
-	
-}
-
-###
-#
-# Derive simple sample GSVA results to refine the genes to pathway-level information
-#
-###
-
-#if (!requireNamespace("BiocManager", quietly = TRUE))
-#    install.packages("BiocManager")
-#BiocManager::install("GSVA")
-library(GSVA)
-
-# Read chosen set of GMTs; namely: hallmarks, oncogenic, and immunologic pathways
-# Downloaded from e.g. https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp#C7
-gmt_h <- GSEABase::getGmt(".\\MSigDB\\h.all.v7.2.symbols.gmt")
-gmt_c6 <- GSEABase::getGmt(".\\MSigDB\\c6.all.v7.2.symbols.gmt")
-gmt_c7 <- GSEABase::getGmt(".\\MSigDB\\c7.all.v7.2.symbols.gmt")
-
-# Synthetic
-gmt_synthetic <- rbind(
-	GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_h),	# Hallmarks
-	GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_c6)#,	# Oncogenic
-	#GSVA::gsva(as.matrix(gex_synthetic_refseq105_genes_tpm), gmt_c7)	# Immunology
-)
-# TCGA
-#gmt_luad <- rbind(
-#	GSVA::gsva(gex_luad, gmt_h),	# Hallmarks
-#	GSVA::gsva(gex_luad, gmt_c6),	# Oncogenic
-#	GSVA::gsva(gex_luad, gmt_c7)	# Immunology
-#)
-#gmt_lusc <- rbind(
-#	GSVA::gsva(gex_lusc, gmt_h),	# Hallmarks
-#	GSVA::gsva(gex_lusc, gmt_c6),	# Oncogenic
-#	GSVA::gsva(gex_lusc, gmt_c7)	# Immunology
-#)
-## Combined (gex transposed)
-gmt_tcga <- rbind(
-	GSVA::gsva(gex_tcga, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_tcga, gmt_c6)#,	# Oncogenic
-	#GSVA::gsva(gex_tcga, gmt_c7)	# Immunology
-)
-
-# TIDEs
-gmt_lauss <- rbind(
-	GSVA::gsva(gex_lauss, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_lauss, gmt_c6)#,	# Oncogenic
-	#GSVA::gsva(gex_lauss, gmt_c7)	# Immunology
-)
-gmt_kim <- rbind(
-	GSVA::gsva(gex_kim, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_kim, gmt_c6)#,	# Oncogenic
-	#GSVA::gsva(gex_kim, gmt_c7)	# Immunology
-)
-gmt_chen <- rbind(
-	GSVA::gsva(gex_chen, gmt_h),	# Hallmarks
-	GSVA::gsva(gex_chen, gmt_c6)#,	# Oncogenic
-	#GSVA::gsva(gex_chen, gmt_c7)	# Immunology
-)
+rownames(dat_gide) <- dat_gide$patientID
+save(gex_gide, file="./RData/gex_gide.RData")
+save(dat_gide, file="./RData/dat_gide.RData")
 
 
 
-###
-#
-# Immune cell deconvolution, using immunedeconv-package
-#
-###
-
-#install.packages("remotes")
-#remotes::install_github("icbi-lab/immunedeconv")
-library(immunedeconv)
-
-
-## Synthetic
-## Updated: Separate idc xcell and mcp
-# Renaming function that transforms the data table to an understandable numeric matrix
-rename_idc <- function(x, method="xcell"){
-	tmp <- gsub(" ", "_", gsub("\\+|\\-", "", c(x[,1])[[1]]))
-	x <- as.matrix(x[,-1])
-	rownames(x) <- paste(method, "_", tmp, sep="")
-	x
-}
-
-idc_xce_synthetic <- rename_idc(immunedeconv::deconvolute(gex_synthetic_refseq105_genes_tpm, method="xcell"), method="xce")
-idc_mcp_synthetic <- rename_idc(immunedeconv::deconvolute(gex_synthetic_refseq105_genes_tpm, method="mcp_counter"), method="mcp")
-
-#idc_synthetic <- rbind(
-#	immunedeconv::deconvolute(gex_synthetic_refseq105_genes_tpm, method="xcell"),
-#	immunedeconv::deconvolute(gex_synthetic_refseq105_genes_tpm, method="mcp_counter")
-#)
-
-## TIDEs
-idc_xce_lauss <- rename_idc(immunedeconv::deconvolute(gex_lauss, method="xcell"), method="xce")
-idc_mcp_lauss <- rename_idc(immunedeconv::deconvolute(gex_lauss, method="mcp_counter"), method="mcp")
-# Lauss
-#idc_lauss <- rbind(
-#	immunedeconv::deconvolute(gex_lauss, method="xcell"),
-#	immunedeconv::deconvolute(gex_lauss, method="mcp_counter")
-#)
-#tmp <- idc_lauss[,1]
-#idc_lauss <- as.matrix(idc_lauss[,-1])
-#rownames(idc_lauss) <- c(tmp)[[1]]
-# Kim
-idc_xce_kim <- rename_idc(immunedeconv::deconvolute(gex_kim, method="xcell"), method="xce")
-idc_mcp_kim <- rename_idc(immunedeconv::deconvolute(gex_kim, method="mcp_counter"), method="mcp")
-#idc_kim <- rbind(
-#	immunedeconv::deconvolute(gex_kim, method="xcell"),
-#	immunedeconv::deconvolute(gex_kim, method="mcp_counter")
-#)
-#tmp <- idc_kim[,1]
-#idc_kim <- as.matrix(idc_kim[,-1])
-#rownames(idc_kim) <- c(tmp)[[1]]
-# Chen
-# - unable to run, key genes missing -
-
-#rm(tmp)
-
-###
-#
-# DeMixT
-#
-###
-
-# https://github.com/wwylab/DeMixT
-# devtools::install_github("wwylab/DeMixT")
-# or rather...
-# https://bioconductor.org/packages/release/bioc/html/DeMixT.html
-library(DeMixT)
-
-
-###
-#
-# ESTIMATE
-#
-###
-
-# https://www.nature.com/articles/ncomms3612
-# https://bioinformatics.mdanderson.org/public-software/estimate/
-# http://r-forge.r-project.org/R/?group_id=2237
-# install.packages("estimate", repos="http://r-forge.r-project.org", dependencies=TRUE)
-#library(estimate)
-
-# Nevermind, requires .gct input
-
-# Preliminary testing whether any of the gmt / gene sets are found by lasso
-if(FALSE){
-	library(glmnet)
-	library(survival)
-	# LASSO testing
-
-	### Lauss
-
-	set.seed(1)
-	# PFS
-	lasso_sub1_lauss <- glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox")
-	lassocv_sub1_lauss <- cv.glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox", nfolds=5)
-	plot(lassocv_sub1_lauss)
-	# No non-zeros...
-	# OS
-	lasso_sub2_lauss <- glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox")
-	lassocv_sub2_lauss <- cv.glmnet(x=t(gmt_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox", nfolds=5)
-	plot(lassocv_sub2_lauss)
-	# No non-zeros...
-	# Response
-	lasso_sub3_lauss <- glmnet(x=t(gmt_lauss), y=cli_lauss[,"Response"], family="binomial")
-	lassocv_sub3_lauss <- cv.glmnet(x=t(gmt_lauss), y=cli_lauss[,"Response"], family="binomial", nfolds=5)
-	plot(lassocv_sub3_lauss)
-
-	### Kim
-
-	set.seed(1)
-	# Response
-	lasso_sub3_kim <- glmnet(x=t(gmt_kim), y=cli_kim[,"Response"], family="binomial")
-	lassocv_sub3_kim <- cv.glmnet(x=t(gmt_kim), y=cli_kim[,"Response"], family="binomial", nfolds=5)
-	plot(lassocv_sub3_kim)
-	#> rownames(gmt_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.min, type="nonzero")[,1]]
-	# [1] "IL15_UP.V1_DN"                                                            
-	# [2] "GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_DN"                                      
-	# [3] "GSE17721_4H_VS_24H_POLYIC_BMDC_DN"                                        
-	# [4] "GSE26495_NAIVE_VS_PD1LOW_CD8_TCELL_UP"                                    
-	# [5] "GSE29615_CTRL_VS_DAY7_LAIV_FLU_VACCINE_PBMC_DN"                           
-	# [6] "GSE36476_YOUNG_VS_OLD_DONOR_MEMORY_CD4_TCELL_40H_TSST_ACT_UP"             
-	# [7] "GSE8515_IL1_VS_IL6_4H_STIM_MAC_DN"                                        
-	# [8] "GSE22601_DOUBLE_NEGATIVE_VS_IMMATURE_CD4_SP_THYMOCYTE_UP"                 
-	# [9] "GSE2585_CD80_HIGH_VS_LOW_MTEC_UP"                                         
-	#[10] "GSE3920_IFNA_VS_IFNG_TREATED_FIBROBLAST_DN"                               
-	#[11] "GSE6875_WT_VS_FOXP3_KO_TREG_DN"                                           
-	#[12] "GSE7831_CPG_VS_INFLUENZA_STIM_PDC_4H_UP"                                  
-	#[13] "GSE12484_HEALTHY_VS_PERIDONTITIS_NEUTROPHILS_DN"                          
-	#[14] "GSE7459_UNTREATED_VS_IL6_TREATED_ACT_CD4_TCELL_DN"                        
-	#[15] "GSE19374_UNINF_VS_LISTERIA_INFECTED_MACROPHAGE_UP"                        
-	#[16] "GSE22432_CONVENTIONAL_CDC_VS_PLASMACYTOID_PDC_DN"                         
-	#[17] "GSE34156_NOD2_LIGAND_VS_NOD2_AND_TLR1_TLR2_LIGAND_24H_TREATED_MONOCYTE_UP"
-	#[18] "GSE11961_MARGINAL_ZONE_BCELL_VS_MEMORY_BCELL_DAY7_DN"                     
-	#[19] "GSE11961_FOLLICULAR_BCELL_VS_MARGINAL_ZONE_BCELL_DN"                      
-	#[20] "GSE42724_MEMORY_VS_B1_BCELL_UP"                                           
-	#[21] "GSE46606_IRF4_KO_VS_WT_CD40L_IL2_IL5_1DAY_STIMULATED_BCELL_UP"
-	#> rownames(gmt_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.1se, type="nonzero")[,1]]
-	#[1] "IL21_UP.V1_DN"                                                "GSE10325_MYELOID_VS_LUPUS_MYELOID_UP"                        
-	#[3] "GSE36476_YOUNG_VS_OLD_DONOR_MEMORY_CD4_TCELL_40H_TSST_ACT_UP" "GSE2585_CD80_HIGH_VS_LOW_MTEC_UP"                            
-	#[5] "GSE41176_UNSTIM_VS_ANTI_IGM_STIM_TAK1_KO_BCELL_3H_DN"
-
-	### Chen
-
-	set.seed(1)
-	# Response
-	lasso_sub3_chen <- glmnet(x=t(gmt_chen), y=cli_chen[,"Response"], family="binomial")
-	## Of note:
-	#Warning message:
-	#In lognet(x, is.sparse, ix, jx, y, weights, offset, alpha, nobs,  :
-	#  one multinomial or binomial class has fewer than 8  observations; dangerous ground
-	lassocv_sub3_chen <- cv.glmnet(x=t(gmt_chen), y=cli_chen[,"Response"], family="binomial", nfolds=5)
-	plot(lassocv_sub3_chen)
-	#rownames(gmt_chen)[predict(lasso_sub3_chen, s=lassocv_sub3_chen$lambda.min, type="nonzero")[,1]]
-	#> rownames(gmt_chen)[predict(lasso_sub3_chen, s=lassocv_sub3_chen$lambda.min, type="nonzero")[,1]]
-	#[1] "GSE22601_IMMATURE_CD4_SINGLE_POSITIVE_VS_DOUBLE_POSITIVE_THYMOCYTE_UP"
-	#[2] "GSE37301_HEMATOPOIETIC_STEM_CELL_VS_CD4_TCELL_DN"
-
-
-}
-
-
-
-
-
-
-# Preliminary testing of whether glmnet grabs anything
-if(FALSE){
-
-	### Lauss
-
-	set.seed(1)
-	# PFS
-	lasso_sub1_lauss <- glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox")
-	lassocv_sub1_lauss <- cv.glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"PFS"], event=cli_lauss[,"PFS.Event"]), family="cox", nfolds=5)
-	plot(lassocv_sub1_lauss)
-	#> rownames(idc_lauss)[predict(lasso_sub1_lauss, s=lassocv_sub1_lauss$lambda.min, type="nonzero")[,1]]
-	# [1] "Myeloid dendritic cell activated" "T cell CD4+ (non-regulatory)"     "T cell CD4+ central memory"      
-	# [4] "T cell CD4+ effector memory"      "T cell CD8+ effector memory"      "Common lymphoid progenitor"      
-	# [7] "Common myeloid progenitor"        "Cancer associated fibroblast"     "Hematopoietic stem cell"         
-	#[10] "Macrophage M2"                    "Mast cell"                        "Neutrophil"                      
-	#[13] "NK cell"                          "T cell NK"                        "B cell plasma"                   
-	#[16] "T cell CD4+ Th1"                  "T cell CD4+ Th2"                  "T cell regulatory (Tregs)"       
-	#[19] "stroma score"                     "cytotoxicity score"               "NK cell"                         
-	#[22] "Myeloid dendritic cell"           "Neutrophil"
-	# --> All cell types except couple...
-	# OS
-	lasso_sub2_lauss <- glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox")
-	lassocv_sub2_lauss <- cv.glmnet(x=t(idc_lauss), y=survival::Surv(time=cli_lauss[,"OS"], event=cli_lauss[,"OS.Event"]), family="cox", nfolds=5)
-	plot(lassocv_sub2_lauss)
-	#> rownames(idc_lauss)[predict(lasso_sub2_lauss, s=lassocv_sub2_lauss$lambda.min, type="nonzero")[,1]]
-	# [1] "Myeloid dendritic cell activated" "T cell CD4+ (non-regulatory)"     "T cell CD4+ effector memory"     
-	# [4] "T cell CD8+ naive"                "T cell CD8+ effector memory"      "Class-switched memory B cell"    
-	# [7] "Common lymphoid progenitor"       "Cancer associated fibroblast"     "Hematopoietic stem cell"         
-	#[10] "Monocyte"                         "Neutrophil"                       "NK cell"                         
-	#[13] "T cell NK"                        "T cell gamma delta"               "T cell CD4+ Th1"                 
-	#[16] "T cell regulatory (Tregs)"        "stroma score"                     "T cell"                          
-	#[19] "NK cell"                          "Myeloid dendritic cell"           "Neutrophil"                      
-	#[22] "Endothelial cell"                 "Cancer associated fibroblast"    
-	#> rownames(idc_lauss)[predict(lasso_sub2_lauss, s=lassocv_sub2_lauss$lambda.1se, type="nonzero")[,1]]
-	# [1] "Myeloid dendritic cell activated" "T cell CD4+ effector memory"      "T cell CD8+ naive"               
-	# [4] "T cell CD8+ effector memory"      "Common lymphoid progenitor"       "Granulocyte-monocyte progenitor" 
-	# [7] "Hematopoietic stem cell"          "Macrophage M2"                    "T cell CD4+ Th1"                 
-	#[10] "T cell regulatory (Tregs)"        "cytotoxicity score"               "NK cell"
-	# --> Highly informative for both PFS/OS
-	# Response
-	lasso_sub3_lauss <- glmnet(x=t(idc_lauss), y=cli_lauss[,"Response"], family="binomial")
-	lassocv_sub3_lauss <- cv.glmnet(x=t(idc_lauss), y=cli_lauss[,"Response"], family="binomial", nfolds=5)
-	plot(lassocv_sub3_lauss)
-	# No non-zeros...
-
-	### Kim
-
-	set.seed(1)
-	# Response
-	lasso_sub3_kim <- glmnet(x=t(idc_kim), y=cli_kim[,"Response"], family="binomial")
-	lassocv_sub3_kim <- cv.glmnet(x=t(idc_kim), y=cli_kim[,"Response"], family="binomial", nfolds=5)
-	plot(lassocv_sub3_kim)
-	#> rownames(idc_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.min, type="nonzero")[,1]]
-	#[1] "T cell CD4+ central memory"   "Macrophage"                   "T cell CD4+ Th1"              "Endothelial cell"            
-	#[5] "Cancer associated fibroblast"
-	#> rownames(idc_kim)[predict(lasso_sub3_kim, s=lassocv_sub3_kim$lambda.1se, type="nonzero")[,1]]
-	#[1] "Macrophage"                   "T cell CD4+ Th1"              "Endothelial cell"             "Cancer associated fibroblast"
-
-}
-
-
-# Only locally, ignored by .gitignore
-#save.image("temp.RData")
 
