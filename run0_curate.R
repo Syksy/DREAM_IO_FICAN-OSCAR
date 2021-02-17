@@ -1210,7 +1210,7 @@ dat_gide <- data.frame(
 	PFS.event = as.integer(cli_gide[,"PFS.Event"]),
 	OS.time = as.integer(cli_gide[,"OS"]),
 	OS.event = as.integer(cli_gide[,"OS.Event"]),
-	Responder = 1-as.integer(cli_gide[,"Response"]=="PD"),
+	Responder = 1-as.integer(cli_gide[,"BestRECISTresponse"]=="PD"),
 	Site = cli_gide[,"Site"],
 	Treatment = cli_gide[,"Treatment"]	
 )
