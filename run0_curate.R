@@ -1213,3 +1213,112 @@ save(dat_gide, file="./RData/dat_gide.RData")
 
 
 
+# Braun et al. 2020, Nature Medicine, downloaded directly from source, manually transformed from Excel to TSVs
+# "Although conventional genomic markers (such as tumor mutation burden and neoantigen load) and the degree of 
+# CD8+ T-cell infiltration were not associated with clinical response, we discovered numerous chromosomal 
+# alterations associated with response or resistance to PD-1 blockade."
+#
+# Heavy focus on mutations/chromosomal aberrations
+#
+# Advanced Clear Cell Renal Cell Carcinoma
+# https://static-content.springer.com/esm/art%3A10.1038%2Fs41591-020-0839-y/MediaObjects/41591_2020_839_MOESM2_ESM.xlsx
+# Normalized expression
+# Duplicate row names
+gex_braun <- read.table(".\\RawData\\Braun2020_RNAseq.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE)
+gex_braun <- by(gex_braun[,-1], INDICES=gex_braun[,1], FUN=function(z) { apply(z, MARGIN=2, FUN=mean) })
+gex_braun <- do.call("rbind", gex_braun)
+# First 27 rows look spurious
+gex_braun <- gex_braun[-c(1:27),]
+# Lots of extra fields, including TMB but no PD-L1 IHC
+cli_braun <- read.table(".\\RawData\\Braun2020_Clinical.txt", sep="\t", row.names=1, header=TRUE, stringsAsFactors=FALSE)
+# Narrow to samples with RNA-samples
+cli_braun <- cli_braun[!is.na(cli_braun[,"RNA_ID"]),]
+# Clinical information and patient IDs in GEX are not in same order!!!
+# e.g. 
+# cbind(cli_braun[,"RNA_ID",], colnames(gex_braun))
+# Some '-' symbols are lost as '.', better replace all with '.'
+gex_braun <- gex_braun[,match(gsub("-", ".", colnames(gex_braun)), gsub("-", ".", cli_braun[,"RNA_ID"]))]
+rownames(cli_braun) <- gsub('-', '.', rownames(cli_braun)
+colnames(gex_braun) <- rownames(cli_braun)
+# Clean up and conserve only certain columns in cli_braun
+cli_braun <- cli_braun[,c("Cohort", "Arm", "Sex", "Age", "Received_Prior_Therapy", "Number_of_Prior_Therapies", "Tumor_Sample_Primary_or_Metastasis", "Site_of_Metastasis", "Tumor_Shrinkage", "ORR", "Benefit", "ExtremeResponder", "PFS", "PFS_CNSR", "OS", "OS_CNSR", "irORR", "irPFS", "irPFS_CNSR", "Purity", "TM_CD8", "TM_CD8_Density", "TC_CD8", "TC_CD8_Density", "TM_TC_Ratio", "ImmunoPhenotype", "TM_CD8_PERCENT", "TC_CD8_PERCENT", "TMB_Counts", "FS_Counts")]
+#> table(ORR = cli_braun[,"ORR"], OS_CNSR = cli_braun[,"OS_CNSR"])
+#      OS_CNSR
+#ORR     0  1
+#  CR    0  1
+#  CRPR 16 14
+#  NE    3 27
+#  PD   16 90
+#  PR    6  7
+#  SD   39 92
+#> table(irORR = cli_braun[,"irORR"], OS_CNSR = cli_braun[,"irPFS_CNSR"])
+#      OS_CNSR
+#irORR   0  1
+#  irCR  1  0
+#  irPD  0 14
+#  irPR  6  3
+#  irSD  6 15
+
+## Time unit in months (according to KMs in paper)
+
+## Nice amount of TMB amounts estimated
+#> sum(!is.na(cli_braun[,"TMB_Counts"]))
+#[1] 217
+#> quantile(cli_braun[,"TMB_Counts"], na.rm=TRUE)
+#  0%  25%  50%  75% 100% 
+#   4   47   64   90  341
+
+## A bit over half of samples are Nivo
+# > table(cli_braun[,"Arm"])
+#
+#EVEROLIMUS  NIVOLUMAB 
+#       130        181
+
+# Includes Checkmate 010 and Checkmate 025
+
+## EVEROLIMUS is a mTOR inhibitor (mTOR kinase inhibitor), and it is considered a chemotherapy drug - chemo arm!
+# apparently it has also been used in non-small cell lung cancer: https://pubmed.ncbi.nlm.nih.gov/22968184/
+# "Everolimus and erlotinib as second- or third-line therapy in patients with advanced non-small-cell lung cancer", 2012
+# https://pubmed.ncbi.nlm.nih.gov/20871262/
+# "Phase II trial of gefitinib and everolimus in advanced non-small cell lung cancer"
+dat_braun <- data.frame(
+	patientID = rownames(cli_braun),
+	SEX = c("Male", "Male", "Female", "Female")[match(cli_braun[,"Sex"], c("Male", "M", "Female", "F"))],
+	AAGE = as.integer(cli_braun[,"Age"]),
+	CRFHIST = NA,
+	TOBACUSE = NA,
+	ECOGPS = as.integer(NA),
+	PDL1 = as.integer(NA),
+	TMB = as.integer(cli_braun[,"TMB_Counts"]),
+	TCR_Shannon = as.numeric(NA),
+	TCR_Richness = as.numeric(NA),
+	TCR_Evenness = as.numeric(NA),
+	BCR_Shannon = as.numeric(NA),
+	BCR_Richness = as.numeric(NA),
+	BCR_Evenness = as.numeric(NA),	
+	PFS.time = as.numeric(cli_braun[,"PFS"]),
+	PFS.event = as.integer(cli_braun[,"PFS_CNSR"]),
+	OS.time = as.numeric(cli_braun[,"OS"]),
+	OS.event = as.integer(cli_braun[,"OS_CNSR"]),	
+	Responder = ifelse(cli_braun[,"ORR"] == "NE", NA, 1-as.integer(cli_braun[,"ORR"]=="PD")),
+	iPFS.time = as.numeric(cli_braun[,"irPFS"]),
+	iPFS.event = as.integer(cli_braun[,"irPFS_CNSR"]),
+	iResponder = 1-as.integer(cli_braun[,"irORR"]=="irPD"),
+	Treatment = cli_braun[,"Arm"],
+	PrimaryOrMetastasis = cli_braun[,"Tumor_Sample_Primary_or_Metastasis"],
+	MetastasisSite = cli_braun[,"Site_of_Metastasis"],
+	PriorTherapy = cli_braun[,"Received_Prior_Therapy"],
+	PriorTherapyCount = cli_braun[,"Number_of_Prior_Therapies"]
+)
+rownames(dat_braun) <- dat_braun$patientID
+# Split into Nivo and Chemo arms
+gex_braun_nivo <- gex_braun[,which(dat_braun[,"Treatment"]=="NIVOLUMAB")]
+dat_braun_nivo <- dat_braun[which(dat_braun[,"Treatment"]=="NIVOLUMAB"),]
+gex_braun_ever <- gex_braun[,which(dat_braun[,"Treatment"]=="EVEROLIMUS")]
+dat_braun_ever <- dat_braun[which(dat_braun[,"Treatment"]=="EVEROLIMUS"),]
+# Save both Nivo and Chemo arms
+save(gex_braun_nivo, file="./RData/gex_braun_nivo.RData")
+save(gex_braun_ever, file="./RData/gex_braun_ever.RData")
+save(dat_braun_nivo, file="./RData/dat_braun_nivo.RData")
+save(dat_braun_ever, file="./RData/dat_braun_ever.RData")
+

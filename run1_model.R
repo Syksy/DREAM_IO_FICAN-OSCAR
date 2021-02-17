@@ -92,7 +92,19 @@ curateX <- function(
 		"PDCD1LG2","PDL2",
 		"PSMB10",
 		"STAT1",
-		"TIGIT"
+		"TIGIT",
+		# https://www.cell.com/cancer-cell/pdfExtended/S1535-6108(19)30037-6
+		"TLR3",
+		"LAG3",
+		"IDO1",
+		"TIGIT",
+		"TNFAIP3",
+		"ADORA2A",
+		"ICOS",
+		"TNFRSF9",
+		"CD52",
+		"BTLA",
+		"TLR8"
 	)),
 	normfunc = function(input) { input }, # Function for normalizing gene values to be used as variables - could be e.g. z-score within sample? log-transform if normalized count data >0?
 	gmts = c(1,2,4,5), # Hallmarks, oncology, custom self-made GMTs, filtered curated pathways from e.g. KEGG
@@ -163,21 +175,24 @@ curateX <- function(
 			X[is.na(X[,"isSquamous"]),"isSquamous"] <- 0
 		}
 	}
-	# TMB, coding into lower (-1), NA (0) or higher (+1)
+	# TMB median, coding into lower (-1), NA (0) or higher (+1), and raw TMB values
 	if("TMB" %in% clinvars){
 		print("TMB")
 		medianTMB <- median(dat[,"TMB"], na.rm=TRUE)
 		# No finite TMB threshold could be determined
 		if(!is.finite(medianTMB)){
+			X <- cbind(X, TMBmedian = 0)
 			X <- cbind(X, TMB = 0)
 		}else{
-			X <- cbind(X, TMB = ifelse(is.na(dat[,"TMB"]), 0, ifelse(dat[,"TMB"]>=medianTMB, 1, -1)))
+			X <- cbind(X, TMBmedian = ifelse(is.na(dat[,"TMB"]), 0, ifelse(dat[,"TMB"]>=medianTMB, 1, -1)))
+			X <- cbind(X, TMB = dat[,"TMB"])
+			X[is.na(X[,"TMB"]),"TMB"] <- medianTMB
 		}
 	}
 	# Sex, binary indicator for +1 that patient was male
 	if("SEX" %in% clinvars){
 		print("SEX")
-		X <- cbind(X, isMale = as.integer(dat[,"SEX"] == "M"))
+		X <- cbind(X, isMale = as.integer(dat[,"SEX"] %in% c("M", "Male")))
 	}
 	# PDL1, coding into lower (-1), NA (0) or higher (+1)
 	if("PDL1" %in% clinvars){
@@ -185,9 +200,11 @@ curateX <- function(
 		medianPDL1 <- median(dat[,"PDL1"], na.rm=TRUE)
 		# No finite TMB threshold could be determined
 		if(!is.finite(medianPDL1)){
+			X <- cbind(X, PDL1median = 0)
 			X <- cbind(X, PDL1 = 0)
 		}else{
-			X <- cbind(X, PDL1 = ifelse(is.na(dat[,"PDL1"]), 0, ifelse(dat[,"PDL1"]>=medianPDL1, 1, -1)))
+			X <- cbind(X, PDL1median = ifelse(is.na(dat[,"PDL1"]), 0, ifelse(dat[,"PDL1"]>=medianPDL1, 1, -1)))
+			X <- cbind(X, PDL1 = ifelse(is.na(dat[,"PDL1"]), PDL1median, dat[,"PDL1"]))
 		}
 	}
 	
@@ -371,13 +388,13 @@ gex_synthetic <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\GRCh37ERCC
 gex_synthetic <- gex_synthetic[order(rownames(gex_synthetic)),]
 gex_synthetic <- as.matrix(gex_synthetic)
 dat_synthetic <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\clinical_data.csv", row.names=1)
-X_synthetic <- curateX(gex=gex_synthetic, dat=dat_synthetic)
+X_synthetic <- cbind(omit.reducols(curateX(gex=gex_synthetic, dat=dat_synthetic)), isIO = 1, isChemo = 0)
 
 # Load premade GEX / DAT and generate X matrix
 # Whole TCGA
 load(".\\RData\\gex_tcga.RData")
 load(".\\RData\\dat_tcga.RData")
-X_tcga <- omit.reducols(curateX(gex=gex_tcga, dat=dat_tcga))
+X_tcga <- cbind(omit.reducols(curateX(gex=gex_tcga, dat=dat_tcga)), isIO = 0, isChemo = 1)
 X_xce_tcga <- X_tcga[,grep("xce_", colnames(X_tcga))]
 X_cus_tcga <- X_tcga[,grep("CUSTOM_", colnames(X_tcga))]
 X_hal_tcga <- X_tcga[,grep("HALLMARK_", colnames(X_tcga))]
@@ -388,7 +405,7 @@ RESP_tcga <- as.integer(dat_tcga$Responder)
 # Hugo et al. (GEO)
 load(".\\RData\\gex_hugo.RData")
 load(".\\RData\\dat_hugo.RData")
-X_hugo <- omit.reducols(curateX(gex=gex_hugo, dat=dat_hugo))
+X_hugo <- cbind(omit.reducols(curateX(gex=gex_hugo, dat=dat_hugo)), isIO = 1, isChemo = 0)
 X_xce_hugo <- X_hugo[,grep("xce_", colnames(X_hugo))]
 X_cus_hugo <- X_hugo[,grep("CUSTOM_", colnames(X_hugo))]
 X_hal_hugo <- X_hugo[,grep("HALLMARK_", colnames(X_hugo))]
@@ -398,7 +415,7 @@ RESP_hugo <- as.integer(dat_hugo$Responder)
 # Prat et al. (GEO)
 load(".\\RData\\gex_prat.RData")
 load(".\\RData\\dat_prat.RData")
-X_prat <- omit.reducols(curateX(gex=gex_prat, dat=dat_prat))
+X_prat <- cbind(omit.reducols(curateX(gex=gex_prat, dat=dat_prat)), isIO = 1, isChemo = 0)
 X_xce_prat <- X_prat[,grep("xce_", colnames(X_prat))]
 X_cus_prat <- X_prat[,grep("CUSTOM_", colnames(X_prat))]
 X_hal_prat <- X_prat[,grep("HALLMARK_", colnames(X_prat))]
@@ -408,7 +425,7 @@ RESP_prat <- as.integer(dat_prat$Responder)
 # Westin et al. (GEO)
 load(".\\RData\\gex_westin.RData")
 load(".\\RData\\dat_westin.RData")
-X_westin <- omit.reducols(curateX(gex=gex_westin, dat=dat_westin))
+X_westin <- cbind(omit.reducols(curateX(gex=gex_westin, dat=dat_westin)), isIO = 1, isChemo = 0)
 X_xce_westin <- X_westin[,grep("xce_", colnames(X_westin))]
 X_cus_westin <- X_westin[,grep("CUSTOM_", colnames(X_westin))]
 X_hal_westin <- X_westin[,grep("HALLMARK_", colnames(X_westin))]
@@ -417,7 +434,7 @@ PFS_westin <- survival::Surv(time = dat_westin$PFS.time, event = dat_westin$PFS.
 # Riaz et al. (GEO)
 load(".\\RData\\gex_riaz.RData")
 load(".\\RData\\dat_riaz.RData")
-X_riaz <- omit.reducols(curateX(gex=gex_riaz, dat=dat_riaz))
+X_riaz <- cbind(omit.reducols(curateX(gex=gex_riaz, dat=dat_riaz)), isIO = 1, isChemo = 0)
 X_xce_riaz <- X_riaz[,grep("xce_", colnames(X_riaz))]
 X_cus_riaz <- X_riaz[,grep("CUSTOM_", colnames(X_riaz))]
 X_hal_riaz <- X_riaz[,grep("HALLMARK_", colnames(X_riaz))]
@@ -426,7 +443,7 @@ RESP_riaz <- dat_riaz[,"Responder"]
 # Lauss et al. (TIDE)
 load(".\\RData\\gex_lauss.RData")
 load(".\\RData\\dat_lauss.RData")
-X_lauss <- omit.reducols(curateX(gex=gex_lauss, dat=dat_lauss))
+X_lauss <- cbind(omit.reducols(curateX(gex=gex_lauss, dat=dat_lauss)), isIO = 1, isChemo = 0)
 X_xce_lauss <- X_lauss[,grep("xce_", colnames(X_lauss))]
 X_cus_lauss <- X_lauss[,grep("CUSTOM_", colnames(X_lauss))]
 X_hal_lauss <- X_lauss[,grep("HALLMARK_", colnames(X_lauss))]
@@ -437,7 +454,7 @@ RESP_lauss <- dat_lauss[,"Responder"]
 # Kim et al. (TIDE)
 load(".\\RData\\gex_kim.RData")
 load(".\\RData\\dat_kim.RData")
-X_kim <- omit.reducols(curateX(gex=gex_kim, dat=dat_kim))
+X_kim <- cbind(omit.reducols(curateX(gex=gex_kim, dat=dat_kim)), isIO = 1, isChemo = 0)
 X_xce_kim <- X_kim[,grep("xce_", colnames(X_kim))]
 X_cus_kim <- X_kim[,grep("CUSTOM_", colnames(X_kim))]
 X_hal_kim <- X_kim[,grep("HALLMARK_", colnames(X_kim))]
@@ -446,14 +463,43 @@ RESP_kim <- dat_kim[,"Responder"]
 # Chen et al. (TIDE)
 load(".\\RData\\gex_chen.RData")
 load(".\\RData\\dat_chen.RData")
-X_chen <- omit.reducols(curateX(gex=gex_chen, dat=dat_chen))
+X_chen <- cbind(omit.reducols(curateX(gex=gex_chen, dat=dat_chen)), isIO = 1, isChemo = 0)
 X_xce_chen <- X_chen[,grep("xce_", colnames(X_chen))]
 X_cus_chen <- X_chen[,grep("CUSTOM_", colnames(X_chen))]
 X_hal_chen <- X_chen[,grep("HALLMARK_", colnames(X_chen))]
 X_bas_chen <- X_chen[,grep("BASE_", colnames(X_chen))]
 RESP_chen <- dat_chen[,"Responder"]
+# Gide et al. (TIDE)
+load(".\\RData\\gex_gide.RData")
+load(".\\RData\\dat_gide.RData")
+X_gide <- cbind(omit.reducols(curateX(gex=gex_gide, dat=dat_gide)), isIO = 1, isChemo = 0)
+X_xce_gide <- X_gide[,grep("xce_", colnames(X_gide))]
+X_cus_gide <- X_gide[,grep("CUSTOM_", colnames(X_gide))]
+X_hal_gide <- X_gide[,grep("HALLMARK_", colnames(X_gide))]
+X_bas_gide <- X_gide[,grep("BASE_", colnames(X_gide))]
+PFS_gide <- survival::Surv(time=dat_gide[,"PFS.time"], event=dat_gide[,"PFS.event"])
+OS_gide <- survival::Surv(time=dat_gide[,"OS.time"], event=dat_gide[,"OS.event"])
+RESP_gide <- dat_gide[,"Responder"]
+# Braun et al. (Raw source, both Nivo and Chemo arms)
+load(".\\RData\\gex_braun_nivo.RData")
+load(".\\RData\\dat_braun_nivo.RData")
+load(".\\RData\\gex_braun_ever.RData")
+load(".\\RData\\dat_braun_ever.RData")
+X_braun_nivo <- cbind(omit.reducols(curateX(gex=gex_braun_nivo, dat=dat_braun_nivo)), isIO = 1, isChemo = 0)
+X_braun_ever <- cbind(omit.reducols(curateX(gex=gex_braun_ever, dat=dat_braun_ever)), isIO = 0, isChemo = 1)
+PFS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"PFS.time"], event=dat_braun_nivo[,"PFS.event"])
+iPFS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"iPFS.time"], event=dat_braun_nivo[,"iPFS.event"])
+OS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"OS.time"], event=dat_braun_nivo[,"OS.event"])
+RESP_braun_nivo <- dat_braun_nivo[,"Responder"]
+iRESP_braun_nivo <- dat_braun_nivo[,"iResponder"]
+PFS_braun_ever <- survival::Surv(time=dat_braun_ever[,"PFS.time"], event=dat_braun_ever[,"PFS.event"])
+iPFS_braun_ever <- survival::Surv(time=dat_braun_ever[,"iPFS.time"], event=dat_braun_ever[,"iPFS.event"])
+OS_braun_ever <- survival::Surv(time=dat_braun_ever[,"OS.time"], event=dat_braun_ever[,"OS.event"])
+RESP_braun_ever <- dat_braun_ever[,"Responder"]
+iRESP_braun_ever <- dat_braun_ever[,"iResponder"]
+
 # Save image containing the GEXs, DATs, Xs, and various y-responses
-#save.image("temp.RData")
+save.image("datas.RData")
 
 
 
