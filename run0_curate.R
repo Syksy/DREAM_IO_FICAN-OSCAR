@@ -1077,7 +1077,6 @@ save(dat_lauss, file="./RData/dat_lauss.RData")
 # Kim et al., Nat Medicine 2018
 # (Pembrolizumab)
 # Response 0/1 available
-
 gex_kim <- read.table(".\\TIDE\\Kim2018_PD1_Gastric_RNASeq\\ICB.Kim2018_Pembrolizumab_Gastric.self_subtract", header=TRUE)
 cli_kim <- read.table(".\\TIDE\\Kim2018_PD1_Gastric_RNASeq\\ICB.Kim2018_Pembrolizumab_Gastric.clinical", header=TRUE, nrows=57)
 # Map to ensembl/hugo/etc
@@ -1092,6 +1091,10 @@ cli_kim <- cli_kim[,-1,drop=FALSE]
 pat_kim <- intersect(rownames(cli_kim), colnames(gex_kim))
 gex_kim <- gex_kim[,pat_kim]
 cli_kim <- cli_kim[pat_kim,,drop=FALSE]
+# Append additional info from Kim et al. Table 2
+cli2_kim <- read.table(".\\RawData\\KimEtAl_Table2.tsv", sep="\t", header=TRUE)
+cli_kim <- cli2_kim[match(rownames(cli_kim), cli2_kim$SEQID),]
+rownames(cli_kim) <- cli_kim$SEQID
 # Create dat_kim
 # NOTE! TIDE may have defined Response differently than DREAM IO
 # No RECIST info here
@@ -1102,8 +1105,9 @@ dat_kim <- data.frame(
 	CRFHIST = NA,
 	TOBACUSE = NA,
 	ECOGPS = as.integer(NA),
-	PDL1 = as.integer(NA),
-	TMB = as.numeric(NA),
+	PDL1 = as.integer(cli_kim[,"PDL1tumor"]),
+	# Choosing suitable TMB-like numbers based of reverse engineering of class labels
+	TMB = c(50,100,250)[match(cli_kim[,"NumberofSNVs"], c("LowML","ModML", "HighML"))],
 	TCR_Shannon = as.numeric(NA),
 	TCR_Richness = as.numeric(NA),
 	TCR_Evenness = as.numeric(NA),
@@ -1114,9 +1118,13 @@ dat_kim <- data.frame(
 	PFS.event = as.integer(NA),
 	OS.time = as.integer(NA),
 	OS.event = as.integer(NA),
-	Responder = as.integer(cli_kim[,"Response"])
+	#Responder = as.integer(cli_kim[,"Response"])
+	Responder = 1-as.integer(cli_kim[,"BOR"]=="PD")
 )
 rownames(dat_kim) <- dat_kim$patientID
+# Brief check for log10(TMB) x PDL1 -> BOR
+#plot(dat_kim[,"PDL1"], log10(dat_kim[,"TMB"]), pch=16, col=dat_kim[,"Responder"])
+plot(gex_kim["CD274",], log10(dat_kim[,"TMB"]), pch=16, col=1+dat_kim[,"Responder"])
 #> all(colnames(gex_kim) == rownames(dat_kim))
 #[1] TRUE
 save(gex_kim, file="./RData/gex_kim.RData")

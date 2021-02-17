@@ -20,7 +20,7 @@ curateX <- function(
 	dat, # Combined clinical and non-GEX variables (e.g. TMB, IHC-stainings, age, ...)
 	keygenes = unique(c(
 		"CD274", "PDL1", # PD-L1
-		"CD276", "B7-H3",
+		"CD276", "B7-H3", "B7.H3",
 		"PDCD1", "CD279",
 		"EGFR",   # T790M mutation in particular, separate drugs used for squamous
 		"ALK",    # Mutation often seen in non-smoker, young, adenocarcinoma subtype
@@ -186,8 +186,9 @@ curateX <- function(
 		}else{
 			X <- cbind(X, TMBmedian = ifelse(is.na(dat[,"TMB"]), 0, ifelse(dat[,"TMB"]>=medianTMB, 1, -1)))
 			X <- cbind(X, TMB = dat[,"TMB"])
-			X[is.na(X[,"TMB"]),"TMB"] <- medianTMB
+			#X[is.na(X[,"TMB"]),"TMB"] <- medianTMB
 		}
+		cbind(X, log10TMB <- log10(dat[,"TMB"]))
 	}
 	# Sex, binary indicator for +1 that patient was male
 	if("SEX" %in% clinvars){
@@ -204,7 +205,7 @@ curateX <- function(
 			X <- cbind(X, PDL1 = 0)
 		}else{
 			X <- cbind(X, PDL1median = ifelse(is.na(dat[,"PDL1"]), 0, ifelse(dat[,"PDL1"]>=medianPDL1, 1, -1)))
-			X <- cbind(X, PDL1 = ifelse(is.na(dat[,"PDL1"]), PDL1median, dat[,"PDL1"]))
+			X <- cbind(X, PDL1 = ifelse(is.na(dat[,"PDL1"]), medianPDL1, dat[,"PDL1"]))
 		}
 	}
 	
@@ -481,6 +482,16 @@ PFS_gide <- survival::Surv(time=dat_gide[,"PFS.time"], event=dat_gide[,"PFS.even
 OS_gide <- survival::Surv(time=dat_gide[,"OS.time"], event=dat_gide[,"OS.event"])
 RESP_gide <- dat_gide[,"Responder"]
 # Braun et al. (Raw source, both Nivo and Chemo arms)
+# NOTE! Possible differences in how TMB behaves:
+# https://jitc.bmj.com/content/8/1/e000319
+#
+# "TMB scores ranged from 0.36 to 12.24 mutations/Mb (mean 2.83 mutations/Mb) with no significant difference between 
+# the PD and DC groups (3.01 vs 2.63 mutations/Mb, respectively; p=0.7682)."
+#
+# "Overall, neither TMB nor PD-L1 correlated with ICI response and TMB was not significantly associated with 
+# PD-L1 expression. The higher incidence of LOH-MHC in PD group suggests that loss of antigen presentation 
+# may restrict response to ICIs. Separately, enrichment of HRR gene mutations in the DC group suggests potential 
+# utility in predicting ICI response and a potential therapeutic target, warranting future studies."
 load(".\\RData\\gex_braun_nivo.RData")
 load(".\\RData\\dat_braun_nivo.RData")
 load(".\\RData\\gex_braun_ever.RData")
@@ -689,6 +700,83 @@ RESP_bas_lauss_oscar <- oscar::oscar(x = X_bas_lauss, y = RESP_lauss, family="lo
 PFS_bas_cv_lauss <- oscar::cv.oscar(PFS_bas_lauss_oscar, fold=5, seed=30)
 OS_bas_cv_lauss <- oscar::cv.oscar(OS_bas_lauss_oscar, fold=5, seed=31)
 RESP_bas_cv_lauss <- oscar::cv.oscar(RESP_bas_lauss_oscar, fold=5, seed=32)
+
+
+save.image("temprun.RData")
+
+
+
+# Gide et al. xCell
+PFS_xce_gide_oscar <- oscar::oscar(x = X_xce_gide, y = PFS_gide, family="cox")
+OS_xce_gide_oscar <- oscar::oscar(x = X_xce_gide, y = OS_gide, family="cox")
+RESP_xce_gide_oscar <- oscar::oscar(x = X_xce_gide, y = RESP_gide, family="logistic")
+# OSCAR CV
+PFS_xce_cv_gide <- oscar::cv.oscar(PFS_xce_gide_oscar, fold=5, seed=21)
+OS_xce_cv_gide <- oscar::cv.oscar(OS_xce_gide_oscar, fold=5, seed=22)
+RESP_xce_cv_gide <- oscar::cv.oscar(RESP_xce_gide_oscar, fold=5, seed=23)
+# Gide et al. CUSTOM GMTs
+PFS_cus_gide_oscar <- oscar::oscar(x = X_cus_gide, y = PFS_gide, family="cox")
+OS_cus_gide_oscar <- oscar::oscar(x = X_cus_gide, y = OS_gide, family="cox")
+RESP_cus_gide_oscar <- oscar::oscar(x = X_cus_gide, y = RESP_gide, family="logistic")
+# OSCAR CV
+PFS_cus_cv_gide <- oscar::cv.oscar(PFS_cus_gide_oscar, fold=5, seed=24)
+OS_cus_cv_gide <- oscar::cv.oscar(OS_cus_gide_oscar, fold=5, seed=25)
+RESP_cus_cv_gide <- oscar::cv.oscar(RESP_cus_gide_oscar, fold=5, seed=26)
+# Gide et al. HALLMARKS
+PFS_hal_gide_oscar <- oscar::oscar(x = X_hal_gide, y = PFS_gide, family="cox")
+OS_hal_gide_oscar <- oscar::oscar(x = X_hal_gide, y = OS_gide, family="cox")
+RESP_hal_gide_oscar <- oscar::oscar(x = X_hal_gide, y = RESP_gide, family="logistic")
+# OSCAR CV
+PFS_hal_cv_gide <- oscar::cv.oscar(PFS_hal_gide_oscar, fold=5, seed=27)
+OS_hal_cv_gide <- oscar::cv.oscar(OS_hal_gide_oscar, fold=5, seed=28)
+RESP_hal_cv_gide <- oscar::cv.oscar(RESP_hal_gide_oscar, fold=5, seed=29)
+# Gide et al. BASE MARKERS
+PFS_bas_gide_oscar <- oscar::oscar(x = X_bas_gide, y = PFS_gide, family="cox")
+OS_bas_gide_oscar <- oscar::oscar(x = X_bas_gide, y = OS_gide, family="cox")
+RESP_bas_gide_oscar <- oscar::oscar(x = X_bas_gide, y = RESP_gide, family="logistic")
+# OSCAR CV
+PFS_bas_cv_gide <- oscar::cv.oscar(PFS_bas_gide_oscar, fold=5, seed=30)
+OS_bas_cv_gide <- oscar::cv.oscar(OS_bas_gide_oscar, fold=5, seed=31)
+RESP_bas_cv_gide <- oscar::cv.oscar(RESP_bas_gide_oscar, fold=5, seed=32)
+
+
+save.image("temprun.RData")
+
+
+
+# Braun et al. Nivo  xCell
+PFS_xce_braun_nivo_oscar <- oscar::oscar(x = X_xce_braun_nivo, y = PFS_braun_nivo, family="cox")
+OS_xce_braun_nivo_oscar <- oscar::oscar(x = X_xce_braun_nivo, y = OS_braun_nivo, family="cox")
+RESP_xce_braun_nivo_oscar <- oscar::oscar(x = X_xce_braun_nivo, y = RESP_braun_nivo, family="logistic")
+# OSCAR CV
+PFS_xce_cv_braun_nivo <- oscar::cv.oscar(PFS_xce_braun_nivo_oscar, fold=5, seed=21)
+OS_xce_cv_braun_nivo <- oscar::cv.oscar(OS_xce_braun_nivo_oscar, fold=5, seed=22)
+RESP_xce_cv_braun_nivo <- oscar::cv.oscar(RESP_xce_braun_nivo_oscar, fold=5, seed=23)
+# Braun et al. Nivo  CUSTOM GMTs
+PFS_cus_braun_nivo_oscar <- oscar::oscar(x = X_cus_braun_nivo, y = PFS_braun_nivo, family="cox")
+OS_cus_braun_nivo_oscar <- oscar::oscar(x = X_cus_braun_nivo, y = OS_braun_nivo, family="cox")
+RESP_cus_braun_nivo_oscar <- oscar::oscar(x = X_cus_braun_nivo, y = RESP_braun_nivo, family="logistic")
+# OSCAR CV
+PFS_cus_cv_braun_nivo <- oscar::cv.oscar(PFS_cus_braun_nivo_oscar, fold=5, seed=24)
+OS_cus_cv_braun_nivo <- oscar::cv.oscar(OS_cus_braun_nivo_oscar, fold=5, seed=25)
+RESP_cus_cv_braun_nivo <- oscar::cv.oscar(RESP_cus_braun_nivo_oscar, fold=5, seed=26)
+# Braun et al. Nivo  HALLMARKS
+PFS_hal_braun_nivo_oscar <- oscar::oscar(x = X_hal_braun_nivo, y = PFS_braun_nivo, family="cox")
+OS_hal_braun_nivo_oscar <- oscar::oscar(x = X_hal_braun_nivo, y = OS_braun_nivo, family="cox")
+RESP_hal_braun_nivo_oscar <- oscar::oscar(x = X_hal_braun_nivo, y = RESP_braun_nivo, family="logistic")
+# OSCAR CV
+PFS_hal_cv_braun_nivo <- oscar::cv.oscar(PFS_hal_braun_nivo_oscar, fold=5, seed=27)
+OS_hal_cv_braun_nivo <- oscar::cv.oscar(OS_hal_braun_nivo_oscar, fold=5, seed=28)
+RESP_hal_cv_braun_nivo <- oscar::cv.oscar(RESP_hal_braun_nivo_oscar, fold=5, seed=29)
+# Braun et al. Nivo  BASE MARKERS
+PFS_bas_braun_nivo_oscar <- oscar::oscar(x = X_bas_braun_nivo, y = PFS_braun_nivo, family="cox")
+OS_bas_braun_nivo_oscar <- oscar::oscar(x = X_bas_braun_nivo, y = OS_braun_nivo, family="cox")
+RESP_bas_braun_nivo_oscar <- oscar::oscar(x = X_bas_braun_nivo, y = RESP_braun_nivo, family="logistic")
+# OSCAR CV
+PFS_bas_cv_braun_nivo <- oscar::cv.oscar(PFS_bas_braun_nivo_oscar, fold=5, seed=30)
+OS_bas_cv_braun_nivo <- oscar::cv.oscar(OS_bas_braun_nivo_oscar, fold=5, seed=31)
+RESP_bas_cv_braun_nivo <- oscar::cv.oscar(RESP_bas_braun_nivo_oscar, fold=5, seed=32)
+
 
 save.image("temprun.RData")
 
