@@ -41,7 +41,7 @@ rownames(dat_input) <- dat_input[,1]
 dat_input <- dat_input[,-1]
 print("Done reading in tpm and clinical data")
 
-# Submission 1, PFS
+# Submission 2, PFS
 
 # Transformation for gene expression data
 logz <- function(x) { 
@@ -87,6 +87,12 @@ aggregateX <- function(
 	rownames(X) <- rownames(dat)
 	# Impute zero indicators if there are NA values
 	if(any(is.na(X[,"isTMBhigh"]))) X[is.na(X[,"isTMBhigh"]),"isTMBhigh"] <- 0
+	
+	X <- cbind(X, isMale = as.integer(dat[,"SEX"] == "M"))
+
+	X <- cbind(X, isSquamous = as.integer(dat[,"CRFHIST"] == "SQUAMOUS"))
+
+	X <- cbind(X, isEversmoker = as.integer(dat[,"TOBACCOUSE"] %in% c("FORMER", "CURRENT")))
 	
 	# CD274 expression level modelled as a surrogate for PD-L1 IHC
 	# Normalized expressions between various platforms and their respective distributional characteristics
@@ -141,12 +147,10 @@ predictX <- function(
 #)
 ## Subchallenge 1 submission 2
 b_sub = c(
-	"CD274" = ,
-	"isTMBhigh" =, # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately
-	"isMale" =, # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ)
+	"CD274" = -0.5326, # = same as HR 0.5870766; has the most effect per unit
+	"isTMBhigh" = log(0.62), # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately
+	"isMale" = log(0.8), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ)
 	"isSquamous" = log(0.77) # Carbone et al. supplementary effect for OS
-	"isSquamousEversmoker" = log(0.59), # Brahmer et al. for SQ eversmoker HR
-	"isNonsquamousEversmoker" = log(0.7), # Borhaei et al for non-SQ eversmoker HR
 	"isEversmoker" = log(0.7) # Huant et al. OncoImmunology 2018 pooled meta-analysis
 )
 

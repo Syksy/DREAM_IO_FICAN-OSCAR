@@ -41,7 +41,7 @@ rownames(dat_input) <- dat_input[,1]
 dat_input <- dat_input[,-1]
 print("Done reading in tpm and clinical data")
 
-# Submission 1, PFS
+# Submission 3, PD or !PD
 
 # Transformation for gene expression data
 logz <- function(x) { 
@@ -76,7 +76,7 @@ aggregateX <- function(
 	
 	# CD274 expression level modelled as a surrogate for PD-L1 IHC
 	# Normalized expressions between various platforms and their respective distributional characteristics
-	#X <- cbind(X, CD274 = gex["CD274",])
+	#X <- cbind(X, CD274 = logz(gex["CD274",]))
 	
 	# GSVA 
 	#gmt_custom <- GSEABase::getGmt("selfmade.gmt")
