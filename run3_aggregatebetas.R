@@ -2,17 +2,107 @@
 
 aggregateX <- function(
 	gex,
-	dat
+	dat,
+	keyGenes = unique(c(
+		"CD274", "PDL1", # PD-L1
+		"CD276", "B7-H3",
+		"PDCD1", "CD279",
+		"EGFR",   # T790M mutation in particular, separate drugs used for squamous
+		"ALK",    # Mutation often seen in non-smoker, young, adenocarcinoma subtype
+		"ROS1",   # Adenocarcinoma, often negative for ALK, KRAS and EGFR muts
+		"BRAF",   # Mutation helps tumor to grow
+		"RET",    # Mutation helps tumor to grow
+		"MET",    # Mutation helps tumor to grow
+		"NTRK",   # Mutation helps tumor to grow
+		"HER2",   # NSLungCa PeerView podcast
+		"KRAS",   # NSLungCa PeerView podcast
+		"NRG1",    # NSLungCa PeerView podcast
+		# Mikko's slides, anything related; https://www.frontiersin.org/articles/10.3389/fonc.2016.00112/full
+		"VEGF",
+		"HER1",
+		"HER2",
+		"HER3",
+		"HER4",
+		"PTEN",
+		"PI3K",
+		"RAS",
+		"MEK",
+		"ERK",
+		"CDK4",
+		"CDK6",
+		"PDK-1",
+		"AKT",
+		# Mikko NGS syöpäpaneeli 1 lisäyksiä
+		"PIK3CA",
+		"KIT",
+		"NRAS",
+		"PDGFRA",
+		# Other interesting? Cytokines, chemokines
+		"CLCL10",
+		"CSCL11",
+		# https://www.cell.com/cancer-cell/pdfExtended/S1535-6108(19)30037-6 Table 2
+		"TLR3", 
+		"LAG3",
+		"IDO1",
+		"TIGIT", 
+		"TNFAIP3",
+		"ADORA2A",
+		"ICOS",
+		"TNFRSF9",
+		"TNFRSF9",
+		"CD52",		
+		"BTLA",
+		"TIGIT",
+		"IDO1",
+		"TLR8",
+		# https://www.nature.com/articles/nm.3909
+		"KLRB1",
+		"CD161",
+		"FOXM1",
+		# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6487502/
+		"SERPINB9",
+		# Immuno marker, e.g. https://science.sciencemag.org/content/362/6411/eaar3593?rss=1#ref-15
+		"CD8A",
+		"CCL5",
+		"CD27",
+		"CMKLR1",
+		"CXCL9",
+		"CXCR6",
+		"HLA-D1A1","HLA.D1A1",
+		"HLA-DRB1","HLA.DRB1",
+		"HLA-E", "HLA.E",
+		"IDO1",
+		"LAG3",
+		"NKG7",
+		"PDCD1LG2","PDL2",
+		"PSMB10",
+		"STAT1",
+		"TIGIT",
+		# https://www.cell.com/cancer-cell/pdfExtended/S1535-6108(19)30037-6
+		"TLR3",
+		"LAG3",
+		"IDO1",
+		"TIGIT",
+		"TNFAIP3",
+		"ADORA2A",
+		"ICOS",
+		"TNFRSF9",
+		"CD52",
+		"BTLA",
+		"TLR8"
+	))
 ){
 	library(GSVA)
 	library(immunedeconv)
 	
 	# Hard-coded Carbone et al. thresholds
 	# 242 mutations threshold for 'high' mutatation; impute NAs as if being not highly mutated
-	X <- data.frame(isTMBhigh = as.integer(dat[,"TMB"] > 242))
+	X <- data.frame(TMB = as.integer(dat[,"TMB"]))
 	rownames(X) <- rownames(dat)
 	# Impute zero indicators if there are NA values
-	if(any(is.na(X[,"isTMBhigh"]))) X[is.na(X[,"isTMBhigh"]),"isTMBhigh"] <- 0
+	if(any(is.na(X[,"TMB"]))) X[is.na(X[,"TMB"]),"TMB"] <- median(X[,"TMB"], na.rm=TRUE)
+	# Arbitrary threshold, based on tertiary from Carbone et al
+	X <- cbind(X, TMBhigh = X[,"TMB"]>242)
 	
 	# There was no significant association between tumor-mutation burden and 
 	# PD-L1 expression level (Pearson’s correlation coefficient = 0.059).	
@@ -29,12 +119,12 @@ aggregateX <- function(
 	# looks like a non-linear trend?
 	
 	# Thirds for quantiles
-	TMBq3s <- quantile(dat[,"TMB"], probs=c(0, 1/3, 2/3, 1), na.rm=TRUE)
-	dat[is.na(dat[,"TMB"]),"TMB"] <- median(dat[,"TMB"], na.rm=TRUE)
-	PDL1q3s <- quantile(dat[,"PDL1"], probs=c(0, 1/3, 2/3, 1), na.rm=TRUE)
-	X <- cbind(X, TMBq3s = findInterval(x=dat[,"TMB"], vec=TMBq3s, rightmost.closed = TRUE))
-	X <- cbind(X, PDL1q3s = findInterval(x=dat[,"PDL1"], vec=PDL1q3s, rightmost.closed = TRUE))
-	X <- cbind(X, TMB.PDL1 = X[,"TMBq3s"] * X[,"PDL1q3s"])
+	#TMBq3s <- quantile(dat[,"TMB"], probs=c(0, 1/3, 2/3, 1), na.rm=TRUE)
+	#dat[is.na(dat[,"TMB"]),"TMB"] <- median(dat[,"TMB"], na.rm=TRUE)
+	#PDL1q3s <- quantile(dat[,"PDL1"], probs=c(0, 1/3, 2/3, 1), na.rm=TRUE)
+	#X <- cbind(X, TMBq3s = findInterval(x=dat[,"TMB"], vec=TMBq3s, rightmost.closed = TRUE))
+	#X <- cbind(X, PDL1q3s = findInterval(x=dat[,"PDL1"], vec=PDL1q3s, rightmost.closed = TRUE))
+	#X <- cbind(X, TMB.PDL1 = X[,"TMBq3s"] * X[,"PDL1q3s"])
 	# CD274 expression level modelled as a surrogate for PD-L1 IHC
 	# Normalized expressions between various platforms and their respective distributional characteristics
 	X <- cbind(X, CD274 = gex["CD274",])
@@ -46,10 +136,10 @@ aggregateX <- function(
 	X <- cbind(X, res_gsva)
 	
 	# Interaction with T-cell inflammatory signal Gene Expression Profile (GEP) and high tumor mutational burden
-	GEPq2s <- median(res_gsva[,"CUSTOM_GEP"])
-	X <- cbind(X, GEPq2s = as.integer(res_gsva[,"CUSTOM_GEP"] > GEPq2s))
+	#GEPq2s <- median(res_gsva[,"CUSTOM_GEP"])
+	#X <- cbind(X, GEPq2s = as.integer(res_gsva[,"CUSTOM_GEP"] > GEPq2s))
 	# TMB x GEP interaction, upper tertile of TMB vs. upper median of GEP signature
-	X <- cbind(X, TMB.GEP = as.integer(X[,"TMBq3s"] == 2) * X[,"GEPq2s"])
+	#X <- cbind(X, TMB.GEP = as.integer(X[,"TMBq3s"] == 2) * X[,"GEPq2s"])
 	
 	# GSVA for Hallmarks
 	gmt_hallmarks <- GSEABase::getGmt(".\\h.all.v7.2.symbols.gmt")
@@ -70,20 +160,21 @@ aggregateX <- function(
 }
 
 setwd("D:\\Gits\\DREAM_2020_IO")
-load("temp.RData")
-load("temprun_tcga.RData")
-load("tempspace_1.RData")
-load("tempspace_2.RData")
-load("tempspace_3.RData")
-load("tempspace_4.RData")
-load("tempspace_5.RData")
-load("tempspace_6.RData")
-load("tempspace_7.RData")
+#load("temp.RData")
+#load("temprun_tcga.RData")
+#load("tempspace_1.RData")
+#load("tempspace_2.RData")
+#load("tempspace_3.RData")
+#load("tempspace_4.RData")
+#load("tempspace_5.RData")
+#load("tempspace_6.RData")
+#load("tempspace_7.RData")
+load("datas.RData")
 
 # Plot various gene expression distributions to see if Cox PH coefficients would generalize between studies
 
 png("GEXs_notransforms.png", width=800, height=800)
-par(mfrow=c(3,3))
+par(mfrow=c(3,4))
 gexplot <- function(x, main=""){
 	plot.new()
 	par(mar=c(4,4,4,1))
@@ -105,6 +196,9 @@ gexplot(gex_lauss, main="GEX Lauss et al. (orig.)")
 gexplot(gex_hugo, main="GEX Prat et al. (orig.)")
 gexplot(gex_westin, main="GEX Westin et al. (orig.)")
 gexplot(gex_riaz, main="GEX Riaz et al. (orig.)")
+gexplot(gex_gide, main="GEX Gide et al. (orig.)")
+gexplot(gex_braun_nivo, main="GEX Braun et al. Nivo (orig.)")
+gexplot(gex_braun_ever, main="GEX Braun et al. Chemo (orig.)")
 dev.off()
 
 logz <- function(x) { 
@@ -115,8 +209,75 @@ logz <- function(x) {
 	tmp
 }
 
-png("GEXs_logzs.png", width=800, height=800)
-par(mfrow=c(3,3))
+if(FALSE){
+	png("GEXs_logzs.png", width=800, height=800)
+	par(mfrow=c(3,4))
+	gexplot <- function(x, main=""){
+		plot.new()
+		par(mar=c(4,4,4,1))
+		# Ranges based on trimmed quantiles
+		xr <- quantile(x, probs=seq(0,1,.1))[c(2,10)]
+		plot.window(xlim=xr, ylim=c(0,1))
+		box(); axis(1); axis(2)
+		title(xlab="GEX values (trimmed, first 100)", ylab="Kernel density", main=main)
+		lapply(1:min(100, nrow(x)), FUN=function(z){
+			points(density(x[z,]), type="l", col=z)
+		})
+	}
+	gexplot(apply(gex_synthetic, MARGIN=1, FUN=logz), main="GEX Synthetic (log-z)")
+	gexplot(apply(gex_tcga, MARGIN=1, FUN=logz), main="GEX TCGA (log-z)")
+	gexplot(gex_chen, main="GEX Chen et al. (orig.)")
+	gexplot(apply(gex_hugo, MARGIN=1, FUN=logz), main="GEX Hugo et al. (log-z)")
+	gexplot(gex_kim, main="GEX Kim et al. (orig.)")
+	gexplot(gex_lauss, main="GEX Lauss et al. (orig.)")
+	gexplot(gex_prat, main="GEX Prat et al. (orig.)")
+	gexplot(apply(gex_westin, MARGIN=1, FUN=logz), main="GEX Westin et al. (log-z)")
+	gexplot(apply(gex_riaz, MARGIN=1, FUN=logz), main="GEX Riaz et al. (log-z)")
+	gexplot(gex_gide, main="GEX Gide et al. (orig.)")
+	gexplot(apply(gex_braun_nivo, MARGIN=1, FUN=logz), main="GEX Braun et al. Nivo (log-z)")
+	gexplot(apply(gex_braun_ever, MARGIN=1, FUN=logz), main="GEX Braun et al. Chemo (log-z)")
+	dev.off()
+}
+
+# Same the log-z standardized gene expression patterns
+#gxz_synthetic <- t(apply(gex_synthetic, MARGIN=1, FUN=logz))
+# Normalize using quantile normalization
+geq_hugo <- preprocessCore::normalize.quantiles.use.target(gex_hugo, target=c(gex_synthetic))
+rownames(geq_hugo) <- rownames(gex_hugo)
+colnames(geq_hugo) <- colnames(gex_hugo)
+geq_prat <- preprocessCore::normalize.quantiles.use.target(gex_prat, target=c(gex_synthetic))
+rownames(geq_prat) <- rownames(gex_prat)
+colnames(geq_prat) <- colnames(gex_prat)
+geq_westin <- preprocessCore::normalize.quantiles.use.target(gex_westin, target=c(gex_synthetic))
+rownames(geq_westin) <- rownames(gex_westin)
+colnames(geq_westin) <- colnames(gex_westin)
+geq_lauss <- preprocessCore::normalize.quantiles.use.target(gex_lauss, target=c(gex_synthetic))
+rownames(geq_lauss) <- rownames(gex_lauss)
+colnames(geq_lauss) <- colnames(gex_lauss)
+geq_gide <- preprocessCore::normalize.quantiles.use.target(gex_gide, target=c(gex_synthetic))
+rownames(geq_gide) <- rownames(gex_gide)
+colnames(geq_gide) <- colnames(gex_gide)
+geq_chen <- preprocessCore::normalize.quantiles.use.target(gex_chen, target=c(gex_synthetic))
+rownames(geq_chen) <- rownames(gex_chen)
+colnames(geq_chen) <- colnames(gex_chen)
+geq_kim <- preprocessCore::normalize.quantiles.use.target(gex_kim, target=c(gex_synthetic))
+rownames(geq_kim) <- rownames(gex_kim)
+colnames(geq_kim) <- colnames(gex_kim)
+geq_riaz <- preprocessCore::normalize.quantiles.use.target(gex_riaz, target=c(gex_synthetic))
+rownames(geq_riaz) <- rownames(gex_riaz)
+colnames(geq_riaz) <- colnames(gex_riaz)
+geq_braun_nivo <- preprocessCore::normalize.quantiles.use.target(gex_braun_nivo, target=c(gex_synthetic))
+rownames(geq_braun_nivo) <- rownames(gex_braun_nivo)
+colnames(geq_braun_nivo) <- colnames(gex_braun_nivo)
+geq_braun_ever <- preprocessCore::normalize.quantiles.use.target(gex_braun_ever, target=c(gex_synthetic))
+rownames(geq_braun_ever) <- rownames(gex_braun_ever)
+colnames(geq_braun_ever) <- colnames(gex_braun_ever)
+geq_tcga <- preprocessCore::normalize.quantiles.use.target(gex_tcga, target=c(gex_synthetic))
+rownames(geq_tcga) <- rownames(gex_tcga)
+colnames(geq_tcga) <- colnames(gex_tcga)
+
+png("GEXs_quantnorm.png", width=800, height=800)
+par(mfrow=c(3,4))
 gexplot <- function(x, main=""){
 	plot.new()
 	par(mar=c(4,4,4,1))
@@ -129,28 +290,35 @@ gexplot <- function(x, main=""){
 		points(density(x[z,]), type="l", col=z)
 	})
 }
-gexplot(apply(gex_synthetic, MARGIN=1, FUN=logz), main="GEX Synthetic (log-z)")
-gexplot(apply(gex_tcga, MARGIN=1, FUN=logz), main="GEX TCGA (log-z)")
-gexplot(gex_chen, main="GEX Chen et al. (orig.)")
-gexplot(apply(gex_hugo, MARGIN=1, FUN=logz), main="GEX Hugo et al. (log-z)")
-gexplot(gex_kim, main="GEX Kim et al. (orig.)")
-gexplot(gex_lauss, main="GEX Lauss et al. (orig.)")
-gexplot(gex_prat, main="GEX Prat et al. (orig.)")
-gexplot(apply(gex_westin, MARGIN=1, FUN=logz), main="GEX Westin et al. (log-z)")
-gexplot(apply(gex_riaz, MARGIN=1, FUN=logz), main="GEX Riaz et al. (log-z)")
+gexplot(gex_synthetic, main="GEX Synthetic (orig.)")
+gexplot(geq_tcga, main="GEX TCGA (quant.)")
+gexplot(geq_chen, main="GEX Chen et al. (quant.)")
+gexplot(geq_hugo, main="GEX Hugo et al. (quant.)")
+gexplot(geq_kim, main="GEX Kim et al. (quant.)")
+gexplot(geq_lauss, main="GEX Lauss et al. (quant.)")
+gexplot(geq_hugo, main="GEX Prat et al. (quant.)")
+gexplot(geq_westin, main="GEX Westin et al. (quant.)")
+gexplot(geq_riaz, main="GEX Riaz et al. (quant.)")
+gexplot(geq_gide, main="GEX Gide et al. (quant.)")
+gexplot(geq_braun_nivo, main="GEX Braun et al. Nivo (quant.)")
+gexplot(geq_braun_ever, main="GEX Braun et al. Chemo (quant.)")
 dev.off()
 
-# Same the log-z standardized gene expression patterns
-gxz_synthetic <- t(apply(gex_synthetic, MARGIN=1, FUN=logz))
-rownames(gxz_synthetic) <- rownames(gex_synthetic)
-gxz_tcga <- t(apply(gex_tcga, MARGIN=1, FUN=logz))
-rownames(gxz_tcga) <- rownames(gex_tcga)
-gxz_hugo <- t(apply(gex_hugo, MARGIN=1, FUN=logz))
-rownames(gxz_hugo) <- rownames(gex_hugo)
-gxz_westin <- t(apply(gex_westin, MARGIN=1, FUN=logz))
-rownames(gxz_westin) <- rownames(gex_westin)
-gxz_riaz <- t(apply(gex_riaz, MARGIN=1, FUN=logz))
-rownames(gxz_riaz) <- rownames(gex_riaz)
+if(FALSE){
+	rownames(gxz_synthetic) <- rownames(gex_synthetic)
+	gxz_tcga <- t(apply(gex_tcga, MARGIN=1, FUN=logz))
+	rownames(gxz_tcga) <- rownames(gex_tcga)
+	gxz_hugo <- t(apply(gex_hugo, MARGIN=1, FUN=logz))
+	rownames(gxz_hugo) <- rownames(gex_hugo)
+	gxz_westin <- t(apply(gex_westin, MARGIN=1, FUN=logz))
+	rownames(gxz_westin) <- rownames(gex_westin)
+	gxz_riaz <- t(apply(gex_riaz, MARGIN=1, FUN=logz))
+	rownames(gxz_riaz) <- rownames(gex_riaz)
+	gxz_braun_nivo <- t(apply(gex_braun_nivo, MARGIN=1, FUN=logz))
+	rownames(gxz_braun_nivo) <- rownames(gex_braun_nivo)
+	gxz_braun_ever <- t(apply(gex_braun_ever, MARGIN=1, FUN=logz))
+	rownames(gxz_braun_ever) <- rownames(gex_braun_ever)
+}
 
 # Compute synthetic data 
 Xs_synthetic <- aggregateX(gex_synthetic, dat=dat_synthetic)
@@ -165,8 +333,11 @@ Xz_synthetic[,OScols]
 
 # Aggregate X matrices
 # PFS:	(Prat et al. &) Lauss et al. & Westin et al.
+#	+ Gide et al. & Braun et al (Nivo)
 # OS:	Hugo et al. & Lauss et al.
+#	+ Gide et al. & Braun et al (Nivo)
 # RESP:	Hugo et a. & Prat et al. & Lauss et al. & Kim et al. & Chen et al. & Riaz et al.
+#	+ Gide et al. & Braun et al (Nivo)
 
 # Chemo-arm
 Xz_tcga <- aggregateX(gex=gxz_tcga, dat=dat_tcga)
@@ -178,10 +349,15 @@ Xz_westin <- aggregateX(gex=gxz_westin, dat=dat_westin)
 Xz_kim <- aggregateX(gex=gex_kim, dat=dat_kim)
 #Xz_chen <- aggregateX(gex=gex_chen, dat=dat_chen)
 Xz_riaz <- aggregateX(gex=gex_riaz, dat=dat_riaz)
+Xz_gide <- aggregateX(gex=gex_gide, dat=dat_gide)
+# Nivo arm
+Xz_braun_nivo <- aggregateX(gex=gex_braun_nivo, dat=dat_braun_nivo)
+# Chemo arm
+Xz_braun_ever <- aggregateX(gex=gex_braun_ever, dat=dat_braun_ever)
 
 
 # Combine studies to generate aggregate HR estimates
-combcols <- c("CD274", "IFNG", "xce_Endothelial_cell")
+combcols <- c("CD274", "CUSTOM_IFNG3", "xce_Endothelial_cell")
 
 # xCell fails for Prat et al. due to too narrow gene panel
 library(survival)
@@ -190,6 +366,12 @@ library(survival)
 # Responses not necessarily in same unit; e.g. Hugo et al. OS in days, Lauss in months
 PFS2_westin <- PFS_westin
 PFS2_westin[,1] <- round(PFS2_westin[,1]/30.5,0)
+
+PFS2_gide <- PFS_gide
+PFS2_gide[,1] <- round(PFS2_gide[,1]/30.5,0)
+
+OS2_gide <- OS_gide
+OS2_gide[,1] <- round(OS2_gide[,1]/30.5,0)
 
 OS2_hugo <- OS_hugo
 OS2_hugo[,1] <- round(OS2_hugo[,1]/30.5,0)
@@ -203,8 +385,8 @@ OS2_hugo[,1] <- round(OS2_hugo[,1]/30.5,0)
 
 ######## COMBINED PROGRESSION FREE SURVIVAL ######
 
-Xz_PFS <- rbind(Xz_lauss[,combcols], Xz_westin[,combcols])
-Yz_PFS <- c(PFS_lauss, PFS2_westin)
+Xz_PFS <- rbind(Xz_lauss[,combcols], Xz_westin[,combcols], Xz_gide[,combcols], Xz_braun_nivo[,combcols])
+Yz_PFS <- c(PFS_lauss, PFS2_westin, PFS2_gide, PFS_braun_nivo)
 survival::coxph(Yz_PFS ~ ., data = as.data.frame(Xz_PFS))
 #> survival::coxph(Yz_PFS ~ ., data = as.data.frame(Xz_PFS))
 #Call:
@@ -247,13 +429,14 @@ survival::coxph(Yz_OS ~ ., data = as.data.frame(Xz_OS))
 ######### COMBINED RESPONSE ########
 
 #RESPcols <- c("CUSTOM_MCP_ENDOTHELIAL.CELLS", "CUSTOM_IFNG3", "xce_Myeloid_dendritic_cell", "HALLMARK_INTERFERON_GAMMA_RESPONSE", "CUSTOM_MCP_MYELOID.DENDRITIC.CELLS")
-RESPcols <- c("CUSTOM_MCP_ENDOTHELIAL.CELLS", "CUSTOM_IFNG3")
+RESPcols <- c("CUSTOM_MCP_ENDOTHELIAL.CELLS", "CUSTOM_IFNG3", "CD274", "CUSTOM_GEP", "HALLMARK_INTERFERON_GAMMA_RESPONSE")
 
 #Xz_RESP <- rbind(Xz_hugo[,combcols], Xz_lauss[,combcols], Xz_kim[,combcols], Xz_riaz[,combcols])
-Xz_RESP <- rbind(Xz_hugo[,RESPcols], Xz_lauss[,RESPcols], Xz_kim[,RESPcols], Xz_riaz[,RESPcols])
-Yz_RESP <- c(RESP_hugo, RESP_lauss, RESP_kim, RESP_riaz)
+Xz_RESP <- rbind(Xz_hugo[,RESPcols], Xz_lauss[,RESPcols], Xz_kim[,RESPcols], Xz_riaz[,RESPcols], Xz_gide[,RESPcols], Xz_braun_nivo[,RESPcols])
+Yz_RESP <- c(RESP_hugo, RESP_lauss, RESP_kim, RESP_riaz, RESP_gide, RESP_braun_nivo)
 summary(stats::glm(Yz_RESP ~ ., data = as.data.frame(Xz_RESP), family="binomial"))
 ### Updated with more variable and Riaz et al.
+
 
 
 ### OLD MODEL
@@ -284,6 +467,15 @@ summary(stats::glm(Yz_RESP ~ ., data = as.data.frame(Xz_RESP), family="binomial"
 #Number of Fisher Scoring iterations: 5
 
 ####### INDIVIDUAL PROGRESSION FREE SURVIVAL ########
+
+# Braun et al Nivo vs. Chemo
+survival::coxph(PFS_braun_nivo ~ ., data = as.data.frame(X_braun_nivo[,c("BASE_TMB", "BASE_CD274", "CUSTOM_GEP")]))
+survival::coxph(OS_braun_nivo ~ ., data = as.data.frame(X_braun_nivo[,c("BASE_TMB", "BASE_CD274", "CUSTOM_GEP")]))
+
+survival::coxph(PFS_braun_ever ~ ., data = as.data.frame(X_braun_ever[,c("BASE_TMB", "BASE_CD274")]))
+survival::coxph(OS_braun_ever ~ ., data = as.data.frame(X_braun_ever[,c("BASE_TMB", "BASE_CD274")]))
+
+
 
 
 # Individual models   
@@ -536,9 +728,380 @@ summary(stats::glm(RESP_tcga ~ ., data = as.data.frame(Xz_tcga[,RESPcols]), fami
 #
 #Number of Fisher Scoring iterations: 4
 
+load("datas.RData")
+
+# Days to months
+dat_tcga[,"PFS.time"] <- dat_tcga[,"PFS.time"] / 30.5
+dat_tcga[,"OS.time"] <- dat_tcga[,"OS.time"] / 30.5
+
+# Impute <0 gex in gex_prat with min(prat>0)
+gex_prat[gex_prat<0] <- min(gex_prat[gex_prat>0])
+
+# Bind Prat et al. vs. TCGA
+gex_prat_tcga <- cbind(
+	gex_prat[intersect(rownames(gex_prat), rownames(gex_tcga)),],
+	gex_tcga[intersect(rownames(gex_prat), rownames(gex_tcga)),]
+)
+dat_prat_tcga <- rbind(
+	cbind(dat_prat[,intersect(colnames(dat_prat), colnames(dat_tcga))], isIO = 1, isChemo = 0),
+	cbind(dat_tcga[,intersect(colnames(dat_prat), colnames(dat_tcga))], isIO = 0, isChemo = 1)
+)
+PFS_prat_tcga <- c(Surv(time=dat_prat[,"PFS.time"], event=dat_prat[,"PFS.event"]), 
+	Surv(time=dat_tcga[,"PFS.time"], event=dat_tcga[,"PFS.event"]))
+# TODO: Update TCGA RESP to comply with Responder ~ !PD
+RESP_prat_tcga <- c(RESP_prat, RESP_tcga)
+
+# Bind Braun Nivo vs. Ever
+gex_brauns <- cbind(
+	gex_braun_nivo,
+	gex_braun_ever
+)
+dat_brauns <- rbind(
+	cbind(dat_braun_nivo, isIO = 1, isChemo = 0),
+	cbind(dat_braun_ever, isIO = 0, isChemo = 0)
+)
+PFS_brauns <- c(Surv(time=dat_braun_nivo[,"PFS.time"], event=dat_braun_nivo[,"PFS.event"]), 
+	Surv(time=dat_braun_ever[,"PFS.time"], event=dat_braun_ever[,"PFS.event"]))
+
+
+# logz the combined datasets
+logz <- function(x) { 
+	tmp <- scale(log(x+1)) 
+	if(any(!is.finite(tmp))){
+		tmp[!is.finite(tmp)] <- 0
+	}
+	tmp
+}
+translogz <- function(gex){
+	rown <- colnames(gex)
+	gex <- apply(gex, MARGIN=1, FUN=logz)
+	rownames(gex) <- rown
+	gex
+}
+scaleonly <- function(gex){
+	rown <- colnames(gex)
+	gex <- apply(gex, MARGIN=1, FUN=scale)
+	rownames(gex) <- rown
+	gex
+}
+# Combined
+gex_prat_tcga <- translogz(gex_prat_tcga)
+gex_brauns <- translogz(gex_brauns)
+# Separate
+#gex_prat <- translogz(gex_prat) 
+gex_prat <- scaleonly(gex_prat)
+gex_tcga <- translogz(gex_tcga)
+gex_braun_nivo <- translogz(gex_braun_nivo)
+gex_braun_ever <- translogz(gex_braun_ever)
+
+# Omit melanoma from Prat et al.
+gex_prat <- gex_prat[-which(dat_prat[,"Type"]=="MELANOMA"),]
+PFS_prat <- PFS_prat[-which(dat_prat[,"Type"]=="MELANOMA"),]
+RESP_prat <- RESP_prat[-which(dat_prat[,"Type"]=="MELANOMA")]
+dat_prat <- dat_prat[-which(dat_prat[,"Type"]=="MELANOMA"),]
+
+## Datasets look roughly equal for distributions
+#
+#> quantile(gex_prat_tcga, probs=seq(0,1,.1))
+#         0%         10%         20%         30%         40%         50%         60%         70%         80%         90%        100% 
+#-4.15229061 -1.37559702 -0.63504017 -0.29961864 -0.00954894  0.18894548  0.34669507  0.50259304  0.69657637  1.01222756  9.75493651 
+#> quantile(gex_brauns, probs=seq(0,1,.1))
+#          0%          10%          20%          30%          40%          50%          60%          70%          80%          90%         100% 
+#-13.46884098  -0.86833959  -0.51815395  -0.33348711  -0.21501742  -0.11617387   0.00222266   0.14766584   0.55049372   1.03722375  17.55783962
+
+#> dim(gex_prat_tcga)
+#[1] 354 716
+#> dim(gex_brauns)
+#[1]   311 43864
+
+coxphs <- lapply(1:ncol(gex_prat), FUN=function(z){
+	try({
+		cox_prat <- survival::coxph(PFS ~ gex_prat, data = data.frame(PFS = PFS_prat, gex_prat = gex_prat[,colnames(gex_prat)[z]]))
+		cox_tcga <- survival::coxph(PFS ~ gex_tcga, data = data.frame(PFS = PFS_tcga, gex_tcga = gex_tcga[,colnames(gex_prat)[z]]))
+		rbind(coef(summary(cox_prat)), coef(summary(cox_tcga)))
+	})
+})
+names(coxphs) <- colnames(gex_prat)
+coxphs[[1]]
+
+biom_prat <- unlist(lapply(coxphs, FUN=function(z){
+	if(!class(z)[1]=="try-error"){
+		# Extract if Nivo-arm is significantly associated while Chemo-armis not
+		z[1,5]<0.1 & z[2,5]>=0.2
+	}else{
+		FALSE
+	}
+}))
+names(biom_prat) <- colnames(gex_prat)
+names(biom_prat)[unlist(biom_prat)]
+length(names(biom_prat)[unlist(biom_prat)])
+
+# Identified as having connection to NSCLC or IO in literature, checking for overlap
+keygenes = unique(c(
+		"CD274", "PDL1", # PD-L1
+		"CD276", "B7-H3", "B7.H3",
+		"PDCD1", "CD279",
+		"EGFR",   # T790M mutation in particular, separate drugs used for squamous
+		"ALK",    # Mutation often seen in non-smoker, young, adenocarcinoma subtype
+		"ROS1",   # Adenocarcinoma, often negative for ALK, KRAS and EGFR muts
+		"BRAF",   # Mutation helps tumor to grow
+		"RET",    # Mutation helps tumor to grow
+		"MET",    # Mutation helps tumor to grow
+		"NTRK",   # Mutation helps tumor to grow
+		"HER2",   # NSLungCa PeerView podcast
+		"KRAS",   # NSLungCa PeerView podcast
+		"NRG1",    # NSLungCa PeerView podcast
+		"IFNG",	# Interferon gamma
+		# Mikko's slides, anything related; https://www.frontiersin.org/articles/10.3389/fonc.2016.00112/full
+		"VEGF",
+		"HER1",
+		"HER2",
+		"HER3",
+		"HER4",
+		"PTEN",
+		"PI3K",
+		"RAS",
+		"MEK",
+		"ERK",
+		"CDK4",
+		"CDK6",
+		"PDK-1",
+		"AKT",
+		# Mikko NGS syöpäpaneeli 1 lisäyksiä
+		"PIK3CA",
+		"KIT",
+		"NRAS",
+		"PDGFRA",
+		# Other interesting? Cytokines, chemokines
+		"CLCL10",
+		"CSCL11",
+		# https://www.cell.com/cancer-cell/pdfExtended/S1535-6108(19)30037-6 Table 2
+		"TLR3", 
+		"LAG3",
+		"IDO1",
+		"TIGIT", 
+		"TNFAIP3",
+		"ADORA2A",
+		"ICOS",
+		"TNFRSF9",
+		"TNFRSF9",
+		"CD52",		
+		"BTLA",
+		"TIGIT",
+		"IDO1",
+		"TLR8",
+		# https://www.nature.com/articles/nm.3909
+		"KLRB1",
+		"CD161",
+		"FOXM1",
+		# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6487502/
+		"SERPINB9",
+		# Immuno marker, e.g. https://science.sciencemag.org/content/362/6411/eaar3593?rss=1#ref-15
+		"CD8A", "CD8B",
+		"CCL5",
+		"CD27",
+		"CMKLR1",
+		"CXCL9",
+		"CXCR6",
+		"HLA-D1A1","HLA.D1A1",
+		"HLA-DRB1","HLA.DRB1",
+		"HLA-E", "HLA.E",
+		"IDO1",
+		"LAG3",
+		"NKG7",
+		"PDCD1LG2","PDL2",
+		"PSMB10",
+		"STAT1",
+		"TIGIT",
+		# https://www.cell.com/cancer-cell/pdfExtended/S1535-6108(19)30037-6
+		"TLR3",
+		"LAG3",
+		"IDO1",
+		"TIGIT",
+		"TNFAIP3",
+		"ADORA2A",
+		"ICOS",
+		"TNFRSF9",
+		"CD52",
+		"BTLA",
+		"TLR8"
+	)
+)
+
+candidates <- intersect(names(biom_prat)[unlist(biom_prat)], keygenes)
+
+#> intersect(names(biom_prat)[unlist(biom_prat)], keygenes)
+# [1] "ADORA2A" "BTLA"    "CCL5"    "CD27"    "CD274"   "CD8A"    "CXCL9"   "CXCR6"   "HLA-E"   "ICOS"    "LAG3"    "PDCD1"   "TIGIT"   "TLR8"    "TNFAIP3" "TNFRSF9"
+
+#> all(candidates %in% rownames(gex_synthetic))
+#[1] TRUE
+
+library(oscar)
+pfs_prat_oscar_candidates <- oscar(x = gex_prat[,candidates], y = PFS_prat, family = "cox")
+cv_pfs_prat_oscar_candidates_seed1 <- cv.oscar(pfs_prat_oscar_candidates, fold=5, seed=1)
+cv_pfs_prat_oscar_candidates_seed2 <- cv.oscar(pfs_prat_oscar_candidates, fold=5, seed=2)
+cv_pfs_prat_oscar_candidates_seed3 <- cv.oscar(pfs_prat_oscar_candidates, fold=5, seed=3)
+cv_pfs_prat_oscar_candidates_seed4 <- cv.oscar(pfs_prat_oscar_candidates, fold=5, seed=4)
+cv_pfs_prat_oscar_candidates_seed5 <- cv.oscar(pfs_prat_oscar_candidates, fold=5, seed=5)
+cv_pfs_prat_oscar_candidates_seed6 <- cv.oscar(pfs_prat_oscar_candidates, fold=5, seed=6)
+
+# Earlier candidates before omitting melanomas
+# ICOS: https://cancerres.aacrjournals.org/content/80/14/3023
+# TIGIT: https://jitc.bmj.com/content/8/2/e000957
+
+#> predict(pfs_prat_oscar_candidates, k=2, type="nonzero")
+#   ADORA2A    TNFAIP3 
+#-0.3083733 -0.3441822 
+#> predict(pfs_prat_oscar_candidates, k=3, type="nonzero")
+#   ADORA2A      CD274    TNFAIP3 
+#-0.2894373 -0.1897381 -0.2903873 
+#> predict(pfs_prat_oscar_candidates, k=4, type="nonzero")
+#   ADORA2A      CD274    TNFAIP3    TNFRSF9 
+#-0.3326448 -0.2189064 -0.3226417  0.1225185
+
+
+coefs <- predict(pfs_prat_oscar_candidates, k=4, type="nonzero")
+names(coefs) <- gsub("minus", "-", names(coefs))
+
+x11()
+par(mfrow=c(3,2))
+cv.visu(cv_pfs_prat_oscar_candidates_seed1)
+cv.visu(cv_pfs_prat_oscar_candidates_seed2)
+cv.visu(cv_pfs_prat_oscar_candidates_seed3)
+cv.visu(cv_pfs_prat_oscar_candidates_seed4)
+cv.visu(cv_pfs_prat_oscar_candidates_seed5)
+cv.visu(cv_pfs_prat_oscar_candidates_seed6)
+
+# k = 1-4 seem optimal
+
+unlist(lapply(1:5, FUN=function(k){
+	pred_prat <- predict(pfs_prat_oscar_candidates, k=k, type="response", newdata = gex_prat[,match(candidates, colnames(gex_prat))])
+	survival::coxph(PFS_prat ~ pred_prat[,1])$concordance["concordance"]
+}))
+#concordance concordance concordance concordance concordance 
+#  0.6723549   0.6979522   0.7013652   0.7081911   0.7235495
+  
+
+unlist(lapply(1:5, FUN=function(k){
+	pred_tcga <- predict(pfs_prat_oscar_candidates, k=k, type="response", newdata = gex_tcga[,match(candidates, colnames(gex_tcga))])
+	survival::coxph(PFS_tcga ~ pred_tcga[,1])$concordance["concordance"]
+}))
+#concordance concordance concordance concordance concordance 
+#  0.5028199   0.4945319   0.5205238   0.5173851   0.4912461
+  
+#> survival::coxph(PFS_tcga ~ pred_tcga[,1])$concordance["concordance"]
+#concordance 
+#  0.4971311
+#
+# Nice!
+  
+#pROC::auc(response = PFS_tcga, predictor = pred_tcga[,1])
+
+fill.na0 <- function(x){
+	x[is.na(x)] <- 0
+	x
+}
+
+# No real response in Braun et al., perhaps due to cancer differences
+
+unlist(lapply(1:5, FUN=function(k){
+	pred_braun_nivo <- predict(pfs_prat_oscar_candidates, k=k, type="response", newdata = fill.na0(gex_braun_nivo[,match(candidates, colnames(gex_braun_nivo))]))
+	survival::coxph(PFS_braun_nivo ~ pred_braun_nivo[,1])$concordance["concordance"]
+}))
+
+unlist(lapply(1:5, FUN=function(k){
+	pred_braun_ever <- predict(pfs_prat_oscar_candidates, k=k, type="response", newdata = fill.na0(gex_braun_ever[,match(candidates, colnames(gex_braun_ever))]))
+	survival::coxph(PFS_braun_ever ~ pred_braun_ever[,1])$concordance["concordance"]
+}))
+
+cor(cbind(gex_tcga, TMB = dat_tcga[,"TMB"])[,c("CD274", "ADORA2A", "TNFAIP3", "TNFRSF9", "TMB")], use="pairwise.complete.obs")
+#> cor(cbind(gex_tcga, TMB = dat_tcga[,"TMB"])[,c("CD274", "ADORA2A", "TNFAIP3", "TNFRSF9", "TMB")], use="pairwise.complete.obs")
+#            CD274     ADORA2A     TNFAIP3   TNFRSF9         TMB
+#CD274   1.0000000  0.29780668  0.42624139 0.4099023  0.11554263
+#ADORA2A 0.2978067  1.00000000  0.44378796 0.3436178 -0.04046758
+#TNFAIP3 0.4262414  0.44378796  1.00000000 0.4419534 -0.07185906
+#TNFRSF9 0.4099023  0.34361782  0.44195341 1.0000000  0.18156038
+#TMB     0.1155426 -0.04046758 -0.07185906 0.1815604  1.00000000
+
+## Similar results with spearman
+
+## TMB independent of all the genetic markers, ICOS ~ TIGIT correlate, HLA-E somewhat correlates with the rest
 
 
 
 
+# Gender and Squamous as potential markers
 
+summary(coxph(PFS_prat ~ dat_prat[,"SEX"] == "M"))
+
+#> coef(summary(coxph(PFS_prat ~ dat_prat[,"SEX"] == "M")))
+#                                   coef exp(coef)  se(coef)        z   Pr(>|z|)
+#dat_prat[, "SEX"] == "M"TRUE -0.9438411 0.3891303 0.4311981 -2.18888 0.02860553
+
+## -> Being male significantly improves PFS
+
+
+coef(summary(coxph(PFS_prat ~ dat_prat[,"CRFHIST"] == "SQUAMOUS")))
+
+#> coef(summary(coxph(PFS_prat ~ dat_prat[,"CRFHIST"] == "SQUAMOUS")))
+#                                               coef exp(coef)  se(coef)          z  Pr(>|z|)
+#dat_prat[, "CRFHIST"] == "SQUAMOUS"TRUE -0.06328496 0.9386759 0.4100476 -0.1543356 0.8773451
+
+## -> No direct link with being squamous,although small coefficient possibly exists based on literature
+
+# Limiting search to only key genes (no TCGA sanity checking for univariate here)
+library(oscar)
+pfs_prat_oscar_keygenes <- oscar(x = gex_prat[,intersect(colnames(gex_prat), keygenes)], y = PFS_prat, family = "cox")
+
+library(oscar)
+resp_prat_oscar_keygenes <- oscar(x = gex_prat[,intersect(colnames(gex_prat), keygenes)], y = RESP_prat, family = "logistic")
+
+cv_resp_prat_oscar_keygenes_seed1 <- cv.oscar(resp_prat_oscar_keygenes, fold=5, seed=1)
+cv_resp_prat_oscar_keygenes_seed2 <- cv.oscar(resp_prat_oscar_keygenes, fold=5, seed=2)
+cv_resp_prat_oscar_keygenes_seed3 <- cv.oscar(resp_prat_oscar_keygenes, fold=5, seed=3)
+cv_resp_prat_oscar_keygenes_seed4 <- cv.oscar(resp_prat_oscar_keygenes, fold=5, seed=4)
+cv_resp_prat_oscar_keygenes_seed5 <- cv.oscar(resp_prat_oscar_keygenes, fold=5, seed=5)
+cv_resp_prat_oscar_keygenes_seed6 <- cv.oscar(resp_prat_oscar_keygenes, fold=5, seed=6)
+
+x11()
+par(mfrow=c(3,2))
+cv.visu(cv_resp_prat_oscar_keygenes_seed1)
+cv.visu(cv_resp_prat_oscar_keygenes_seed2)
+cv.visu(cv_resp_prat_oscar_keygenes_seed3)
+cv.visu(cv_resp_prat_oscar_keygenes_seed4)
+cv.visu(cv_resp_prat_oscar_keygenes_seed5)
+cv.visu(cv_resp_prat_oscar_keygenes_seed6)
+
+# Close to perfect ROC-AUC at k=4
+lapply(1:4, FUN=function(k) { predict(resp_prat_oscar_keygenes, k=k, type="nonzero") })
+#> lapply(1:4, FUN=function(k) { predict(resp_prat_oscar_keygenes, k=k, type="nonzero") })
+#[[1]]
+#(Intercept)     TNFAIP3 
+#  0.4358063   1.5371501 
+#
+#[[2]]
+#(Intercept)       STAT1     TNFAIP3 
+#  0.4187963  -0.8576741   2.0492448 
+#
+#[[3]]
+#(Intercept)       PDCD1       STAT1     TNFAIP3 
+#  0.5536882   2.1052032  -1.8249023   1.8744194 
+#
+#[[4]]
+#(Intercept)        ICOS       PDCD1       STAT1     TNFAIP3 
+#  0.6710472  -1.5739444   3.5773745  -2.0436992   1.9443965
+
+# Very similar as for PFS
+
+# PCDC1 = CD279 = Programmed Cell Death 1
+# "Inhibitory receptor on antigen activated T-cells that plays a critical role in induction and 
+# maintenance of immune tolerance to self (PubMed:21276005). Delivers inhibitory signals upon 
+# binding to ligands CD274/PDCD1L1 and CD273/PDCD1LG2 (PubMed:21276005). Following T-cell receptor 
+# (TCR) engagement, PDCD1 associates with CD3-TCR in the immunological synapse and directly inhibits 
+# T-cell activation (By similarity)."
+# (Gene Card)
+
+# TNFAIP3: 
+# Inhibition of TNFAIP3 increases invasiveness etc of NSCLC
+# https://onlinelibrary.wiley.com/doi/abs/10.1002/jcb.29323
 
