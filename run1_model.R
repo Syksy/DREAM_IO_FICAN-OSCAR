@@ -109,13 +109,7 @@ curateX <- function(
 	normfunc = function(input) { input }, # Function for normalizing gene values to be used as variables - could be e.g. z-score within sample? log-transform if normalized count data >0?
 	gmts = c(1,2,4,5), # Hallmarks, oncology, custom self-made GMTs, filtered curated pathways from e.g. KEGG
 	idcs = 1,
-	clinvars = c("Age", "Smoking", "ECOG", "Squamous", "TMB", "SEX", "PDL1"),
-	scores = c( # Included scoring metrics (preferably IO and lung cancer related)
-		#"TIS", # Tumor inflammatory score
-		#"MSI", # Microsatellite instability
-		#"APM", # Antigen processing / presentation machinery
-		#"IFN"  # Interferon gamma signalling
-	)
+	clinvars = c("Age", "Smoking", "ECOG", "Squamous", "TMB", "SEX", "PDL1")
 ){
 	# Format data matrix X
 	X <- matrix(NA, nrow=ncol(gex), ncol=0)
@@ -175,6 +169,16 @@ curateX <- function(
 			X[is.na(X[,"isSquamous"]),"isSquamous"] <- 0
 		}
 	}
+	# If Squamous histologic subtype
+	if("NonSquamous" %in% clinvars){
+		print("NonSquamous")
+		X <- cbind(X, isSquamous = as.integer(dat[,"CRFHIST"] == "NON-SQUAMOUS"))
+		# 0s, NAs and 1s -> code into -1, 0, +1
+		if(NA %in% X[,"isNonSquamous"] & !all(is.na(X[,"isNonSquamous"]))){
+			X[X[,"isNonSquamous"]==0,"isNonSquamous"] <- -1
+			X[is.na(X[,"isNonSquamous"]),"isNonSquamous"] <- 0
+		}
+	}
 	# TMB median, coding into lower (-1), NA (0) or higher (+1), and raw TMB values
 	if("TMB" %in% clinvars){
 		print("TMB")
@@ -223,89 +227,30 @@ curateX <- function(
 		}
 	}
 
-	# All scores prior to these are called "BASE" metrics; i.e. very basic patient characteristics, cherry-picked individual genes etc
-	
-	try({colnames(X) <- paste("BASE_", colnames(X), sep="") })
-	
-
-	## Custom gene-based scoring metrics
-	# For starters, simply compute mean of expression as the "score" in all scoring methods (they were all very similar)
-	# Later perhaps refine to rank-based, z-scored means or so?
-	IFNGscore1 <- function(gex){
-		genes <- c("IDO1", "CXCL10", "CXCL9", "HLA-DRA", "STAT1", "IFNG")
-		genes <- genes[which(genes %in% rownames(gex))]
-		apply(gex[genes,], MARGIN=2, FUN=mean)
-		
-	}
-	IFNGscore2 <- function(gex){
-		genes <- c("CD3D", "IDO1", "CIITA", "CD3E", "CCL5", "GZMK", "CD2", "HLA-DRA", "CXCL13", "IL2RG", "NKG7", "HLA-E", "CXCR6", "LAG3", "TAGAP", "CXCL10", "STAT1", "GZMB")
-		genes <- genes[which(genes %in% rownames(gex))]
-		apply(gex[genes,], MARGIN=2, FUN=mean)
-	}
-	APMscore <- function(gex){
-		genes <- c("B2M", "CALR", "NLRC5", "PSMB9", "PSME1", "PSME3", "RFX5", "HSP90AB1")
-		genes <- genes[which(genes %in% rownames(gex))]
-		apply(gex[genes,], MARGIN=2, FUN=mean)
-	}
-	TISscore <- function(gex){
-		# Taken from Fig 1 panel d in the publ.
-		# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6829827/#MOESM2
-		genes <- c("CD276", "HLA-DQA1", "CD274", "IDO1", "HLA-DRB1", "HLA-E", "CMKLR1", "PDCD1LG2", "PSMB10", "LAG3", "CXCL9", "STAT1", "CD8A", "CCL5", "NKG7", "TIGIT", "CD27", "CXCR6")
-		genes <- genes[which(genes %in% rownames(gex))]
-		apply(gex[genes,], MARGIN=2, FUN=mean)		
-	}
-	# MSI
-	# ...
-	
-	
-	
-	# IFN gamma signaling
-	if("IFN" %in% scores){
-		print("IFN scores")
-		X <- cbind(X, IFN1score = IFNGscore1(gex=gex))
-		X <- cbind(X, IFN2score = IFNGscore2(gex=gex))
-	}
-	# Tumor inflammatory score
-	if("TIS" %in% scores){
-		print("TIS score")
-		X <- cbind(X, TISscore = TISscore(gex=gex))
-	}
-	# Antigen processing / presentation machinery
-	if("APM" %in% scores){
-		print("APM score")
-		X <- cbind(X, APMscore = APMscore(gex=gex))
-	}
-	# Microsallite instability
-	# k-NN based prediction, 15 genes or so
-	#if("MSI" %in% scores){
-	#	# https://github.com/WangX-Lab/PreMSIm
-	#	#if (!requireNamespace("devtools", quietly = TRUE))
-	#	#    install.packages("devtools")
-	#	#devtools::install_github("WangX-Lab/PreMSIm")
-	#	library(PreMSIm)
-	#	
-	#}
+	# All scores prior to these are called "BASE" metrics; i.e. very basic patient characteristics, cherry-picked individual genes etc	
+	colnames(X) <- paste("BASE_", colnames(X), sep="")
 
 	## GSVA
 	library(GSVA)	
 	# Hallmark gene sets
-	gmt_h <- GSEABase::getGmt(".\\MSigDB\\h.all.v7.2.symbols.gmt")
+	gmt_h <- GSEABase::getGmt("h.all.v7.2.symbols.gmt")
 	# Oncogenic
-	gmt_c6 <- GSEABase::getGmt(".\\MSigDB\\c6.all.v7.2.symbols.gmt")
+	gmt_c6 <- GSEABase::getGmt("c6.all.v7.2.symbols.gmt")
 	# Immunogenic
-	gmt_c7 <- GSEABase::getGmt(".\\MSigDB\\c7.all.v7.2.symbols.gmt")
+	gmt_c7 <- GSEABase::getGmt("c7.all.v7.2.symbols.gmt")
 	# Custom self-made
-	gmt_custom <- GSEABase::getGmt(".\\MSigDB\\selfmade.gmt")
+	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
 	# Curated GMTs, subset to interesting
-	gmt_c2 <- GSEABase::getGmt(".\\MSigDB\\c2.all.v7.2.symbols.gmt")
+	gmt_c2 <- GSEABase::getGmt("c2.all.v7.2.symbols.gmt")
 	gmt_c2 <- gmt_c2[grep("NEUTROPH|LEUKOCYT|CD4|CD8|INTERLEUK|INFLAM|T.CELL|B.CELL|TCELL|BCELL|CHEMOK|CYTOK", unlist(lapply(gmt_c2, FUN=function(x) x@setName)))]
 
 	# Create selected gmt-variables
+	# Add parameter mx.diff = FALSE because it's unsure whether the test statistic is uni- or bivariate (genes expressed in both extremes within gene set)
 	# Hallmarks
 	if(1 %in% gmts){
 		print("Hallmarks")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_h, verbose=FALSE))) # Hallmarks
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_h, verbose=FALSE, mx.diff=FALSE)))
 			# Omit selected hallmarks based on a priori knowledge or educated guesses
 			X <- X[,-grep("CHOLESTEROL|ESTROGEN|ANDROGEN|FATTY_ACID|OXIDATIVE|GLYCOLYSIS|REACTIVE_OXYGEN|UV_RESPONSE|BILE_ACID|ALLOGRAFT|SPERMATOGENESIS|PANCREAS", colnames(X))]
 		})
@@ -314,28 +259,28 @@ curateX <- function(
 	if(2 %in% gmts){
 		print("Oncogenic")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c6, verbose=FALSE))) # Oncogenic
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c6, verbose=FALSE, mx.diff=FALSE))) # Oncogenic
 		})
 	}
 	# Immunology
 	if(3 %in% gmts){
 		print("Immunology")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c7, verbose=FALSE))) # Immunology
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c7, verbose=FALSE, mx.diff=FALSE))) # Immunology
 		})
 	}
 	# Custom self made GMTs
 	if(4 %in% gmts){
 		print("Selfmade GMTs")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE))) # Custom self made GMTs
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE, mx.diff=FALSE))) # Custom self made GMTs
 		})
 	}
 	# Curated gene pathways
 	if(5 %in% gmts){
 		print("Curated GTMs from various databases")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c2, verbose=FALSE))) # Curated GMTs
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c2, verbose=FALSE, mx.diff=FALSE))) # Curated GMTs
 		})
 	}
 
@@ -381,6 +326,16 @@ omit.nacols <- function(mat){
 
 ## LOAD DATA
 
+# Do logz-transformation for the synthetic (or target) data
+logz <- function(x) { 
+	tmp <- scale(log(x+1)) 
+	if(any(!is.finite(tmp))){
+		tmp[!is.finite(tmp)] <- 0
+	}
+	colnames(tmp) <- rownames(x)
+	tmp
+}
+
 ###
 #
 # SYNTHETIC
@@ -390,14 +345,6 @@ gex_synthetic <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\GRCh37ERCC
 gex_synthetic <- gex_synthetic[order(rownames(gex_synthetic)),]
 gex_synthetic <- as.matrix(gex_synthetic)
 dat_synthetic <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\clinical_data.csv", row.names=1)
-# Do logz-transformation for the synthetic (or target) data (?)
-logz <- function(x) { 
-	tmp <- scale(log(x+1)) 
-	if(any(!is.finite(tmp))){
-		tmp[!is.finite(tmp)] <- 0
-	}
-	tmp
-}
 #tmp <- rownames(gex_synthetic)
 #gex_synthetic <- t(apply(gex_synthetic, MARGIN=1, FUN=logz))
 #rownames(gex_synthetic) <- tmp
@@ -405,45 +352,48 @@ logz <- function(x) {
 X_synthetic <- cbind(omit.reducols(curateX(gex=gex_synthetic, dat=dat_synthetic)), isIO = 1, isChemo = 0)
 
 # Normalize using quantile normalization
-geq_hugo <- preprocessCore::normalize.quantiles.use.target(gex_hugo, target=c(gex_synthetic))
-rownames(geq_hugo) <- rownames(gex_hugo)
-colnames(geq_hugo) <- colnames(gex_hugo)
-geq_prat <- preprocessCore::normalize.quantiles.use.target(gex_prat, target=c(gex_synthetic))
-rownames(geq_prat) <- rownames(gex_prat)
-colnames(geq_prat) <- colnames(gex_prat)
-geq_westin <- preprocessCore::normalize.quantiles.use.target(gex_westin, target=c(gex_synthetic))
-rownames(geq_westin) <- rownames(gex_westin)
-colnames(geq_westin) <- colnames(gex_westin)
-geq_lauss <- preprocessCore::normalize.quantiles.use.target(gex_lauss, target=c(gex_synthetic))
-rownames(geq_lauss) <- rownames(gex_lauss)
-colnames(geq_lauss) <- colnames(gex_lauss)
-geq_gide <- preprocessCore::normalize.quantiles.use.target(gex_gide, target=c(gex_synthetic))
-rownames(geq_gide) <- rownames(gex_gide)
-colnames(geq_gide) <- colnames(gex_gide)
-geq_chen <- preprocessCore::normalize.quantiles.use.target(gex_chen, target=c(gex_synthetic))
-rownames(geq_chen) <- rownames(gex_chen)
-colnames(geq_chen) <- colnames(gex_chen)
-geq_kim <- preprocessCore::normalize.quantiles.use.target(gex_kim, target=c(gex_synthetic))
-rownames(geq_kim) <- rownames(gex_kim)
-colnames(geq_kim) <- colnames(gex_kim)
-geq_riaz <- preprocessCore::normalize.quantiles.use.target(gex_riaz, target=c(gex_synthetic))
-rownames(geq_riaz) <- rownames(gex_riaz)
-colnames(geq_riaz) <- colnames(gex_riaz)
-geq_braun_nivo <- preprocessCore::normalize.quantiles.use.target(gex_braun_nivo, target=c(gex_synthetic))
-rownames(geq_braun_nivo) <- rownames(gex_braun_nivo)
-colnames(geq_braun_nivo) <- colnames(gex_braun_nivo)
-geq_braun_ever <- preprocessCore::normalize.quantiles.use.target(gex_braun_ever, target=c(gex_synthetic))
-rownames(geq_braun_ever) <- rownames(gex_braun_ever)
-colnames(geq_braun_ever) <- colnames(gex_braun_ever)
-geq_tcga <- preprocessCore::normalize.quantiles.use.target(gex_tcga, target=c(gex_synthetic))
-rownames(geq_tcga) <- rownames(gex_tcga)
-colnames(geq_tcga) <- colnames(gex_tcga)
+if(FALSE){
+	geq_hugo <- preprocessCore::normalize.quantiles.use.target(gex_hugo, target=c(gex_synthetic))
+	rownames(geq_hugo) <- rownames(gex_hugo)
+	colnames(geq_hugo) <- colnames(gex_hugo)
+	geq_prat <- preprocessCore::normalize.quantiles.use.target(gex_prat, target=c(gex_synthetic))
+	rownames(geq_prat) <- rownames(gex_prat)
+	colnames(geq_prat) <- colnames(gex_prat)
+	geq_westin <- preprocessCore::normalize.quantiles.use.target(gex_westin, target=c(gex_synthetic))
+	rownames(geq_westin) <- rownames(gex_westin)
+	colnames(geq_westin) <- colnames(gex_westin)
+	geq_lauss <- preprocessCore::normalize.quantiles.use.target(gex_lauss, target=c(gex_synthetic))
+	rownames(geq_lauss) <- rownames(gex_lauss)
+	colnames(geq_lauss) <- colnames(gex_lauss)
+	geq_gide <- preprocessCore::normalize.quantiles.use.target(gex_gide, target=c(gex_synthetic))
+	rownames(geq_gide) <- rownames(gex_gide)
+	colnames(geq_gide) <- colnames(gex_gide)
+	geq_chen <- preprocessCore::normalize.quantiles.use.target(gex_chen, target=c(gex_synthetic))
+	rownames(geq_chen) <- rownames(gex_chen)
+	colnames(geq_chen) <- colnames(gex_chen)
+	geq_kim <- preprocessCore::normalize.quantiles.use.target(gex_kim, target=c(gex_synthetic))
+	rownames(geq_kim) <- rownames(gex_kim)
+	colnames(geq_kim) <- colnames(gex_kim)
+	geq_riaz <- preprocessCore::normalize.quantiles.use.target(gex_riaz, target=c(gex_synthetic))
+	rownames(geq_riaz) <- rownames(gex_riaz)
+	colnames(geq_riaz) <- colnames(gex_riaz)
+	geq_braun_nivo <- preprocessCore::normalize.quantiles.use.target(gex_braun_nivo, target=c(gex_synthetic))
+	rownames(geq_braun_nivo) <- rownames(gex_braun_nivo)
+	colnames(geq_braun_nivo) <- colnames(gex_braun_nivo)
+	geq_braun_ever <- preprocessCore::normalize.quantiles.use.target(gex_braun_ever, target=c(gex_synthetic))
+	rownames(geq_braun_ever) <- rownames(gex_braun_ever)
+	colnames(geq_braun_ever) <- colnames(gex_braun_ever)
+	geq_tcga <- preprocessCore::normalize.quantiles.use.target(gex_tcga, target=c(gex_synthetic))
+	rownames(geq_tcga) <- rownames(gex_tcga)
+	colnames(geq_tcga) <- colnames(gex_tcga)
+})
 
 # Load premade GEX / DAT and generate X matrix
 # Whole TCGA
 load(".\\RData\\gex_tcga.RData")
 load(".\\RData\\dat_tcga.RData")
-X_tcga <- cbind(omit.reducols(curateX(gex=geq_tcga, dat=dat_tcga)), isIO = 0, isChemo = 1)
+gex_tcga <- logz(gex_tcga)
+X_tcga <- cbind(omit.reducols(curateX(gex=gex_tcga, dat=dat_tcga)), isIO = 0, isChemo = 1)
 X_xce_tcga <- X_tcga[,grep("xce_", colnames(X_tcga))]
 X_cus_tcga <- X_tcga[,grep("CUSTOM_", colnames(X_tcga))]
 X_hal_tcga <- X_tcga[,grep("HALLMARK_", colnames(X_tcga))]
@@ -454,7 +404,8 @@ RESP_tcga <- as.integer(dat_tcga$Responder)
 # Hugo et al. (GEO)
 load(".\\RData\\gex_hugo.RData")
 load(".\\RData\\dat_hugo.RData")
-X_hugo <- cbind(omit.reducols(curateX(gex=geq_hugo, dat=dat_hugo)), isIO = 1, isChemo = 0)
+gex_hugo <- logz(gex_hugo)
+X_hugo <- cbind(omit.reducols(curateX(gex=gex_hugo, dat=dat_hugo)), isIO = 1, isChemo = 0)
 X_xce_hugo <- X_hugo[,grep("xce_", colnames(X_hugo))]
 X_cus_hugo <- X_hugo[,grep("CUSTOM_", colnames(X_hugo))]
 X_hal_hugo <- X_hugo[,grep("HALLMARK_", colnames(X_hugo))]
@@ -464,7 +415,8 @@ RESP_hugo <- as.integer(dat_hugo$Responder)
 # Prat et al. (GEO)
 load(".\\RData\\gex_prat.RData")
 load(".\\RData\\dat_prat.RData")
-X_prat <- cbind(omit.reducols(curateX(gex=geq_prat, dat=dat_prat)), isIO = 1, isChemo = 0)
+gex_hugo <- logz(gex_hugo)
+X_prat <- cbind(omit.reducols(curateX(gex=gex_prat, dat=dat_prat)), isIO = 1, isChemo = 0)
 X_xce_prat <- X_prat[,grep("xce_", colnames(X_prat))]
 X_cus_prat <- X_prat[,grep("CUSTOM_", colnames(X_prat))]
 X_hal_prat <- X_prat[,grep("HALLMARK_", colnames(X_prat))]
@@ -474,7 +426,8 @@ RESP_prat <- as.integer(dat_prat$Responder)
 # Westin et al. (GEO)
 load(".\\RData\\gex_westin.RData")
 load(".\\RData\\dat_westin.RData")
-X_westin <- cbind(omit.reducols(curateX(gex=geq_westin, dat=dat_westin)), isIO = 1, isChemo = 0)
+gex_hugo <- logz(gex_hugo)
+X_westin <- cbind(omit.reducols(curateX(gex=gex_westin, dat=dat_westin)), isIO = 1, isChemo = 0)
 X_xce_westin <- X_westin[,grep("xce_", colnames(X_westin))]
 X_cus_westin <- X_westin[,grep("CUSTOM_", colnames(X_westin))]
 X_hal_westin <- X_westin[,grep("HALLMARK_", colnames(X_westin))]
@@ -483,7 +436,8 @@ PFS_westin <- survival::Surv(time = dat_westin$PFS.time, event = dat_westin$PFS.
 # Riaz et al. (GEO)
 load(".\\RData\\gex_riaz.RData")
 load(".\\RData\\dat_riaz.RData")
-X_riaz <- cbind(omit.reducols(curateX(gex=geq_riaz, dat=dat_riaz)), isIO = 1, isChemo = 0)
+gex_hugo <- logz(gex_hugo)
+X_riaz <- cbind(omit.reducols(curateX(gex=gex_riaz, dat=dat_riaz)), isIO = 1, isChemo = 0)
 X_xce_riaz <- X_riaz[,grep("xce_", colnames(X_riaz))]
 X_cus_riaz <- X_riaz[,grep("CUSTOM_", colnames(X_riaz))]
 X_hal_riaz <- X_riaz[,grep("HALLMARK_", colnames(X_riaz))]
@@ -492,7 +446,8 @@ RESP_riaz <- dat_riaz[,"Responder"]
 # Lauss et al. (TIDE)
 load(".\\RData\\gex_lauss.RData")
 load(".\\RData\\dat_lauss.RData")
-X_lauss <- cbind(omit.reducols(curateX(gex=geq_lauss, dat=dat_lauss)), isIO = 1, isChemo = 0)
+gex_lauss <- logz(gex_lauss)
+X_lauss <- cbind(omit.reducols(curateX(gex=gex_lauss, dat=dat_lauss)), isIO = 1, isChemo = 0)
 X_xce_lauss <- X_lauss[,grep("xce_", colnames(X_lauss))]
 X_cus_lauss <- X_lauss[,grep("CUSTOM_", colnames(X_lauss))]
 X_hal_lauss <- X_lauss[,grep("HALLMARK_", colnames(X_lauss))]
@@ -503,7 +458,8 @@ RESP_lauss <- dat_lauss[,"Responder"]
 # Kim et al. (TIDE)
 load(".\\RData\\gex_kim.RData")
 load(".\\RData\\dat_kim.RData")
-X_kim <- cbind(omit.reducols(curateX(gex=geq_kim, dat=dat_kim)), isIO = 1, isChemo = 0)
+gex_kim <- logz(gex_kim)
+X_kim <- cbind(omit.reducols(curateX(gex=gex_kim, dat=dat_kim)), isIO = 1, isChemo = 0)
 X_xce_kim <- X_kim[,grep("xce_", colnames(X_kim))]
 X_cus_kim <- X_kim[,grep("CUSTOM_", colnames(X_kim))]
 X_hal_kim <- X_kim[,grep("HALLMARK_", colnames(X_kim))]
@@ -512,7 +468,8 @@ RESP_kim <- dat_kim[,"Responder"]
 # Chen et al. (TIDE)
 load(".\\RData\\gex_chen.RData")
 load(".\\RData\\dat_chen.RData")
-X_chen <- cbind(omit.reducols(curateX(gex=geq_chen, dat=dat_chen)), isIO = 1, isChemo = 0)
+gex_chen <- logz(gex_chen)
+X_chen <- cbind(omit.reducols(curateX(gex=gex_chen, dat=dat_chen)), isIO = 1, isChemo = 0)
 X_xce_chen <- X_chen[,grep("xce_", colnames(X_chen))]
 X_cus_chen <- X_chen[,grep("CUSTOM_", colnames(X_chen))]
 X_hal_chen <- X_chen[,grep("HALLMARK_", colnames(X_chen))]
@@ -521,7 +478,8 @@ RESP_chen <- dat_chen[,"Responder"]
 # Gide et al. (TIDE)
 load(".\\RData\\gex_gide.RData")
 load(".\\RData\\dat_gide.RData")
-X_gide <- cbind(omit.reducols(curateX(gex=geq_gide, dat=dat_gide)), isIO = 1, isChemo = 0)
+gex_gide <- logz(gex_gide)
+X_gide <- cbind(omit.reducols(curateX(gex=gex_gide, dat=dat_gide)), isIO = 1, isChemo = 0)
 X_xce_gide <- X_gide[,grep("xce_", colnames(X_gide))]
 X_cus_gide <- X_gide[,grep("CUSTOM_", colnames(X_gide))]
 X_hal_gide <- X_gide[,grep("HALLMARK_", colnames(X_gide))]
@@ -544,8 +502,10 @@ load(".\\RData\\gex_braun_nivo.RData")
 load(".\\RData\\dat_braun_nivo.RData")
 load(".\\RData\\gex_braun_ever.RData")
 load(".\\RData\\dat_braun_ever.RData")
-X_braun_nivo <- cbind(omit.reducols(curateX(gex=geq_braun_nivo, dat=dat_braun_nivo)), isIO = 1, isChemo = 0)
-X_braun_ever <- cbind(omit.reducols(curateX(gex=geq_braun_ever, dat=dat_braun_ever)), isIO = 0, isChemo = 1)
+gex_braun_nivo <- logz(gex_braun_nivo)
+gex_braun_ever <- logz(gex_braun_ever)
+X_braun_nivo <- cbind(omit.reducols(curateX(gex=gex_braun_nivo, dat=dat_braun_nivo)), isIO = 1, isChemo = 0)
+X_braun_ever <- cbind(omit.reducols(curateX(gex=gex_braun_ever, dat=dat_braun_ever)), isIO = 0, isChemo = 1)
 PFS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"PFS.time"], event=dat_braun_nivo[,"PFS.event"])
 iPFS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"iPFS.time"], event=dat_braun_nivo[,"iPFS.event"])
 OS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"OS.time"], event=dat_braun_nivo[,"OS.event"])
