@@ -16,3 +16,4 @@ CUSTOM_MCP_ENDOTHELIAL.CELLS	MCP counter list in https://github.com/ebecht/MCPco
 CUSTOM_MCP_FIBROBLASTS	MCP counter list in https://github.com/ebecht/MCPcounter/blob/master/Signatures/genes.txt	COL1A1	COL3A1	COL6A1	COL6A2	DCN	GREM1	PAMR1	TAGLN
 CUSTOM_CHROM3p_LOSS	Loss in chromosome arm 3p from https://clincancerres.aacrjournals.org/content/25/16/5015	AP20	CER1	CER2	LUCA	ROBO1	FHIT
 CUSTOM_GEP	Tumor inflammatory Gene Expression Pattern from https://science.sciencemag.org/content/362/6411/eaar3593?rss=1	CCL5	CD27	CD274	CD276	CD8A	CMKLR1	CXCL9	CXCR6	HLA-DQA1	HLA-DRB1	HLA-E	IDO1	LAG3	NKG7	PDCD1LG2	PSMB10	STAT1	TIGIT
+CUSTOM_FOPANEL	Panel designed for DREAM-IO	CD274	PDCD1	TIGIT	CXCL9	CXCR6

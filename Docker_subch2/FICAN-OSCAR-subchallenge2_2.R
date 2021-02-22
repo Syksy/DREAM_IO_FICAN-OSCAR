@@ -55,10 +55,19 @@ logz <- function(x) {
 # Aggregation
 aggregateX <- function(
 	gex,
-	dat
+	dat,
+	normalize = TRUE
 ){
 	library(GSVA)
 	library(immunedeconv)
+	
+	# Whether whole gene matrix should be normalized
+	if(normalize){
+		nam <- colnames(gex)
+		gex <- apply(gex, MARGIN=1, FUN=logz)
+		rownames(gex) <- nam
+		gex <- t(gex) # Transpose needed for GSVA etc
+	}
 	
 	# 242 mutations threshold for 'high' mutatation; impute NAs as if being not highly mutated
 	X <- data.frame(isTMBhigh = as.integer(dat[,"TMB"] > 242))
@@ -74,12 +83,12 @@ aggregateX <- function(
 	
 	# CD274 expression level modelled as a surrogate for PD-L1 IHC
 	# Normalized expressions between various platforms and their respective distributional characteristics
-	X <- cbind(X, CD274 = logz(gex["CD274",]))
+	#X <- cbind(X, CD274 = logz(gex["CD274",]))
 	
 	# GSVA for CUSTOM_IFNG3
-	#gmt_custom <- GSEABase::getGmt("selfmade.gmt")
-	#res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE)) # Custom GMTs
-	#X <- cbind(X, IFNG = res_gsva[,grep("CUSTOM_IFNG3", colnames(res_gsva))])
+	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
+	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE)) # Custom GMTs
+	X <- cbind(X, CUSTOM_FOPANEL = res_gsva[,grep("CUSTOM_FOPANEL", colnames(res_gsva))])
 	
 	# Epithelial cell expression as reported by xCell
 	#tmp <- immunedeconv::deconvolute(gex, method="xcell")
@@ -125,22 +134,30 @@ predictX <- function(
 #	"TMB.PDL1" = log(0.8), # Educated estimate of 0.8 HR transformed into linear coefficient, as interaction is exponentially increasing
 #	"TMB.GEP" = log(0.7) # HR estimate 0.7 based on Cristescu et al. in Science, of TMB & GEP sign interaction
 #)
-## -> DSS x, Nivo x, Chemo x
+## -> DSS -0.0143, Nivo 0.5359, Chemo 0.5636
 
 ## Subchallenge 2 submission 2
 b_sub = c(
-	"CD274" = -0.5326, # = same as HR 0.5870766; has the most effect per unit
-	"isTMBhigh" = log(0.62), # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately
-	"isMale" = log(0.8), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ)
-	"isSquamous" = log(0.77), # Carbone et al. supplementary effect for OS
-	"isEversmoker" = log(0.7) # Huant et al. OncoImmunology 2018 pooled meta-analysis
+	"CUSTOM_FOPANEL" = -0.5, # Custom trained panel estimated using GSVA; estimate from aggregated estimates from training data (e.g. Prat, Gide)
+	"isTMBhigh" = log(0.7), # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately, estimate from Cristescu et al. omitting GEP
+	"isMale" = log(0.9), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ); conservative estimate
+	"isSquamous" = log(0.82) # Carbone et al. supplementary effect for OS; 0.72 if PD-L1 >5% alternatively
 )
+
+## REPLACE
+#setwd("..")
+#gex_input <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\GRCh37ERCC_refseq105_genes_tpm.csv", row.names=1)
+#gex_input <- gex_input[order(rownames(gex_input)),]
+#gex_input <- as.matrix(gex_input)
+#dat_input <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\clinical_data.csv", row.names=1)
+#setwd("Docker_subch2")
+## REPLACE ENDS
+
 # https://onlinelibrary.wiley.com/doi/epdf/10.1002/cam4.2807 -> never smoker is a marker for poor prognosis (or vice versa?)
 X_sub <- aggregateX(
 	gex = gex_input,	# Gene expression matrix of actual data
 	dat = dat_input	# Clinical variable matrix of actual data
 )
-
 # Xb
 ret <- predictX(
 	X = X_sub, # Data matrix
