@@ -23,7 +23,7 @@ curateX <- function(
 		"CD276", "B7-H3", "B7.H3",
 		"PDCD1", "CD279",
 		"EGFR",   # T790M mutation in particular, separate drugs used for squamous
-		"ALK",    # Mutation often seen in non-smoker, young, adenocarcinoma subtype
+		"CD246", "ALK",    # Mutation often seen in non-smoker, young, adenocarcinoma subtype
 		"ROS1",   # Adenocarcinoma, often negative for ALK, KRAS and EGFR muts
 		"BRAF",   # Mutation helps tumor to grow
 		"RET",    # Mutation helps tumor to grow
@@ -104,12 +104,18 @@ curateX <- function(
 		"TNFRSF9",
 		"CD52",
 		"BTLA",
-		"TLR8"
+		"TLR8",
+		# Call on Feb 22
+		"CD80",
+		"ATG5",
+		"ATG7",
+		"ARG1"
 	)),
-	normfunc = function(input) { input }, # Function for normalizing gene values to be used as variables - could be e.g. z-score within sample? log-transform if normalized count data >0?
-	gmts = c(1,2,4,5), # Hallmarks, oncology, custom self-made GMTs, filtered curated pathways from e.g. KEGG
-	idcs = 1,
-	clinvars = c("Age", "Smoking", "ECOG", "Squamous", "TMB", "SEX", "PDL1")
+	normalize = TRUE,
+	normfunc = logz, # Function for normalizing gene values to be used as variables - could be e.g. z-score within sample? log-transform if normalized count data >0?
+	gmts = c(4), # Hallmarks, oncology, custom self-made GMTs, filtered curated pathways from e.g. KEGG
+	idcs = c(1),
+	clinvars = c("Age", "Smoking", "ECOG", "Squamous", "NonSquamous", "TMB", "SEX", "PDL1")
 ){
 	# Format data matrix X
 	X <- matrix(NA, nrow=ncol(gex), ncol=0)
@@ -120,7 +126,13 @@ curateX <- function(
 	keygenes <- keygenes[which(keygenes %in% rownames(gex))]
 	X <- cbind(X, t(do.call("rbind", lapply(keygenes, FUN=function(z){
 		print(paste(z, "..."))
-		normfunc(gex[z,])
+		if(normalize){
+			coln <- colnames(gex)
+			tmp <- t(normfunc(gex[z,]))
+			
+		}else{
+			gex[z,]
+		}
 	}))))
 	# Rename
 	colnames(X) <- keygenes
@@ -147,6 +159,7 @@ curateX <- function(
 		X <- cbind(X, isSmokerCurrent = as.integer(dat[,"TOBACUSE"] == "CURRENT"))
 		X <- cbind(X, isSmokerFormer = as.integer(dat[,"TOBACUSE"] == "FORMER"))
 		X <- cbind(X, isSmokerNever = as.integer(dat[,"TOBACUSE"] == "NEVER"))
+		X <- cbind(X, isSmokerEver = as.integer(dat[,"TOBACUSE"] %in% c("FORMER", "CURRENT")))
 		# other case UNKNOWN omitted; basically NA
 	}
 	# ECOG status {0,1,2,3,4}, binarized
@@ -172,7 +185,7 @@ curateX <- function(
 	# If Squamous histologic subtype
 	if("NonSquamous" %in% clinvars){
 		print("NonSquamous")
-		X <- cbind(X, isSquamous = as.integer(dat[,"CRFHIST"] == "NON-SQUAMOUS"))
+		X <- cbind(X, isNonSquamous = as.integer(dat[,"CRFHIST"] == "NON-SQUAMOUS"))
 		# 0s, NAs and 1s -> code into -1, 0, +1
 		if(NA %in% X[,"isNonSquamous"] & !all(is.na(X[,"isNonSquamous"]))){
 			X[X[,"isNonSquamous"]==0,"isNonSquamous"] <- -1
@@ -230,6 +243,14 @@ curateX <- function(
 	# All scores prior to these are called "BASE" metrics; i.e. very basic patient characteristics, cherry-picked individual genes etc	
 	colnames(X) <- paste("BASE_", colnames(X), sep="")
 
+	# Whether whole gene matrix should be normalized
+	if(normalize){
+		nam <- colnames(gex)
+		gex <- apply(gex, MARGIN=1, FUN=logz)
+		rownames(gex) <- nam
+		gex <- t(gex)
+	}
+
 	## GSVA
 	library(GSVA)	
 	# Hallmark gene sets
@@ -240,6 +261,9 @@ curateX <- function(
 	gmt_c7 <- GSEABase::getGmt("c7.all.v7.2.symbols.gmt")
 	# Custom self-made
 	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
+	# FICAN-OSCAR DREAM IO GMTs
+	gmt_fo <- GSEABase::getGmt("fican-oscar.gmt")
+
 	# Curated GMTs, subset to interesting
 	gmt_c2 <- GSEABase::getGmt("c2.all.v7.2.symbols.gmt")
 	gmt_c2 <- gmt_c2[grep("NEUTROPH|LEUKOCYT|CD4|CD8|INTERLEUK|INFLAM|T.CELL|B.CELL|TCELL|BCELL|CHEMOK|CYTOK", unlist(lapply(gmt_c2, FUN=function(x) x@setName)))]
@@ -274,6 +298,10 @@ curateX <- function(
 		print("Selfmade GMTs")
 		try({
 			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE, mx.diff=FALSE))) # Custom self made GMTs
+		})
+		print("FICAN-OSCAR GMTs")
+		try({
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_fo, verbose=FALSE))) # Custom self made GMTs
 		})
 	}
 	# Curated gene pathways
@@ -328,11 +356,10 @@ omit.nacols <- function(mat){
 
 # Do logz-transformation for the synthetic (or target) data
 logz <- function(x) { 
-	tmp <- scale(log(x+1)) 
+	tmp <- c(scale(log(x+1)))
 	if(any(!is.finite(tmp))){
 		tmp[!is.finite(tmp)] <- 0
 	}
-	colnames(tmp) <- rownames(x)
 	tmp
 }
 
@@ -349,7 +376,7 @@ dat_synthetic <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\clinical_d
 #gex_synthetic <- t(apply(gex_synthetic, MARGIN=1, FUN=logz))
 #rownames(gex_synthetic) <- tmp
 #rm(tmp)
-X_synthetic <- cbind(omit.reducols(curateX(gex=gex_synthetic, dat=dat_synthetic)), isIO = 1, isChemo = 0)
+X_synthetic <- omit.reducols(curateX(gex=gex_synthetic, dat=dat_synthetic))
 
 # Normalize using quantile normalization
 if(FALSE){
@@ -392,98 +419,98 @@ if(FALSE){
 # Whole TCGA
 load(".\\RData\\gex_tcga.RData")
 load(".\\RData\\dat_tcga.RData")
-gex_tcga <- logz(gex_tcga)
-X_tcga <- cbind(omit.reducols(curateX(gex=gex_tcga, dat=dat_tcga)), isIO = 0, isChemo = 1)
+X_tcga <- omit.reducols(curateX(gex=gex_tcga, dat=dat_tcga))
 X_xce_tcga <- X_tcga[,grep("xce_", colnames(X_tcga))]
 X_cus_tcga <- X_tcga[,grep("CUSTOM_", colnames(X_tcga))]
-X_hal_tcga <- X_tcga[,grep("HALLMARK_", colnames(X_tcga))]
+#X_hal_tcga <- X_tcga[,grep("HALLMARK_", colnames(X_tcga))]
 X_bas_tcga <- X_tcga[,grep("BASE_", colnames(X_tcga))]
+X_oth_tcga <- X_gide[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_gide))]
 PFS_tcga <- survival::Surv(time = dat_tcga$PFS.time, event = dat_tcga$PFS.event)
 OS_tcga <- survival::Surv(time = dat_tcga$OS.time, event = dat_tcga$OS.event)
 RESP_tcga <- as.integer(dat_tcga$Responder)
 # Hugo et al. (GEO)
 load(".\\RData\\gex_hugo.RData")
 load(".\\RData\\dat_hugo.RData")
-gex_hugo <- logz(gex_hugo)
-X_hugo <- cbind(omit.reducols(curateX(gex=gex_hugo, dat=dat_hugo)), isIO = 1, isChemo = 0)
+X_hugo <- omit.reducols(curateX(gex=gex_hugo, dat=dat_hugo))
 X_xce_hugo <- X_hugo[,grep("xce_", colnames(X_hugo))]
 X_cus_hugo <- X_hugo[,grep("CUSTOM_", colnames(X_hugo))]
-X_hal_hugo <- X_hugo[,grep("HALLMARK_", colnames(X_hugo))]
+#X_hal_hugo <- X_hugo[,grep("HALLMARK_", colnames(X_hugo))]
 X_bas_hugo <- X_hugo[,grep("BASE_", colnames(X_hugo))]
+X_oth_hugo <- X_hugo[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_hugo))]
 OS_hugo <- survival::Surv(time = dat_hugo$OS.time, event = dat_hugo$OS.event)
 RESP_hugo <- as.integer(dat_hugo$Responder)
 # Prat et al. (GEO)
 load(".\\RData\\gex_prat.RData")
 load(".\\RData\\dat_prat.RData")
-gex_hugo <- logz(gex_hugo)
-X_prat <- cbind(omit.reducols(curateX(gex=gex_prat, dat=dat_prat)), isIO = 1, isChemo = 0)
+X_prat <- omit.reducols(curateX(gex=gex_prat, dat=dat_prat, normalize=FALSE))
 X_xce_prat <- X_prat[,grep("xce_", colnames(X_prat))]
 X_cus_prat <- X_prat[,grep("CUSTOM_", colnames(X_prat))]
-X_hal_prat <- X_prat[,grep("HALLMARK_", colnames(X_prat))]
+#X_hal_prat <- X_prat[,grep("HALLMARK_", colnames(X_prat))]
 X_bas_prat <- X_prat[,grep("BASE_", colnames(X_prat))]
+X_oth_prat <- X_prat[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_prat))]
 PFS_prat <- survival::Surv(time = dat_prat$PFS.time, event = dat_prat$PFS.event)
 RESP_prat <- as.integer(dat_prat$Responder)
 # Westin et al. (GEO)
 load(".\\RData\\gex_westin.RData")
 load(".\\RData\\dat_westin.RData")
-gex_hugo <- logz(gex_hugo)
-X_westin <- cbind(omit.reducols(curateX(gex=gex_westin, dat=dat_westin)), isIO = 1, isChemo = 0)
+X_westin <- omit.reducols(curateX(gex=gex_westin, dat=dat_westin))
 X_xce_westin <- X_westin[,grep("xce_", colnames(X_westin))]
 X_cus_westin <- X_westin[,grep("CUSTOM_", colnames(X_westin))]
-X_hal_westin <- X_westin[,grep("HALLMARK_", colnames(X_westin))]
+#X_hal_westin <- X_westin[,grep("HALLMARK_", colnames(X_westin))]
 X_bas_westin <- X_westin[,grep("BASE_", colnames(X_westin))]
+X_oth_westin <- X_westin[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_westin))]
 PFS_westin <- survival::Surv(time = dat_westin$PFS.time, event = dat_westin$PFS.event)
 # Riaz et al. (GEO)
 load(".\\RData\\gex_riaz.RData")
 load(".\\RData\\dat_riaz.RData")
-gex_hugo <- logz(gex_hugo)
-X_riaz <- cbind(omit.reducols(curateX(gex=gex_riaz, dat=dat_riaz)), isIO = 1, isChemo = 0)
+X_riaz <- omit.reducols(curateX(gex=gex_riaz, dat=dat_riaz))
 X_xce_riaz <- X_riaz[,grep("xce_", colnames(X_riaz))]
 X_cus_riaz <- X_riaz[,grep("CUSTOM_", colnames(X_riaz))]
-X_hal_riaz <- X_riaz[,grep("HALLMARK_", colnames(X_riaz))]
+#X_hal_riaz <- X_riaz[,grep("HALLMARK_", colnames(X_riaz))]
 X_bas_riaz <- X_riaz[,grep("BASE_", colnames(X_riaz))]
+X_oth_riaz <- X_riaz[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_riaz))]
 RESP_riaz <- dat_riaz[,"Responder"]
 # Lauss et al. (TIDE)
 load(".\\RData\\gex_lauss.RData")
 load(".\\RData\\dat_lauss.RData")
-gex_lauss <- logz(gex_lauss)
-X_lauss <- cbind(omit.reducols(curateX(gex=gex_lauss, dat=dat_lauss)), isIO = 1, isChemo = 0)
+X_lauss <- omit.reducols(curateX(gex=gex_lauss, dat=dat_lauss))
 X_xce_lauss <- X_lauss[,grep("xce_", colnames(X_lauss))]
 X_cus_lauss <- X_lauss[,grep("CUSTOM_", colnames(X_lauss))]
-X_hal_lauss <- X_lauss[,grep("HALLMARK_", colnames(X_lauss))]
+#X_hal_lauss <- X_lauss[,grep("HALLMARK_", colnames(X_lauss))]
 X_bas_lauss <- X_lauss[,grep("BASE_", colnames(X_lauss))]
+X_oth_lauss <- X_lauss[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_lauss))]
 PFS_lauss <- survival::Surv(time=dat_lauss[,"PFS.time"], event=dat_lauss[,"PFS.event"])
 OS_lauss <- survival::Surv(time=dat_lauss[,"OS.time"], event=dat_lauss[,"OS.event"])
 RESP_lauss <- dat_lauss[,"Responder"]
 # Kim et al. (TIDE)
 load(".\\RData\\gex_kim.RData")
 load(".\\RData\\dat_kim.RData")
-gex_kim <- logz(gex_kim)
-X_kim <- cbind(omit.reducols(curateX(gex=gex_kim, dat=dat_kim)), isIO = 1, isChemo = 0)
+X_kim <- omit.reducols(curateX(gex=gex_kim, dat=dat_kim))
 X_xce_kim <- X_kim[,grep("xce_", colnames(X_kim))]
 X_cus_kim <- X_kim[,grep("CUSTOM_", colnames(X_kim))]
-X_hal_kim <- X_kim[,grep("HALLMARK_", colnames(X_kim))]
+#X_hal_kim <- X_kim[,grep("HALLMARK_", colnames(X_kim))]
 X_bas_kim <- X_kim[,grep("BASE_", colnames(X_kim))]
+X_oth_kim <- X_kim[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_kim))]
 RESP_kim <- dat_kim[,"Responder"]
 # Chen et al. (TIDE)
 load(".\\RData\\gex_chen.RData")
 load(".\\RData\\dat_chen.RData")
-gex_chen <- logz(gex_chen)
-X_chen <- cbind(omit.reducols(curateX(gex=gex_chen, dat=dat_chen)), isIO = 1, isChemo = 0)
+X_chen <- omit.reducols(curateX(gex=gex_chen, dat=dat_chen))
 X_xce_chen <- X_chen[,grep("xce_", colnames(X_chen))]
 X_cus_chen <- X_chen[,grep("CUSTOM_", colnames(X_chen))]
-X_hal_chen <- X_chen[,grep("HALLMARK_", colnames(X_chen))]
+#X_hal_chen <- X_chen[,grep("HALLMARK_", colnames(X_chen))]
 X_bas_chen <- X_chen[,grep("BASE_", colnames(X_chen))]
+X_oth_chen <- X_chen[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_chen))]
 RESP_chen <- dat_chen[,"Responder"]
 # Gide et al. (TIDE)
 load(".\\RData\\gex_gide.RData")
 load(".\\RData\\dat_gide.RData")
-gex_gide <- logz(gex_gide)
-X_gide <- cbind(omit.reducols(curateX(gex=gex_gide, dat=dat_gide)), isIO = 1, isChemo = 0)
+X_gide <- omit.reducols(curateX(gex=gex_gide, dat=dat_gide))
 X_xce_gide <- X_gide[,grep("xce_", colnames(X_gide))]
 X_cus_gide <- X_gide[,grep("CUSTOM_", colnames(X_gide))]
-X_hal_gide <- X_gide[,grep("HALLMARK_", colnames(X_gide))]
+#X_hal_gide <- X_gide[,grep("HALLMARK_", colnames(X_gide))]
 X_bas_gide <- X_gide[,grep("BASE_", colnames(X_gide))]
+X_oth_gide <- X_gide[,-grep("BASE_|CUSTOM_|isIO|isChemo", colnames(X_gide))]
 PFS_gide <- survival::Surv(time=dat_gide[,"PFS.time"], event=dat_gide[,"PFS.event"])
 OS_gide <- survival::Surv(time=dat_gide[,"OS.time"], event=dat_gide[,"OS.event"])
 RESP_gide <- dat_gide[,"Responder"]
@@ -502,10 +529,8 @@ load(".\\RData\\gex_braun_nivo.RData")
 load(".\\RData\\dat_braun_nivo.RData")
 load(".\\RData\\gex_braun_ever.RData")
 load(".\\RData\\dat_braun_ever.RData")
-gex_braun_nivo <- logz(gex_braun_nivo)
-gex_braun_ever <- logz(gex_braun_ever)
-X_braun_nivo <- cbind(omit.reducols(curateX(gex=gex_braun_nivo, dat=dat_braun_nivo)), isIO = 1, isChemo = 0)
-X_braun_ever <- cbind(omit.reducols(curateX(gex=gex_braun_ever, dat=dat_braun_ever)), isIO = 0, isChemo = 1)
+X_braun_nivo <- omit.reducols(curateX(gex=gex_braun_nivo, dat=dat_braun_nivo))
+X_braun_ever <- omit.reducols(curateX(gex=gex_braun_ever, dat=dat_braun_ever))
 PFS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"PFS.time"], event=dat_braun_nivo[,"PFS.event"])
 iPFS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"iPFS.time"], event=dat_braun_nivo[,"iPFS.event"])
 OS_braun_nivo <- survival::Surv(time=dat_braun_nivo[,"OS.time"], event=dat_braun_nivo[,"OS.event"])
@@ -535,9 +560,9 @@ RESP_xce_tcga_oscar <- oscar::oscar(x = X_xce_tcga, y = RESP_tcga, family="logis
 PFS_cus_tcga_oscar <- oscar::oscar(x = X_cus_tcga, y = PFS_tcga, family="cox", verb=1)
 OS_cus_tcga_oscar <- oscar::oscar(x = X_cus_tcga, y = OS_tcga, family="cox", verb=1)
 RESP_cus_tcga_oscar <- oscar::oscar(x = X_cus_tcga, y = RESP_tcga, family="logistic", verb=1)
-PFS_hal_tcga_oscar <- oscar::oscar(x = X_hal_tcga, y = PFS_tcga, family="cox", verb=1)
-OS_hal_tcga_oscar <- oscar::oscar(x = X_hal_tcga, y = OS_tcga, family="cox", verb=1)
-RESP_hal_tcga_oscar <- oscar::oscar(x = X_hal_tcga, y = RESP_tcga, family="logistic", verb=1)
+PFS_oth_tcga_oscar <- oscar::oscar(x = X_oth_tcga, y = PFS_tcga, family="cox", verb=1)
+OS_oth_tcga_oscar <- oscar::oscar(x = X_oth_tcga, y = OS_tcga, family="cox", verb=1)
+RESP_oth_tcga_oscar <- oscar::oscar(x = X_oth_tcga, y = RESP_tcga, family="logistic", verb=1)
 PFS_bas_tcga_oscar <- oscar::oscar(x = X_bas_tcga, y = PFS_tcga, family="cox", verb=1)
 OS_bas_tcga_oscar <- oscar::oscar(x = X_bas_tcga, y = OS_tcga, family="cox", verb=1)
 RESP_bas_tcga_oscar <- oscar::oscar(x = X_bas_tcga, y = RESP_tcga, family="logistic", verb=1)
@@ -549,8 +574,8 @@ OS_xce_hugo_oscar <- oscar::oscar(x = X_xce_hugo, y = OS_hugo, family="cox")
 RESP_xce_hugo_oscar <- oscar::oscar(x = X_xce_hugo, y = RESP_hugo, family="logistic")
 OS_cus_hugo_oscar <- oscar::oscar(x = X_cus_hugo, y = OS_hugo, family="cox")
 RESP_cus_hugo_oscar <- oscar::oscar(x = X_cus_hugo, y = RESP_hugo, family="logistic")
-OS_hal_hugo_oscar <- oscar::oscar(x = X_hal_hugo, y = OS_hugo, family="cox")
-RESP_hal_hugo_oscar <- oscar::oscar(x = X_hal_hugo, y = RESP_hugo, family="logistic")
+OS_oth_hugo_oscar <- oscar::oscar(x = X_oth_hugo, y = OS_hugo, family="cox")
+RESP_oth_hugo_oscar <- oscar::oscar(x = X_oth_hugo, y = RESP_hugo, family="logistic")
 OS_bas_hugo_oscar <- oscar::oscar(x = X_bas_hugo, y = OS_hugo, family="cox")
 RESP_bas_hugo_oscar <- oscar::oscar(x = X_bas_hugo, y = RESP_hugo, family="logistic")
 
@@ -561,8 +586,8 @@ PFS_xce_prat_oscar <- oscar::oscar(x = X_xce_prat, y = PFS_prat, family="cox")
 RESP_xce_prat_oscar <- oscar::oscar(x = X_xce_prat, y = RESP_prat, family="logistic")
 PFS_cus_prat_oscar <- oscar::oscar(x = X_cus_prat, y = PFS_prat, family="cox")
 RESP_cus_prat_oscar <- oscar::oscar(x = X_cus_prat, y = RESP_prat, family="logistic")
-PFS_hal_prat_oscar <- oscar::oscar(x = X_hal_prat, y = PFS_prat, family="cox")
-RESP_hal_prat_oscar <- oscar::oscar(x = X_hal_prat, y = RESP_prat, family="logistic")
+PFS_oth_prat_oscar <- oscar::oscar(x = X_oth_prat, y = PFS_prat, family="cox")
+RESP_oth_prat_oscar <- oscar::oscar(x = X_oth_prat, y = RESP_prat, family="logistic")
 PFS_bas_prat_oscar <- oscar::oscar(x = X_bas_prat, y = PFS_prat, family="cox")
 RESP_bas_prat_oscar <- oscar::oscar(x = X_bas_prat, y = RESP_prat, family="logistic")
 
@@ -571,7 +596,7 @@ save.image("temprun_oscar.RData")
 # Westin et al. 
 PFS_xce_westin_oscar <- oscar::oscar(x = X_xce_westin, y = PFS_westin, family="cox")
 PFS_cus_westin_oscar <- oscar::oscar(x = X_cus_westin, y = PFS_westin, family="cox")
-PFS_hal_westin_oscar <- oscar::oscar(x = X_hal_westin, y = PFS_westin, family="cox")
+PFS_oth_westin_oscar <- oscar::oscar(x = X_oth_westin, y = PFS_westin, family="cox")
 PFS_bas_westin_oscar <- oscar::oscar(x = X_bas_westin, y = PFS_westin, family="cox")
 
 save.image("temprun_oscar.RData")
@@ -579,7 +604,7 @@ save.image("temprun_oscar.RData")
 # Riaz et al. 
 RESP_xce_riaz_oscar <- oscar::oscar(x = X_xce_riaz, y = RESP_riaz, family="logistic")
 RESP_cus_riaz_oscar <- oscar::oscar(x = X_cus_riaz, y = RESP_riaz, family="logistic")
-RESP_hal_riaz_oscar <- oscar::oscar(x = X_hal_riaz, y = RESP_riaz, family="logistic")
+RESP_oth_riaz_oscar <- oscar::oscar(x = X_oth_riaz, y = RESP_riaz, family="logistic")
 RESP_bas_riaz_oscar <- oscar::oscar(x = X_bas_riaz, y = RESP_riaz, family="logistic")
 
 save.image("temprun_oscar.RData")
@@ -591,9 +616,9 @@ RESP_xce_lauss_oscar <- oscar::oscar(x = X_xce_lauss, y = RESP_lauss, family="lo
 PFS_cus_lauss_oscar <- oscar::oscar(x = X_cus_lauss, y = PFS_lauss, family="cox")
 OS_cus_lauss_oscar <- oscar::oscar(x = X_cus_lauss, y = OS_lauss, family="cox")
 RESP_cus_lauss_oscar <- oscar::oscar(x = X_cus_lauss, y = RESP_lauss, family="logistic")
-PFS_hal_lauss_oscar <- oscar::oscar(x = X_hal_lauss, y = PFS_lauss, family="cox")
-OS_hal_lauss_oscar <- oscar::oscar(x = X_hal_lauss, y = OS_lauss, family="cox")
-RESP_hal_lauss_oscar <- oscar::oscar(x = X_hal_lauss, y = RESP_lauss, family="logistic")
+PFS_oth_lauss_oscar <- oscar::oscar(x = X_oth_lauss, y = PFS_lauss, family="cox")
+OS_oth_lauss_oscar <- oscar::oscar(x = X_oth_lauss, y = OS_lauss, family="cox")
+RESP_oth_lauss_oscar <- oscar::oscar(x = X_oth_lauss, y = RESP_lauss, family="logistic")
 PFS_bas_lauss_oscar <- oscar::oscar(x = X_bas_lauss, y = PFS_lauss, family="cox")
 OS_bas_lauss_oscar <- oscar::oscar(x = X_bas_lauss, y = OS_lauss, family="cox")
 RESP_bas_lauss_oscar <- oscar::oscar(x = X_bas_lauss, y = RESP_lauss, family="logistic")
@@ -607,9 +632,9 @@ RESP_xce_gide_oscar <- oscar::oscar(x = X_xce_gide, y = RESP_gide, family="logis
 PFS_cus_gide_oscar <- oscar::oscar(x = X_cus_gide, y = PFS_gide, family="cox")
 OS_cus_gide_oscar <- oscar::oscar(x = X_cus_gide, y = OS_gide, family="cox")
 RESP_cus_gide_oscar <- oscar::oscar(x = X_cus_gide, y = RESP_gide, family="logistic")
-PFS_hal_gide_oscar <- oscar::oscar(x = X_hal_gide, y = PFS_gide, family="cox")
-OS_hal_gide_oscar <- oscar::oscar(x = X_hal_gide, y = OS_gide, family="cox")
-RESP_hal_gide_oscar <- oscar::oscar(x = X_hal_gide, y = RESP_gide, family="logistic")
+PFS_oth_gide_oscar <- oscar::oscar(x = X_oth_gide, y = PFS_gide, family="cox")
+OS_oth_gide_oscar <- oscar::oscar(x = X_oth_gide, y = OS_gide, family="cox")
+RESP_oth_gide_oscar <- oscar::oscar(x = X_oth_gide, y = RESP_gide, family="logistic")
 PFS_bas_gide_oscar <- oscar::oscar(x = X_bas_gide, y = PFS_gide, family="cox")
 OS_bas_gide_oscar <- oscar::oscar(x = X_bas_gide, y = OS_gide, family="cox")
 RESP_bas_gide_oscar <- oscar::oscar(x = X_bas_gide, y = RESP_gide, family="logistic")
@@ -623,9 +648,9 @@ RESP_xce_braun_nivo_oscar <- oscar::oscar(x = X_xce_braun_nivo, y = RESP_braun_n
 PFS_cus_braun_nivo_oscar <- oscar::oscar(x = X_cus_braun_nivo, y = PFS_braun_nivo, family="cox")
 OS_cus_braun_nivo_oscar <- oscar::oscar(x = X_cus_braun_nivo, y = OS_braun_nivo, family="cox")
 RESP_cus_braun_nivo_oscar <- oscar::oscar(x = X_cus_braun_nivo, y = RESP_braun_nivo, family="logistic")
-PFS_hal_braun_nivo_oscar <- oscar::oscar(x = X_hal_braun_nivo, y = PFS_braun_nivo, family="cox")
-OS_hal_braun_nivo_oscar <- oscar::oscar(x = X_hal_braun_nivo, y = OS_braun_nivo, family="cox")
-RESP_hal_braun_nivo_oscar <- oscar::oscar(x = X_hal_braun_nivo, y = RESP_braun_nivo, family="logistic")
+PFS_oth_braun_nivo_oscar <- oscar::oscar(x = X_oth_braun_nivo, y = PFS_braun_nivo, family="cox")
+OS_oth_braun_nivo_oscar <- oscar::oscar(x = X_oth_braun_nivo, y = OS_braun_nivo, family="cox")
+RESP_oth_braun_nivo_oscar <- oscar::oscar(x = X_oth_braun_nivo, y = RESP_braun_nivo, family="logistic")
 PFS_bas_braun_nivo_oscar <- oscar::oscar(x = X_bas_braun_nivo, y = PFS_braun_nivo, family="cox")
 OS_bas_braun_nivo_oscar <- oscar::oscar(x = X_bas_braun_nivo, y = OS_braun_nivo, family="cox")
 RESP_bas_braun_nivo_oscar <- oscar::oscar(x = X_bas_braun_nivo, y = RESP_braun_nivo, family="logistic")
@@ -639,9 +664,9 @@ RESP_xce_braun_ever_oscar <- oscar::oscar(x = X_xce_braun_ever, y = RESP_braun_e
 PFS_cus_braun_ever_oscar <- oscar::oscar(x = X_cus_braun_ever, y = PFS_braun_ever, family="cox")
 OS_cus_braun_ever_oscar <- oscar::oscar(x = X_cus_braun_ever, y = OS_braun_ever, family="cox")
 RESP_cus_braun_ever_oscar <- oscar::oscar(x = X_cus_braun_ever, y = RESP_braun_ever, family="logistic")
-PFS_hal_braun_ever_oscar <- oscar::oscar(x = X_hal_braun_ever, y = PFS_braun_ever, family="cox")
-OS_hal_braun_ever_oscar <- oscar::oscar(x = X_hal_braun_ever, y = OS_braun_ever, family="cox")
-RESP_hal_braun_ever_oscar <- oscar::oscar(x = X_hal_braun_ever, y = RESP_braun_ever, family="logistic")
+PFS_oth_braun_ever_oscar <- oscar::oscar(x = X_oth_braun_ever, y = PFS_braun_ever, family="cox")
+OS_oth_braun_ever_oscar <- oscar::oscar(x = X_oth_braun_ever, y = OS_braun_ever, family="cox")
+RESP_oth_braun_ever_oscar <- oscar::oscar(x = X_oth_braun_ever, y = RESP_braun_ever, family="logistic")
 PFS_bas_braun_ever_oscar <- oscar::oscar(x = X_bas_braun_ever, y = PFS_braun_ever, family="cox")
 OS_bas_braun_ever_oscar <- oscar::oscar(x = X_bas_braun_ever, y = OS_braun_ever, family="cox")
 RESP_bas_braun_ever_oscar <- oscar::oscar(x = X_bas_braun_ever, y = RESP_braun_ever, family="logistic")
@@ -651,7 +676,7 @@ save.image("temprun_oscar.RData")
 # Kim et al.
 RESP_xce_kim_oscar <- oscar::oscar(x = X_xce_kim, y = RESP_kim, family="logistic")
 RESP_cus_kim_oscar <- oscar::oscar(x = X_cus_kim, y = RESP_kim, family="logistic")
-RESP_hal_kim_oscar <- oscar::oscar(x = X_hal_kim, y = RESP_kim, family="logistic")
+RESP_oth_kim_oscar <- oscar::oscar(x = X_oth_kim, y = RESP_kim, family="logistic")
 RESP_bas_kim_oscar <- oscar::oscar(x = X_bas_kim, y = RESP_kim, family="logistic")
 
 save.image("temprun_oscar.RData")
@@ -659,7 +684,7 @@ save.image("temprun_oscar.RData")
 # Chen et al. 
 RESP_xce_chen_oscar <- oscar::oscar(x = X_xce_chen, y = RESP_chen, family="logistic")
 RESP_cus_chen_oscar <- oscar::oscar(x = X_cus_chen, y = RESP_chen, family="logistic")
-RESP_hal_chen_oscar <- oscar::oscar(x = X_hal_chen, y = RESP_chen, family="logistic")
+RESP_oth_chen_oscar <- oscar::oscar(x = X_oth_chen, y = RESP_chen, family="logistic")
 RESP_bas_chen_oscar <- oscar::oscar(x = X_bas_chen, y = RESP_chen, family="logistic")
 
 save.image("temprun_oscar.RData")
@@ -674,32 +699,40 @@ OS_xce_cv_hugo_seed1 <- oscar::cv.oscar(OS_xce_hugo_oscar, fold=5, seed=1)
 RESP_xce_cv_hugo_seed1 <- oscar::cv.oscar(RESP_xce_hugo_oscar, fold=5, seed=1)
 OS_cus_cv_hugo_seed1 <- oscar::cv.oscar(OS_cus_hugo_oscar, fold=5, seed=1)
 RESP_cus_cv_hugo_seed1 <- oscar::cv.oscar(RESP_cus_hugo_oscar, fold=5, seed=1)
-OS_hal_cv_hugo_seed1 <- oscar::cv.oscar(OS_hal_hugo_oscar, fold=5, seed=1)
-RESP_hal_cv_hugo_seed1 <- oscar::cv.oscar(RESP_hal_hugo_oscar, fold=5, seed=1)
+OS_oth_cv_hugo_seed1 <- oscar::cv.oscar(OS_oth_hugo_oscar, fold=5, seed=1)
+RESP_oth_cv_hugo_seed1 <- oscar::cv.oscar(RESP_oth_hugo_oscar, fold=5, seed=1)
 OS_bas_cv_hugo_seed1 <- oscar::cv.oscar(OS_bas_hugo_oscar, fold=5, seed=1)
 RESP_bas_cv_hugo_seed1 <- oscar::cv.oscar(RESP_bas_hugo_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # Prat et al. CV
 PFS_xce_cv_prat_seed1 <- oscar::cv.oscar(PFS_xce_prat_oscar, fold=5, seed=1)
 RESP_xce_cv_prat_seed1 <- oscar::cv.oscar(RESP_xce_prat_oscar, fold=5, seed=1)
 PFS_cus_cv_prat_seed1 <- oscar::cv.oscar(PFS_cus_prat_oscar, fold=5, seed=1)
 RESP_cus_cv_prat_seed1 <- oscar::cv.oscar(RESP_cus_prat_oscar, fold=5, seed=1)
-PFS_hal_cv_prat_seed1 <- oscar::cv.oscar(PFS_hal_prat_oscar, fold=5, seed=1)
-RESP_hal_cv_prat_seed1 <- oscar::cv.oscar(RESP_hal_prat_oscar, fold=5, seed=1)
+PFS_oth_cv_prat_seed1 <- oscar::cv.oscar(PFS_oth_prat_oscar, fold=5, seed=1)
+RESP_oth_cv_prat_seed1 <- oscar::cv.oscar(RESP_oth_prat_oscar, fold=5, seed=1)
 PFS_bas_cv_prat_seed1 <- oscar::cv.oscar(PFS_bas_prat_oscar, fold=5, seed=1)
 RESP_bas_cv_prat_seed1 <- oscar::cv.oscar(RESP_bas_prat_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # Westin et al. CV
 PFS_xce_cv_westin_seed1 <- oscar::cv.oscar(PFS_xce_westin_oscar, fold=5, seed=1)
 PFS_cus_cv_westin_seed1 <- oscar::cv.oscar(PFS_cus_westin_oscar, fold=5, seed=1)
-PFS_hal_cv_westin_seed1 <- oscar::cv.oscar(PFS_hal_westin_oscar, fold=5, seed=1)
+PFS_oth_cv_westin_seed1 <- oscar::cv.oscar(PFS_oth_westin_oscar, fold=5, seed=1)
 PFS_bas_cv_westin_seed1 <- oscar::cv.oscar(PFS_bas_westin_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # Riaz et al. CV
 RESP_xce_cv_riaz_seed1 <- oscar::cv.oscar(RESP_xce_riaz_oscar, fold=5, seed=1)
 RESP_cus_cv_riaz_seed1 <- oscar::cv.oscar(RESP_cus_riaz_oscar, fold=5, seed=1)
-RESP_hal_cv_riaz_seed1 <- oscar::cv.oscar(RESP_hal_riaz_oscar, fold=5, seed=1)
+RESP_oth_cv_riaz_seed1 <- oscar::cv.oscar(RESP_oth_riaz_oscar, fold=5, seed=1)
 RESP_bas_cv_riaz_seed1 <- oscar::cv.oscar(RESP_bas_riaz_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # Lauss et al CV
 PFS_xce_cv_lauss_seed1 <- oscar::cv.oscar(PFS_xce_lauss_oscar, fold=5, seed=1)
@@ -708,12 +741,14 @@ RESP_xce_cv_lauss_seed1 <- oscar::cv.oscar(RESP_xce_lauss_oscar, fold=5, seed=1)
 PFS_cus_cv_lauss_seed1 <- oscar::cv.oscar(PFS_cus_lauss_oscar, fold=5, seed=1)
 OS_cus_cv_lauss_seed1 <- oscar::cv.oscar(OS_cus_lauss_oscar, fold=5, seed=1)
 RESP_cus_cv_lauss_seed1 <- oscar::cv.oscar(RESP_cus_lauss_oscar, fold=5, seed=1)
-PFS_hal_cv_lauss_seed1 <- oscar::cv.oscar(PFS_hal_lauss_oscar, fold=5, seed=1)
-OS_hal_cv_lauss_seed1 <- oscar::cv.oscar(OS_hal_lauss_oscar, fold=5, seed=1)
-RESP_hal_cv_lauss_seed1 <- oscar::cv.oscar(RESP_hal_lauss_oscar, fold=5, seed=1)
+PFS_oth_cv_lauss_seed1 <- oscar::cv.oscar(PFS_oth_lauss_oscar, fold=5, seed=1)
+OS_oth_cv_lauss_seed1 <- oscar::cv.oscar(OS_oth_lauss_oscar, fold=5, seed=1)
+RESP_oth_cv_lauss_seed1 <- oscar::cv.oscar(RESP_oth_lauss_oscar, fold=5, seed=1)
 PFS_bas_cv_lauss_seed1 <- oscar::cv.oscar(PFS_bas_lauss_oscar, fold=5, seed=1)
 OS_bas_cv_lauss_seed1 <- oscar::cv.oscar(OS_bas_lauss_oscar, fold=5, seed=1)
 RESP_bas_cv_lauss_seed1 <- oscar::cv.oscar(RESP_bas_lauss_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # Gide et al. CV
 PFS_xce_cv_gide_seed1 <- oscar::cv.oscar(PFS_xce_gide_oscar, fold=5, seed=1)
@@ -722,24 +757,30 @@ RESP_xce_cv_gide_seed1 <- oscar::cv.oscar(RESP_xce_gide_oscar, fold=5, seed=1)
 PFS_cus_cv_gide_seed1 <- oscar::cv.oscar(PFS_cus_gide_oscar, fold=5, seed=1)
 OS_cus_cv_gide_seed1 <- oscar::cv.oscar(OS_cus_gide_oscar, fold=5, seed=1)
 RESP_cus_cv_gide_seed1 <- oscar::cv.oscar(RESP_cus_gide_oscar, fold=5, seed=1)
-PFS_hal_cv_gide_seed1 <- oscar::cv.oscar(PFS_hal_gide_oscar, fold=5, seed=1)
-OS_hal_cv_gide_seed1 <- oscar::cv.oscar(OS_hal_gide_oscar, fold=5, seed=1)
-RESP_hal_cv_gide_seed1 <- oscar::cv.oscar(RESP_hal_gide_oscar, fold=5, seed=1)
+PFS_oth_cv_gide_seed1 <- oscar::cv.oscar(PFS_oth_gide_oscar, fold=5, seed=1)
+OS_oth_cv_gide_seed1 <- oscar::cv.oscar(OS_oth_gide_oscar, fold=5, seed=1)
+RESP_oth_cv_gide_seed1 <- oscar::cv.oscar(RESP_oth_gide_oscar, fold=5, seed=1)
 PFS_bas_cv_gide_seed1 <- oscar::cv.oscar(PFS_bas_gide_oscar, fold=5, seed=1)
 OS_bas_cv_gide_seed1 <- oscar::cv.oscar(OS_bas_gide_oscar, fold=5, seed=1)
 RESP_bas_cv_gide_seed1 <- oscar::cv.oscar(RESP_bas_gide_oscar, fold=5, seed=1)
 
+save.image("temprun_cv_seed1.RData")
+
 # Kim et al. CV
 RESP_xce_cv_kim_seed1 <- oscar::cv.oscar(RESP_xce_kim_oscar, fold=5, seed=1)
 RESP_cus_cv_kim_seed1 <- oscar::cv.oscar(RESP_cus_kim_oscar, fold=5, seed=1)
-RESP_hal_cv_kim_seed1 <- oscar::cv.oscar(RESP_hal_kim_oscar, fold=5, seed=1)
+RESP_oth_cv_kim_seed1 <- oscar::cv.oscar(RESP_oth_kim_oscar, fold=5, seed=1)
 RESP_bas_cv_kim_seed1 <- oscar::cv.oscar(RESP_bas_kim_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # Chen et al. CV
 RESP_xce_cv_chen_seed1 <- oscar::cv.oscar(RESP_xce_chen_oscar, fold=5, seed=1)
 RESP_cus_cv_chen_seed1 <- oscar::cv.oscar(RESP_cus_chen_oscar, fold=5, seed=1)
-RESP_hal_cv_chen_seed1 <- oscar::cv.oscar(RESP_hal_chen_oscar, fold=5, seed=1)
+RESP_oth_cv_chen_seed1 <- oscar::cv.oscar(RESP_oth_chen_oscar, fold=5, seed=1)
 RESP_bas_cv_chen_seed1 <- oscar::cv.oscar(RESP_bas_chen_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # Braun et al. Nivo CV
 PFS_xce_cv_braun_nivo_seed1 <- oscar::cv.oscar(PFS_xce_braun_nivo_oscar, fold=5, seed=1)
@@ -748,12 +789,14 @@ RESP_xce_cv_braun_nivo_seed1 <- oscar::cv.oscar(RESP_xce_braun_nivo_oscar, fold=
 PFS_cus_cv_braun_nivo_seed1 <- oscar::cv.oscar(PFS_cus_braun_nivo_oscar, fold=5, seed=1)
 OS_cus_cv_braun_nivo_seed1 <- oscar::cv.oscar(OS_cus_braun_nivo_oscar, fold=5, seed=1)
 RESP_cus_cv_braun_nivo_seed1 <- oscar::cv.oscar(RESP_cus_braun_nivo_oscar, fold=5, seed=1)
-PFS_hal_cv_braun_nivo_seed1 <- oscar::cv.oscar(PFS_hal_braun_nivo_oscar, fold=5, seed=1)
-OS_hal_cv_braun_nivo_seed1 <- oscar::cv.oscar(OS_hal_braun_nivo_oscar, fold=5, seed=1)
-RESP_hal_cv_braun_nivo_seed1 <- oscar::cv.oscar(RESP_hal_braun_nivo_oscar, fold=5, seed=1)
+PFS_oth_cv_braun_nivo_seed1 <- oscar::cv.oscar(PFS_oth_braun_nivo_oscar, fold=5, seed=1)
+OS_oth_cv_braun_nivo_seed1 <- oscar::cv.oscar(OS_oth_braun_nivo_oscar, fold=5, seed=1)
+RESP_oth_cv_braun_nivo_seed1 <- oscar::cv.oscar(RESP_oth_braun_nivo_oscar, fold=5, seed=1)
 PFS_bas_cv_braun_nivo_seed1 <- oscar::cv.oscar(PFS_bas_braun_nivo_oscar, fold=5, seed=1)
 OS_bas_cv_braun_nivo_seed1 <- oscar::cv.oscar(OS_bas_braun_nivo_oscar, fold=5, seed=1)
 RESP_bas_cv_braun_nivo_seed1 <- oscar::cv.oscar(RESP_bas_braun_nivo_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # Braun et al. Chemo CV
 PFS_xce_cv_braun_ever_seed1 <- oscar::cv.oscar(PFS_xce_braun_ever_oscar, fold=5, seed=1)
@@ -762,12 +805,14 @@ RESP_xce_cv_braun_ever_seed1 <- oscar::cv.oscar(RESP_xce_braun_ever_oscar, fold=
 PFS_cus_cv_braun_ever_seed1 <- oscar::cv.oscar(PFS_cus_braun_ever_oscar, fold=5, seed=1)
 OS_cus_cv_braun_ever_seed1 <- oscar::cv.oscar(OS_cus_braun_ever_oscar, fold=5, seed=1)
 RESP_cus_cv_braun_ever_seed1 <- oscar::cv.oscar(RESP_cus_braun_ever_oscar, fold=5, seed=1)
-PFS_hal_cv_braun_ever_seed1 <- oscar::cv.oscar(PFS_hal_braun_ever_oscar, fold=5, seed=1)
-OS_hal_cv_braun_ever_seed1 <- oscar::cv.oscar(OS_hal_braun_ever_oscar, fold=5, seed=1)
-RESP_hal_cv_braun_ever_seed1 <- oscar::cv.oscar(RESP_hal_braun_ever_oscar, fold=5, seed=1)
+PFS_oth_cv_braun_ever_seed1 <- oscar::cv.oscar(PFS_oth_braun_ever_oscar, fold=5, seed=1)
+OS_oth_cv_braun_ever_seed1 <- oscar::cv.oscar(OS_oth_braun_ever_oscar, fold=5, seed=1)
+RESP_oth_cv_braun_ever_seed1 <- oscar::cv.oscar(RESP_oth_braun_ever_oscar, fold=5, seed=1)
 PFS_bas_cv_braun_ever_seed1 <- oscar::cv.oscar(PFS_bas_braun_ever_oscar, fold=5, seed=1)
 OS_bas_cv_braun_ever_seed1 <- oscar::cv.oscar(OS_bas_braun_ever_oscar, fold=5, seed=1)
 RESP_bas_cv_braun_ever_seed1 <- oscar::cv.oscar(RESP_bas_braun_ever_oscar, fold=5, seed=1)
+
+save.image("temprun_cv_seed1.RData")
 
 # TCGA CV
 PFS_xce_cv_tcga_seed1 <- oscar::cv.oscar(PFS_xce_tcga_oscar, fold=5, seed=1)
@@ -776,9 +821,9 @@ RESP_xce_cv_tcga_seed1 <- oscar::cv.oscar(RESP_xce_tcga_oscar, fold=5, seed=1)
 PFS_cus_cv_tcga_seed1 <- oscar::cv.oscar(PFS_cus_tcga_oscar, fold=5, seed=1)
 OS_cus_cv_tcga_seed1 <- oscar::cv.oscar(OS_cus_tcga_oscar, fold=5, seed=1)
 RESP_cus_cv_tcga_seed1 <- oscar::cv.oscar(RESP_cus_tcga_oscar, fold=5, seed=1)
-PFS_hal_cv_tcga_seed1 <- oscar::cv.oscar(PFS_hal_tcga_oscar, fold=5, seed=1)
-OS_hal_cv_tcga_seed1 <- oscar::cv.oscar(OS_hal_tcga_oscar, fold=5, seed=1)
-RESP_hal_cv_tcga_seed1 <- oscar::cv.oscar(RESP_hal_tcga_oscar, fold=5, seed=1)
+PFS_oth_cv_tcga_seed1 <- oscar::cv.oscar(PFS_oth_tcga_oscar, fold=5, seed=1)
+OS_oth_cv_tcga_seed1 <- oscar::cv.oscar(OS_oth_tcga_oscar, fold=5, seed=1)
+RESP_oth_cv_tcga_seed1 <- oscar::cv.oscar(RESP_oth_tcga_oscar, fold=5, seed=1)
 PFS_bas_cv_tcga_seed1 <- oscar::cv.oscar(PFS_bas_tcga_oscar, fold=5, seed=1)
 OS_bas_cv_tcga_seed1 <- oscar::cv.oscar(OS_bas_tcga_oscar, fold=5, seed=1)
 RESP_bas_cv_tcga_seed1 <- oscar::cv.oscar(RESP_bas_tcga_oscar, fold=5, seed=1)
@@ -796,32 +841,40 @@ OS_xce_cv_hugo_seed2 <- oscar::cv.oscar(OS_xce_hugo_oscar, fold=5, seed=2)
 RESP_xce_cv_hugo_seed2 <- oscar::cv.oscar(RESP_xce_hugo_oscar, fold=5, seed=2)
 OS_cus_cv_hugo_seed2 <- oscar::cv.oscar(OS_cus_hugo_oscar, fold=5, seed=2)
 RESP_cus_cv_hugo_seed2 <- oscar::cv.oscar(RESP_cus_hugo_oscar, fold=5, seed=2)
-OS_hal_cv_hugo_seed2 <- oscar::cv.oscar(OS_hal_hugo_oscar, fold=5, seed=2)
-RESP_hal_cv_hugo_seed2 <- oscar::cv.oscar(RESP_hal_hugo_oscar, fold=5, seed=2)
+OS_oth_cv_hugo_seed2 <- oscar::cv.oscar(OS_oth_hugo_oscar, fold=5, seed=2)
+RESP_oth_cv_hugo_seed2 <- oscar::cv.oscar(RESP_oth_hugo_oscar, fold=5, seed=2)
 OS_bas_cv_hugo_seed2 <- oscar::cv.oscar(OS_bas_hugo_oscar, fold=5, seed=2)
 RESP_bas_cv_hugo_seed2 <- oscar::cv.oscar(RESP_bas_hugo_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # Prat et al. CV
 PFS_xce_cv_prat_seed2 <- oscar::cv.oscar(PFS_xce_prat_oscar, fold=5, seed=2)
 RESP_xce_cv_prat_seed2 <- oscar::cv.oscar(RESP_xce_prat_oscar, fold=5, seed=2)
 PFS_cus_cv_prat_seed2 <- oscar::cv.oscar(PFS_cus_prat_oscar, fold=5, seed=2)
 RESP_cus_cv_prat_seed2 <- oscar::cv.oscar(RESP_cus_prat_oscar, fold=5, seed=2)
-PFS_hal_cv_prat_seed2 <- oscar::cv.oscar(PFS_hal_prat_oscar, fold=5, seed=2)
-RESP_hal_cv_prat_seed2 <- oscar::cv.oscar(RESP_hal_prat_oscar, fold=5, seed=2)
+PFS_oth_cv_prat_seed2 <- oscar::cv.oscar(PFS_oth_prat_oscar, fold=5, seed=2)
+RESP_oth_cv_prat_seed2 <- oscar::cv.oscar(RESP_oth_prat_oscar, fold=5, seed=2)
 PFS_bas_cv_prat_seed2 <- oscar::cv.oscar(PFS_bas_prat_oscar, fold=5, seed=2)
 RESP_bas_cv_prat_seed2 <- oscar::cv.oscar(RESP_bas_prat_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # Westin et al. CV
 PFS_xce_cv_westin_seed2 <- oscar::cv.oscar(PFS_xce_westin_oscar, fold=5, seed=2)
 PFS_cus_cv_westin_seed2 <- oscar::cv.oscar(PFS_cus_westin_oscar, fold=5, seed=2)
-PFS_hal_cv_westin_seed2 <- oscar::cv.oscar(PFS_hal_westin_oscar, fold=5, seed=2)
+PFS_oth_cv_westin_seed2 <- oscar::cv.oscar(PFS_oth_westin_oscar, fold=5, seed=2)
 PFS_bas_cv_westin_seed2 <- oscar::cv.oscar(PFS_bas_westin_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # Riaz et al. CV
 RESP_xce_cv_riaz_seed2 <- oscar::cv.oscar(RESP_xce_riaz_oscar, fold=5, seed=2)
 RESP_cus_cv_riaz_seed2 <- oscar::cv.oscar(RESP_cus_riaz_oscar, fold=5, seed=2)
-RESP_hal_cv_riaz_seed2 <- oscar::cv.oscar(RESP_hal_riaz_oscar, fold=5, seed=2)
+RESP_oth_cv_riaz_seed2 <- oscar::cv.oscar(RESP_oth_riaz_oscar, fold=5, seed=2)
 RESP_bas_cv_riaz_seed2 <- oscar::cv.oscar(RESP_bas_riaz_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # Lauss et al CV
 PFS_xce_cv_lauss_seed2 <- oscar::cv.oscar(PFS_xce_lauss_oscar, fold=5, seed=2)
@@ -830,12 +883,14 @@ RESP_xce_cv_lauss_seed2 <- oscar::cv.oscar(RESP_xce_lauss_oscar, fold=5, seed=2)
 PFS_cus_cv_lauss_seed2 <- oscar::cv.oscar(PFS_cus_lauss_oscar, fold=5, seed=2)
 OS_cus_cv_lauss_seed2 <- oscar::cv.oscar(OS_cus_lauss_oscar, fold=5, seed=2)
 RESP_cus_cv_lauss_seed2 <- oscar::cv.oscar(RESP_cus_lauss_oscar, fold=5, seed=2)
-PFS_hal_cv_lauss_seed2 <- oscar::cv.oscar(PFS_hal_lauss_oscar, fold=5, seed=2)
-OS_hal_cv_lauss_seed2 <- oscar::cv.oscar(OS_hal_lauss_oscar, fold=5, seed=2)
-RESP_hal_cv_lauss_seed2 <- oscar::cv.oscar(RESP_hal_lauss_oscar, fold=5, seed=2)
+PFS_oth_cv_lauss_seed2 <- oscar::cv.oscar(PFS_oth_lauss_oscar, fold=5, seed=2)
+OS_oth_cv_lauss_seed2 <- oscar::cv.oscar(OS_oth_lauss_oscar, fold=5, seed=2)
+RESP_oth_cv_lauss_seed2 <- oscar::cv.oscar(RESP_oth_lauss_oscar, fold=5, seed=2)
 PFS_bas_cv_lauss_seed2 <- oscar::cv.oscar(PFS_bas_lauss_oscar, fold=5, seed=2)
 OS_bas_cv_lauss_seed2 <- oscar::cv.oscar(OS_bas_lauss_oscar, fold=5, seed=2)
 RESP_bas_cv_lauss_seed2 <- oscar::cv.oscar(RESP_bas_lauss_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # Gide et al. CV
 PFS_xce_cv_gide_seed2 <- oscar::cv.oscar(PFS_xce_gide_oscar, fold=5, seed=2)
@@ -844,24 +899,30 @@ RESP_xce_cv_gide_seed2 <- oscar::cv.oscar(RESP_xce_gide_oscar, fold=5, seed=2)
 PFS_cus_cv_gide_seed2 <- oscar::cv.oscar(PFS_cus_gide_oscar, fold=5, seed=2)
 OS_cus_cv_gide_seed2 <- oscar::cv.oscar(OS_cus_gide_oscar, fold=5, seed=2)
 RESP_cus_cv_gide_seed2 <- oscar::cv.oscar(RESP_cus_gide_oscar, fold=5, seed=2)
-PFS_hal_cv_gide_seed2 <- oscar::cv.oscar(PFS_hal_gide_oscar, fold=5, seed=2)
-OS_hal_cv_gide_seed2 <- oscar::cv.oscar(OS_hal_gide_oscar, fold=5, seed=2)
-RESP_hal_cv_gide_seed2 <- oscar::cv.oscar(RESP_hal_gide_oscar, fold=5, seed=2)
+PFS_oth_cv_gide_seed2 <- oscar::cv.oscar(PFS_oth_gide_oscar, fold=5, seed=2)
+OS_oth_cv_gide_seed2 <- oscar::cv.oscar(OS_oth_gide_oscar, fold=5, seed=2)
+RESP_oth_cv_gide_seed2 <- oscar::cv.oscar(RESP_oth_gide_oscar, fold=5, seed=2)
 PFS_bas_cv_gide_seed2 <- oscar::cv.oscar(PFS_bas_gide_oscar, fold=5, seed=2)
 OS_bas_cv_gide_seed2 <- oscar::cv.oscar(OS_bas_gide_oscar, fold=5, seed=2)
 RESP_bas_cv_gide_seed2 <- oscar::cv.oscar(RESP_bas_gide_oscar, fold=5, seed=2)
 
+save.image("temprun_cv_seed2.RData")
+
 # Kim et al. CV
 RESP_xce_cv_kim_seed2 <- oscar::cv.oscar(RESP_xce_kim_oscar, fold=5, seed=2)
 RESP_cus_cv_kim_seed2 <- oscar::cv.oscar(RESP_cus_kim_oscar, fold=5, seed=2)
-RESP_hal_cv_kim_seed2 <- oscar::cv.oscar(RESP_hal_kim_oscar, fold=5, seed=2)
+RESP_oth_cv_kim_seed2 <- oscar::cv.oscar(RESP_oth_kim_oscar, fold=5, seed=2)
 RESP_bas_cv_kim_seed2 <- oscar::cv.oscar(RESP_bas_kim_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # Chen et al. CV
 RESP_xce_cv_chen_seed2 <- oscar::cv.oscar(RESP_xce_chen_oscar, fold=5, seed=2)
 RESP_cus_cv_chen_seed2 <- oscar::cv.oscar(RESP_cus_chen_oscar, fold=5, seed=2)
-RESP_hal_cv_chen_seed2 <- oscar::cv.oscar(RESP_hal_chen_oscar, fold=5, seed=2)
+RESP_oth_cv_chen_seed2 <- oscar::cv.oscar(RESP_oth_chen_oscar, fold=5, seed=2)
 RESP_bas_cv_chen_seed2 <- oscar::cv.oscar(RESP_bas_chen_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # Braun et al. Nivo CV
 PFS_xce_cv_braun_nivo_seed2 <- oscar::cv.oscar(PFS_xce_braun_nivo_oscar, fold=5, seed=2)
@@ -870,12 +931,14 @@ RESP_xce_cv_braun_nivo_seed2 <- oscar::cv.oscar(RESP_xce_braun_nivo_oscar, fold=
 PFS_cus_cv_braun_nivo_seed2 <- oscar::cv.oscar(PFS_cus_braun_nivo_oscar, fold=5, seed=2)
 OS_cus_cv_braun_nivo_seed2 <- oscar::cv.oscar(OS_cus_braun_nivo_oscar, fold=5, seed=2)
 RESP_cus_cv_braun_nivo_seed2 <- oscar::cv.oscar(RESP_cus_braun_nivo_oscar, fold=5, seed=2)
-PFS_hal_cv_braun_nivo_seed2 <- oscar::cv.oscar(PFS_hal_braun_nivo_oscar, fold=5, seed=2)
-OS_hal_cv_braun_nivo_seed2 <- oscar::cv.oscar(OS_hal_braun_nivo_oscar, fold=5, seed=2)
-RESP_hal_cv_braun_nivo_seed2 <- oscar::cv.oscar(RESP_hal_braun_nivo_oscar, fold=5, seed=2)
+PFS_oth_cv_braun_nivo_seed2 <- oscar::cv.oscar(PFS_oth_braun_nivo_oscar, fold=5, seed=2)
+OS_oth_cv_braun_nivo_seed2 <- oscar::cv.oscar(OS_oth_braun_nivo_oscar, fold=5, seed=2)
+RESP_oth_cv_braun_nivo_seed2 <- oscar::cv.oscar(RESP_oth_braun_nivo_oscar, fold=5, seed=2)
 PFS_bas_cv_braun_nivo_seed2 <- oscar::cv.oscar(PFS_bas_braun_nivo_oscar, fold=5, seed=2)
 OS_bas_cv_braun_nivo_seed2 <- oscar::cv.oscar(OS_bas_braun_nivo_oscar, fold=5, seed=2)
 RESP_bas_cv_braun_nivo_seed2 <- oscar::cv.oscar(RESP_bas_braun_nivo_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # Braun et al. Chemo CV
 PFS_xce_cv_braun_ever_seed2 <- oscar::cv.oscar(PFS_xce_braun_ever_oscar, fold=5, seed=2)
@@ -884,12 +947,14 @@ RESP_xce_cv_braun_ever_seed2 <- oscar::cv.oscar(RESP_xce_braun_ever_oscar, fold=
 PFS_cus_cv_braun_ever_seed2 <- oscar::cv.oscar(PFS_cus_braun_ever_oscar, fold=5, seed=2)
 OS_cus_cv_braun_ever_seed2 <- oscar::cv.oscar(OS_cus_braun_ever_oscar, fold=5, seed=2)
 RESP_cus_cv_braun_ever_seed2 <- oscar::cv.oscar(RESP_cus_braun_ever_oscar, fold=5, seed=2)
-PFS_hal_cv_braun_ever_seed2 <- oscar::cv.oscar(PFS_hal_braun_ever_oscar, fold=5, seed=2)
-OS_hal_cv_braun_ever_seed2 <- oscar::cv.oscar(OS_hal_braun_ever_oscar, fold=5, seed=2)
-RESP_hal_cv_braun_ever_seed2 <- oscar::cv.oscar(RESP_hal_braun_ever_oscar, fold=5, seed=2)
+PFS_oth_cv_braun_ever_seed2 <- oscar::cv.oscar(PFS_oth_braun_ever_oscar, fold=5, seed=2)
+OS_oth_cv_braun_ever_seed2 <- oscar::cv.oscar(OS_oth_braun_ever_oscar, fold=5, seed=2)
+RESP_oth_cv_braun_ever_seed2 <- oscar::cv.oscar(RESP_oth_braun_ever_oscar, fold=5, seed=2)
 PFS_bas_cv_braun_ever_seed2 <- oscar::cv.oscar(PFS_bas_braun_ever_oscar, fold=5, seed=2)
 OS_bas_cv_braun_ever_seed2 <- oscar::cv.oscar(OS_bas_braun_ever_oscar, fold=5, seed=2)
 RESP_bas_cv_braun_ever_seed2 <- oscar::cv.oscar(RESP_bas_braun_ever_oscar, fold=5, seed=2)
+
+save.image("temprun_cv_seed2.RData")
 
 # TCGA CV
 PFS_xce_cv_tcga_seed2 <- oscar::cv.oscar(PFS_xce_tcga_oscar, fold=5, seed=2)
@@ -898,9 +963,9 @@ RESP_xce_cv_tcga_seed2 <- oscar::cv.oscar(RESP_xce_tcga_oscar, fold=5, seed=2)
 PFS_cus_cv_tcga_seed2 <- oscar::cv.oscar(PFS_cus_tcga_oscar, fold=5, seed=2)
 OS_cus_cv_tcga_seed2 <- oscar::cv.oscar(OS_cus_tcga_oscar, fold=5, seed=2)
 RESP_cus_cv_tcga_seed2 <- oscar::cv.oscar(RESP_cus_tcga_oscar, fold=5, seed=2)
-PFS_hal_cv_tcga_seed2 <- oscar::cv.oscar(PFS_hal_tcga_oscar, fold=5, seed=2)
-OS_hal_cv_tcga_seed2 <- oscar::cv.oscar(OS_hal_tcga_oscar, fold=5, seed=2)
-RESP_hal_cv_tcga_seed2 <- oscar::cv.oscar(RESP_hal_tcga_oscar, fold=5, seed=2)
+PFS_oth_cv_tcga_seed2 <- oscar::cv.oscar(PFS_oth_tcga_oscar, fold=5, seed=2)
+OS_oth_cv_tcga_seed2 <- oscar::cv.oscar(OS_oth_tcga_oscar, fold=5, seed=2)
+RESP_oth_cv_tcga_seed2 <- oscar::cv.oscar(RESP_oth_tcga_oscar, fold=5, seed=2)
 PFS_bas_cv_tcga_seed2 <- oscar::cv.oscar(PFS_bas_tcga_oscar, fold=5, seed=2)
 OS_bas_cv_tcga_seed2 <- oscar::cv.oscar(OS_bas_tcga_oscar, fold=5, seed=2)
 RESP_bas_cv_tcga_seed2 <- oscar::cv.oscar(RESP_bas_tcga_oscar, fold=5, seed=2)
@@ -918,32 +983,41 @@ OS_xce_cv_hugo_seed3 <- oscar::cv.oscar(OS_xce_hugo_oscar, fold=5, seed=3)
 RESP_xce_cv_hugo_seed3 <- oscar::cv.oscar(RESP_xce_hugo_oscar, fold=5, seed=3)
 OS_cus_cv_hugo_seed3 <- oscar::cv.oscar(OS_cus_hugo_oscar, fold=5, seed=3)
 RESP_cus_cv_hugo_seed3 <- oscar::cv.oscar(RESP_cus_hugo_oscar, fold=5, seed=3)
-OS_hal_cv_hugo_seed3 <- oscar::cv.oscar(OS_hal_hugo_oscar, fold=5, seed=3)
-RESP_hal_cv_hugo_seed3 <- oscar::cv.oscar(RESP_hal_hugo_oscar, fold=5, seed=3)
+OS_oth_cv_hugo_seed3 <- oscar::cv.oscar(OS_oth_hugo_oscar, fold=5, seed=3)
+RESP_oth_cv_hugo_seed3 <- oscar::cv.oscar(RESP_oth_hugo_oscar, fold=5, seed=3)
 OS_bas_cv_hugo_seed3 <- oscar::cv.oscar(OS_bas_hugo_oscar, fold=5, seed=3)
 RESP_bas_cv_hugo_seed3 <- oscar::cv.oscar(RESP_bas_hugo_oscar, fold=5, seed=3)
+
+save.image("temprun_cv_seed3.RData")
 
 # Prat et al. CV
 PFS_xce_cv_prat_seed3 <- oscar::cv.oscar(PFS_xce_prat_oscar, fold=5, seed=3)
 RESP_xce_cv_prat_seed3 <- oscar::cv.oscar(RESP_xce_prat_oscar, fold=5, seed=3)
 PFS_cus_cv_prat_seed3 <- oscar::cv.oscar(PFS_cus_prat_oscar, fold=5, seed=3)
 RESP_cus_cv_prat_seed3 <- oscar::cv.oscar(RESP_cus_prat_oscar, fold=5, seed=3)
-PFS_hal_cv_prat_seed3 <- oscar::cv.oscar(PFS_hal_prat_oscar, fold=5, seed=3)
-RESP_hal_cv_prat_seed3 <- oscar::cv.oscar(RESP_hal_prat_oscar, fold=5, seed=3)
+PFS_oth_cv_prat_seed3 <- oscar::cv.oscar(PFS_oth_prat_oscar, fold=5, seed=3)
+RESP_oth_cv_prat_seed3 <- oscar::cv.oscar(RESP_oth_prat_oscar, fold=5, seed=3)
 PFS_bas_cv_prat_seed3 <- oscar::cv.oscar(PFS_bas_prat_oscar, fold=5, seed=3)
 RESP_bas_cv_prat_seed3 <- oscar::cv.oscar(RESP_bas_prat_oscar, fold=5, seed=3)
+
+save.image("temprun_cv_seed3.RData")
+
 
 # Westin et al. CV
 PFS_xce_cv_westin_seed3 <- oscar::cv.oscar(PFS_xce_westin_oscar, fold=5, seed=3)
 PFS_cus_cv_westin_seed3 <- oscar::cv.oscar(PFS_cus_westin_oscar, fold=5, seed=3)
-PFS_hal_cv_westin_seed3 <- oscar::cv.oscar(PFS_hal_westin_oscar, fold=5, seed=3)
+PFS_oth_cv_westin_seed3 <- oscar::cv.oscar(PFS_oth_westin_oscar, fold=5, seed=3)
 PFS_bas_cv_westin_seed3 <- oscar::cv.oscar(PFS_bas_westin_oscar, fold=5, seed=3)
+
+save.image("temprun_cv_seed3.RData")
 
 # Riaz et al. CV
 RESP_xce_cv_riaz_seed3 <- oscar::cv.oscar(RESP_xce_riaz_oscar, fold=5, seed=3)
 RESP_cus_cv_riaz_seed3 <- oscar::cv.oscar(RESP_cus_riaz_oscar, fold=5, seed=3)
-RESP_hal_cv_riaz_seed3 <- oscar::cv.oscar(RESP_hal_riaz_oscar, fold=5, seed=3)
+RESP_oth_cv_riaz_seed3 <- oscar::cv.oscar(RESP_oth_riaz_oscar, fold=5, seed=3)
 RESP_bas_cv_riaz_seed3 <- oscar::cv.oscar(RESP_bas_riaz_oscar, fold=5, seed=3)
+
+save.image("temprun_cv_seed3.RData")
 
 # Lauss et al CV
 PFS_xce_cv_lauss_seed3 <- oscar::cv.oscar(PFS_xce_lauss_oscar, fold=5, seed=3)
@@ -952,12 +1026,14 @@ RESP_xce_cv_lauss_seed3 <- oscar::cv.oscar(RESP_xce_lauss_oscar, fold=5, seed=3)
 PFS_cus_cv_lauss_seed3 <- oscar::cv.oscar(PFS_cus_lauss_oscar, fold=5, seed=3)
 OS_cus_cv_lauss_seed3 <- oscar::cv.oscar(OS_cus_lauss_oscar, fold=5, seed=3)
 RESP_cus_cv_lauss_seed3 <- oscar::cv.oscar(RESP_cus_lauss_oscar, fold=5, seed=3)
-PFS_hal_cv_lauss_seed3 <- oscar::cv.oscar(PFS_hal_lauss_oscar, fold=5, seed=3)
-OS_hal_cv_lauss_seed3 <- oscar::cv.oscar(OS_hal_lauss_oscar, fold=5, seed=3)
-RESP_hal_cv_lauss_seed3 <- oscar::cv.oscar(RESP_hal_lauss_oscar, fold=5, seed=3)
+PFS_oth_cv_lauss_seed3 <- oscar::cv.oscar(PFS_oth_lauss_oscar, fold=5, seed=3)
+OS_oth_cv_lauss_seed3 <- oscar::cv.oscar(OS_oth_lauss_oscar, fold=5, seed=3)
+RESP_oth_cv_lauss_seed3 <- oscar::cv.oscar(RESP_oth_lauss_oscar, fold=5, seed=3)
 PFS_bas_cv_lauss_seed3 <- oscar::cv.oscar(PFS_bas_lauss_oscar, fold=5, seed=3)
 OS_bas_cv_lauss_seed3 <- oscar::cv.oscar(OS_bas_lauss_oscar, fold=5, seed=3)
 RESP_bas_cv_lauss_seed3 <- oscar::cv.oscar(RESP_bas_lauss_oscar, fold=5, seed=3)
+
+save.image("temprun_cv_seed3.RData")
 
 # Gide et al. CV
 PFS_xce_cv_gide_seed3 <- oscar::cv.oscar(PFS_xce_gide_oscar, fold=5, seed=3)
@@ -966,23 +1042,27 @@ RESP_xce_cv_gide_seed3 <- oscar::cv.oscar(RESP_xce_gide_oscar, fold=5, seed=3)
 PFS_cus_cv_gide_seed3 <- oscar::cv.oscar(PFS_cus_gide_oscar, fold=5, seed=3)
 OS_cus_cv_gide_seed3 <- oscar::cv.oscar(OS_cus_gide_oscar, fold=5, seed=3)
 RESP_cus_cv_gide_seed3 <- oscar::cv.oscar(RESP_cus_gide_oscar, fold=5, seed=3)
-PFS_hal_cv_gide_seed3 <- oscar::cv.oscar(PFS_hal_gide_oscar, fold=5, seed=3)
-OS_hal_cv_gide_seed3 <- oscar::cv.oscar(OS_hal_gide_oscar, fold=5, seed=3)
-RESP_hal_cv_gide_seed3 <- oscar::cv.oscar(RESP_hal_gide_oscar, fold=5, seed=3)
+PFS_oth_cv_gide_seed3 <- oscar::cv.oscar(PFS_oth_gide_oscar, fold=5, seed=3)
+OS_oth_cv_gide_seed3 <- oscar::cv.oscar(OS_oth_gide_oscar, fold=5, seed=3)
+RESP_oth_cv_gide_seed3 <- oscar::cv.oscar(RESP_oth_gide_oscar, fold=5, seed=3)
 PFS_bas_cv_gide_seed3 <- oscar::cv.oscar(PFS_bas_gide_oscar, fold=5, seed=3)
 OS_bas_cv_gide_seed3 <- oscar::cv.oscar(OS_bas_gide_oscar, fold=5, seed=3)
 RESP_bas_cv_gide_seed3 <- oscar::cv.oscar(RESP_bas_gide_oscar, fold=5, seed=3)
 
+save.image("temprun_cv_seed3.RData")
+
 # Kim et al. CV
 RESP_xce_cv_kim_seed3 <- oscar::cv.oscar(RESP_xce_kim_oscar, fold=5, seed=3)
 RESP_cus_cv_kim_seed3 <- oscar::cv.oscar(RESP_cus_kim_oscar, fold=5, seed=3)
-RESP_hal_cv_kim_seed3 <- oscar::cv.oscar(RESP_hal_kim_oscar, fold=5, seed=3)
+RESP_oth_cv_kim_seed3 <- oscar::cv.oscar(RESP_oth_kim_oscar, fold=5, seed=3)
 RESP_bas_cv_kim_seed3 <- oscar::cv.oscar(RESP_bas_kim_oscar, fold=5, seed=3)
+
+save.image("temprun_cv_seed3.RData")
 
 # Chen et al. CV
 RESP_xce_cv_chen_seed3 <- oscar::cv.oscar(RESP_xce_chen_oscar, fold=5, seed=3)
 RESP_cus_cv_chen_seed3 <- oscar::cv.oscar(RESP_cus_chen_oscar, fold=5, seed=3)
-RESP_hal_cv_chen_seed3 <- oscar::cv.oscar(RESP_hal_chen_oscar, fold=5, seed=3)
+RESP_oth_cv_chen_seed3 <- oscar::cv.oscar(RESP_oth_chen_oscar, fold=5, seed=3)
 RESP_bas_cv_chen_seed3 <- oscar::cv.oscar(RESP_bas_chen_oscar, fold=5, seed=3)
 
 # Braun et al. Nivo CV
@@ -992,12 +1072,14 @@ RESP_xce_cv_braun_nivo_seed3 <- oscar::cv.oscar(RESP_xce_braun_nivo_oscar, fold=
 PFS_cus_cv_braun_nivo_seed3 <- oscar::cv.oscar(PFS_cus_braun_nivo_oscar, fold=5, seed=3)
 OS_cus_cv_braun_nivo_seed3 <- oscar::cv.oscar(OS_cus_braun_nivo_oscar, fold=5, seed=3)
 RESP_cus_cv_braun_nivo_seed3 <- oscar::cv.oscar(RESP_cus_braun_nivo_oscar, fold=5, seed=3)
-PFS_hal_cv_braun_nivo_seed3 <- oscar::cv.oscar(PFS_hal_braun_nivo_oscar, fold=5, seed=3)
-OS_hal_cv_braun_nivo_seed3 <- oscar::cv.oscar(OS_hal_braun_nivo_oscar, fold=5, seed=3)
-RESP_hal_cv_braun_nivo_seed3 <- oscar::cv.oscar(RESP_hal_braun_nivo_oscar, fold=5, seed=3)
+PFS_oth_cv_braun_nivo_seed3 <- oscar::cv.oscar(PFS_oth_braun_nivo_oscar, fold=5, seed=3)
+OS_oth_cv_braun_nivo_seed3 <- oscar::cv.oscar(OS_oth_braun_nivo_oscar, fold=5, seed=3)
+RESP_oth_cv_braun_nivo_seed3 <- oscar::cv.oscar(RESP_oth_braun_nivo_oscar, fold=5, seed=3)
 PFS_bas_cv_braun_nivo_seed3 <- oscar::cv.oscar(PFS_bas_braun_nivo_oscar, fold=5, seed=3)
 OS_bas_cv_braun_nivo_seed3 <- oscar::cv.oscar(OS_bas_braun_nivo_oscar, fold=5, seed=3)
 RESP_bas_cv_braun_nivo_seed3 <- oscar::cv.oscar(RESP_bas_braun_nivo_oscar, fold=5, seed=3)
+
+save.image("temprun_cv_seed3.RData")
 
 # Braun et al. Chemo CV
 PFS_xce_cv_braun_ever_seed3 <- oscar::cv.oscar(PFS_xce_braun_ever_oscar, fold=5, seed=3)
@@ -1006,12 +1088,14 @@ RESP_xce_cv_braun_ever_seed3 <- oscar::cv.oscar(RESP_xce_braun_ever_oscar, fold=
 PFS_cus_cv_braun_ever_seed3 <- oscar::cv.oscar(PFS_cus_braun_ever_oscar, fold=5, seed=3)
 OS_cus_cv_braun_ever_seed3 <- oscar::cv.oscar(OS_cus_braun_ever_oscar, fold=5, seed=3)
 RESP_cus_cv_braun_ever_seed3 <- oscar::cv.oscar(RESP_cus_braun_ever_oscar, fold=5, seed=3)
-PFS_hal_cv_braun_ever_seed3 <- oscar::cv.oscar(PFS_hal_braun_ever_oscar, fold=5, seed=3)
-OS_hal_cv_braun_ever_seed3 <- oscar::cv.oscar(OS_hal_braun_ever_oscar, fold=5, seed=3)
-RESP_hal_cv_braun_ever_seed3 <- oscar::cv.oscar(RESP_hal_braun_ever_oscar, fold=5, seed=3)
+PFS_oth_cv_braun_ever_seed3 <- oscar::cv.oscar(PFS_oth_braun_ever_oscar, fold=5, seed=3)
+OS_oth_cv_braun_ever_seed3 <- oscar::cv.oscar(OS_oth_braun_ever_oscar, fold=5, seed=3)
+RESP_oth_cv_braun_ever_seed3 <- oscar::cv.oscar(RESP_oth_braun_ever_oscar, fold=5, seed=3)
 PFS_bas_cv_braun_ever_seed3 <- oscar::cv.oscar(PFS_bas_braun_ever_oscar, fold=5, seed=3)
 OS_bas_cv_braun_ever_seed3 <- oscar::cv.oscar(OS_bas_braun_ever_oscar, fold=5, seed=3)
 RESP_bas_cv_braun_ever_seed3 <- oscar::cv.oscar(RESP_bas_braun_ever_oscar, fold=5, seed=3)
+
+save.image("temprun_cv_seed3.RData")
 
 # TCGA CV
 PFS_xce_cv_tcga_seed3 <- oscar::cv.oscar(PFS_xce_tcga_oscar, fold=5, seed=3)
@@ -1020,9 +1104,9 @@ RESP_xce_cv_tcga_seed3 <- oscar::cv.oscar(RESP_xce_tcga_oscar, fold=5, seed=3)
 PFS_cus_cv_tcga_seed3 <- oscar::cv.oscar(PFS_cus_tcga_oscar, fold=5, seed=3)
 OS_cus_cv_tcga_seed3 <- oscar::cv.oscar(OS_cus_tcga_oscar, fold=5, seed=3)
 RESP_cus_cv_tcga_seed3 <- oscar::cv.oscar(RESP_cus_tcga_oscar, fold=5, seed=3)
-PFS_hal_cv_tcga_seed3 <- oscar::cv.oscar(PFS_hal_tcga_oscar, fold=5, seed=3)
-OS_hal_cv_tcga_seed3 <- oscar::cv.oscar(OS_hal_tcga_oscar, fold=5, seed=3)
-RESP_hal_cv_tcga_seed3 <- oscar::cv.oscar(RESP_hal_tcga_oscar, fold=5, seed=3)
+PFS_oth_cv_tcga_seed3 <- oscar::cv.oscar(PFS_oth_tcga_oscar, fold=5, seed=3)
+OS_oth_cv_tcga_seed3 <- oscar::cv.oscar(OS_oth_tcga_oscar, fold=5, seed=3)
+RESP_oth_cv_tcga_seed3 <- oscar::cv.oscar(RESP_oth_tcga_oscar, fold=5, seed=3)
 PFS_bas_cv_tcga_seed3 <- oscar::cv.oscar(PFS_bas_tcga_oscar, fold=5, seed=3)
 OS_bas_cv_tcga_seed3 <- oscar::cv.oscar(OS_bas_tcga_oscar, fold=5, seed=3)
 RESP_bas_cv_tcga_seed3 <- oscar::cv.oscar(RESP_bas_tcga_oscar, fold=5, seed=3)
