@@ -262,7 +262,7 @@ curateX <- function(
 	# Custom self-made
 	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
 	# FICAN-OSCAR DREAM IO GMTs
-	gmt_fo <- GSEABase::getGmt("fican-oscar.gmt")
+	#gmt_fo <- GSEABase::getGmt("fican-oscar.gmt")
 
 	# Curated GMTs, subset to interesting
 	gmt_c2 <- GSEABase::getGmt("c2.all.v7.2.symbols.gmt")
@@ -274,7 +274,8 @@ curateX <- function(
 	if(1 %in% gmts){
 		print("Hallmarks")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_h, verbose=FALSE, mx.diff=FALSE)))
+			#X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_h, verbose=FALSE, mx.diff=FALSE)))
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_h, verbose=FALSE)))
 			# Omit selected hallmarks based on a priori knowledge or educated guesses
 			X <- X[,-grep("CHOLESTEROL|ESTROGEN|ANDROGEN|FATTY_ACID|OXIDATIVE|GLYCOLYSIS|REACTIVE_OXYGEN|UV_RESPONSE|BILE_ACID|ALLOGRAFT|SPERMATOGENESIS|PANCREAS", colnames(X))]
 		})
@@ -283,32 +284,36 @@ curateX <- function(
 	if(2 %in% gmts){
 		print("Oncogenic")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c6, verbose=FALSE, mx.diff=FALSE))) # Oncogenic
+			#X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c6, verbose=FALSE, mx.diff=FALSE))) # Oncogenic
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c6, verbose=FALSE))) # Oncogenic
 		})
 	}
 	# Immunology
 	if(3 %in% gmts){
 		print("Immunology")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c7, verbose=FALSE, mx.diff=FALSE))) # Immunology
+			#X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c7, verbose=FALSE, mx.diff=FALSE))) # Immunology
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c7, verbose=FALSE))) # Immunology
 		})
 	}
 	# Custom self made GMTs
 	if(4 %in% gmts){
 		print("Selfmade GMTs")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE, mx.diff=FALSE))) # Custom self made GMTs
+			#X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE, mx.diff=FALSE))) # Custom self made GMTs
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE))) # Custom self made GMTs
 		})
-		print("FICAN-OSCAR GMTs")
-		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_fo, verbose=FALSE))) # Custom self made GMTs
-		})
+		#print("FICAN-OSCAR GMTs")
+		#try({
+		#	X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_fo, verbose=FALSE))) # Custom self made GMTs
+		#})
 	}
 	# Curated gene pathways
 	if(5 %in% gmts){
 		print("Curated GTMs from various databases")
 		try({
-			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c2, verbose=FALSE, mx.diff=FALSE))) # Curated GMTs
+			#X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c2, verbose=FALSE, mx.diff=FALSE))) # Curated GMTs
+			X <- cbind(X, t(GSVA::gsva(as.matrix(gex), gmt_c2, verbose=FALSE))) # Curated GMTs
 		})
 	}
 
@@ -413,7 +418,7 @@ if(FALSE){
 	geq_tcga <- preprocessCore::normalize.quantiles.use.target(gex_tcga, target=c(gex_synthetic))
 	rownames(geq_tcga) <- rownames(gex_tcga)
 	colnames(geq_tcga) <- colnames(gex_tcga)
-})
+}
 
 # Load premade GEX / DAT and generate X matrix
 # Whole TCGA
@@ -473,7 +478,7 @@ RESP_riaz <- dat_riaz[,"Responder"]
 # Lauss et al. (TIDE)
 load(".\\RData\\gex_lauss.RData")
 load(".\\RData\\dat_lauss.RData")
-X_lauss <- omit.reducols(curateX(gex=gex_lauss, dat=dat_lauss))
+X_lauss <- omit.reducols(curateX(gex=gex_lauss, dat=dat_lauss, normalize=FALSE))
 X_xce_lauss <- X_lauss[,grep("xce_", colnames(X_lauss))]
 X_cus_lauss <- X_lauss[,grep("CUSTOM_", colnames(X_lauss))]
 #X_hal_lauss <- X_lauss[,grep("HALLMARK_", colnames(X_lauss))]
@@ -485,7 +490,7 @@ RESP_lauss <- dat_lauss[,"Responder"]
 # Kim et al. (TIDE)
 load(".\\RData\\gex_kim.RData")
 load(".\\RData\\dat_kim.RData")
-X_kim <- omit.reducols(curateX(gex=gex_kim, dat=dat_kim))
+X_kim <- omit.reducols(curateX(gex=gex_kim, dat=dat_kim, normalize=FALSE))
 X_xce_kim <- X_kim[,grep("xce_", colnames(X_kim))]
 X_cus_kim <- X_kim[,grep("CUSTOM_", colnames(X_kim))]
 #X_hal_kim <- X_kim[,grep("HALLMARK_", colnames(X_kim))]
@@ -495,7 +500,7 @@ RESP_kim <- dat_kim[,"Responder"]
 # Chen et al. (TIDE)
 load(".\\RData\\gex_chen.RData")
 load(".\\RData\\dat_chen.RData")
-X_chen <- omit.reducols(curateX(gex=gex_chen, dat=dat_chen))
+X_chen <- omit.reducols(curateX(gex=gex_chen, dat=dat_chen, normalize=FALSE))
 X_xce_chen <- X_chen[,grep("xce_", colnames(X_chen))]
 X_cus_chen <- X_chen[,grep("CUSTOM_", colnames(X_chen))]
 #X_hal_chen <- X_chen[,grep("HALLMARK_", colnames(X_chen))]
@@ -1112,3 +1117,101 @@ OS_bas_cv_tcga_seed3 <- oscar::cv.oscar(OS_bas_tcga_oscar, fold=5, seed=3)
 RESP_bas_cv_tcga_seed3 <- oscar::cv.oscar(RESP_bas_tcga_oscar, fold=5, seed=3)
 
 save.image("temprun_cv_seed3.RData")
+
+
+
+## Selective OSCAR based on e.g. TCGA findings
+
+# Features after blocking out chemo effects and having a priori information from DREAM-IO and various models put into the training datasets
+
+
+## OSCAR + cross-validation
+library(oscar)
+
+selective <- unique(c(
+	# Normalized gene expressions
+	"BASE_CD274", "BASE_CD276", "BASE_ALK", "BASE_KRAS", "BASE_IDO1", "BASE_TIGIT", "BASE_CD8A", "BASE_CD8B", "BASE_CCL5", "BASE_CXCL9", "BASE_CXCR6", "BASE_PDCD1LG2", "BASE_STAT1", "BASE_ADORA2A", "BASE_ICOS", 
+	# Various baseline characteristics
+	"BASE_Age", "BASE_isSmokerNever", "BASE_isSmokerEver", "BASE_isECOG2orAbove", "BASE_isSquamous",
+	# Custom panels
+	"CUSTOM_AYERS_INFG", "CUSTOM_GIDERESPGENES", "CUSTOM_GIDERESPSHORT", "CUSTOM_HUGORESPGENES", "CUSTOM_CTL", "CUSTOM_TIS", "CUSTOM_APM", "CUSTOM_KADERBHAI_ICR", "CUSTOM_MSI",
+	# Selected hallmarks
+	"HALLMARK_ADIPOGENESIS", "HALLMARK_HEDGEHOG_SIGNALING", "HALLMARK_UV_RESPONSE_UP", "HALLMARK_KRAS_SIGNALING_DN", "HALLMARK_KRAS_SIGNALING_DN", "HALLMARK_INFLAMMATORY_RESPONSE", "HALLMARK_INTERFERON_ALPHA_RESPONSE", "HALLMARK_INTERFERON_GAMMA_RESPONSE",
+	# Other literature curated MSigDB pathways
+	"DING_LUNG_CANCER_MUTATED_SIGNIFICANTLY", "DING_LUNG_CANCER_MUTATED_FREQUENTLY", "SPIRA_SMOKERS_LUNG_CANCER_DN", "KRAS.LUNG_UP.V1_DN", "KRAS.LUNG_UP.V1_UP", "FALVELLA_SMOKERS_WITH_LUNG_CANCER", "SIG_BCR_SIGNALING_PATHWAY",
+	# Other major databases
+	"KEGG_NON_SMALL_CELL_LUNG_CANCER", "KEGG_B_CELL_RECEPTOR_SIGNALING_PATHWAY", "KEGG_T_CELL_RECEPTOR_SIGNALING_PATHWAY", "KEGG_CYTOKINE_CYTOKINE_RECEPTOR_INTERACTION", "KEGG_CHEMOKINE_SIGNALING_PATHWAY", "PID_CD8_TCR_PATHWAY", "PID_IL2_1PATHWAY", "WP_B_CELL_RECEPTOR_SIGNALING_PATHWAY", "WP_CANCER_IMMUNOTHERAPY_BY_PD1_BLOCKADE", "WP_CHEMOKINE_SIGNALING_PATHWAY",
+	# Our own custom panels
+	"CUSTOM_FOPANEL", "CUSTOM_FOPANELv2"
+))
+
+### OSCAR FITS
+
+# Prat et al. 
+PFS_prat_oscar <- oscar::oscar(x = X_prat[,intersect(selective, colnames(X_prat))], y = PFS_prat, family="cox")
+RESP_prat_oscar <- oscar::oscar(x = X_prat[,intersect(selective, colnames(X_prat))], y = RESP_prat, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+# Kim et al.
+RESP_kim_oscar <- oscar::oscar(x = X_kim[,intersect(selective, colnames(X_kim))], y = RESP_kim, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+# Braun et al. Nivo  
+PFS_bas_braun_nivo_oscar <- oscar::oscar(x = X_braun_nivo[,intersect(selective, colnames(X_braun_nivo))], y = PFS_braun_nivo, family="cox")
+OS_bas_braun_nivo_oscar <- oscar::oscar(x = X_braun_nivo[,intersect(selective, colnames(X_braun_nivo))], y = OS_braun_nivo, family="cox")
+RESP_bas_braun_nivo_oscar <- oscar::oscar(x = X_braun_nivo[,intersect(selective, colnames(X_braun_nivo))], y = RESP_braun_nivo, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+# Braun et al. Ever  xCell
+PFS_braun_ever_oscar <- oscar::oscar(x = X_braun_ever[,intersect(selective, colnames(X_braun_ever))], y = PFS_braun_ever, family="cox")
+OS_braun_ever_oscar <- oscar::oscar(x = X_braun_ever[,intersect(selective, colnames(X_braun_ever))], y = OS_braun_ever, family="cox")
+RESP_braun_ever_oscar <- oscar::oscar(x = X_braun_ever[,intersect(selective, colnames(X_braun_ever))], y = RESP_braun_ever, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+# TCGA Chemo control arm 
+PFS_tcga_oscar <- oscar::oscar(x = X_tcga[,intersect(selective, colnames(X_tcga))], y = PFS_tcga, family="cox", verb=1)
+OS_tcga_oscar <- oscar::oscar(x = X_tcga[,intersect(selective, colnames(X_tcga))], y = OS_tcga, family="cox", verb=1)
+RESP_tcga_oscar <- oscar::oscar(x = X_tcga[,intersect(selective, colnames(X_tcga))], y = RESP_tcga, family="logistic", verb=1)
+
+save.image("temprun_oscar_selective.RData")
+
+# Gide et al. 
+PFS_gide_oscar <- oscar::oscar(x = X_gide[,intersect(selective, colnames(X_gide))], y = PFS_gide, family="cox")
+OS_gide_oscar <- oscar::oscar(x = X_gide[,intersect(selective, colnames(X_gide))], y = OS_gide, family="cox")
+RESP_gide_oscar <- oscar::oscar(x = X_gide[,intersect(selective, colnames(X_gide))], y = RESP_gide, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+# Hugo et al. xCell
+OS_hugo_oscar <- oscar::oscar(x = X_hugo[,intersect(selective, colnames(X_hugo))], y = OS_hugo, family="cox")
+RESP_hugo_oscar <- oscar::oscar(x = X_hugo[,intersect(selective, colnames(X_hugo))], y = RESP_hugo, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+# Westin et al. 
+PFS_westin_oscar <- oscar::oscar(x = X_westin[,intersect(selective, colnames(X_westin))], y = PFS_westin, family="cox")
+
+save.image("temprun_oscar_selective.RData")
+
+# Riaz et al. 
+RESP_riaz_oscar <- oscar::oscar(x = X_riaz[,intersect(selective, colnames(X_riaz))], y = RESP_riaz, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+# Lauss et al. 
+PFS_lauss_oscar <- oscar::oscar(x = X_lauss[,intersect(selective, colnames(X_lauss))], y = PFS_lauss, family="cox")
+OS_lauss_oscar <- oscar::oscar(x = X_lauss[,intersect(selective, colnames(X_lauss))], y = OS_lauss, family="cox")
+RESP_lauss_oscar <- oscar::oscar(x = X_lauss[,intersect(selective, colnames(X_lauss))], y = RESP_lauss, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+# Chen et al. 
+RESP_chen_oscar <- oscar::oscar(x = X_chen[,intersect(selective, colnames(X_chen))], y = RESP_chen, family="logistic")
+
+save.image("temprun_oscar_selective.RData")
+
+

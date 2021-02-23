@@ -79,18 +79,18 @@ aggregateX <- function(
 
 	X <- cbind(X, isSquamous = as.integer(dat[,"CRFHIST"] == "SQUAMOUS"))
 
+	X <- cbind(X, isSquamous_above5PDL1 = ifelse(dat[,"PDL1"]>=5, X[,"isSquamous"], 0))
+
 	X <- cbind(X, isEversmoker = as.integer(dat[,"TOBACUSE"] %in% c("FORMER", "CURRENT")))
+
+	X <- cbind(X, isECOG0 = as.integer(dat[,"ECOGPS"] == 0))
 	
-	# CD274 expression level modelled as a surrogate for PD-L1 IHC
-	# Normalized expressions between various platforms and their respective distributional characteristics
-	#X <- cbind(X, CD274 = logz(gex["CD274",]))
-	
-	# GSVA for CUSTOM_IFNG3
+	# GSVA 
 	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
-	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE)) # Custom GMTs
-	X <- cbind(X, CUSTOM_FOPANEL = res_gsva[,grep("CUSTOM_FOPANEL", colnames(res_gsva))])
+	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE, mx.diff=TRUE)) # Custom GMTs, mx.diff = TRUE as the genes in the FICAN-OSCAR panel are concordantly in one direction
+	X <- cbind(X, CUSTOM_FOPANEL = res_gsva[,"CUSTOM_FOPANEL"])
 	
-	# Epithelial cell expression as reported by xCell
+	# Cell expression as reported by xCell
 	#tmp <- immunedeconv::deconvolute(gex, method="xcell")
 	#tmp <- as.matrix(tmp)
 	#rownames(tmp) <- paste("xce_", gsub(" ", "_", tmp[,1]), sep="")
@@ -137,13 +137,38 @@ predictX <- function(
 ## -> DSS -0.0143, Nivo 0.5359, Chemo 0.5636
 
 ## Subchallenge 2 submission 2
-b_sub = c(
-	"CUSTOM_FOPANEL" = -0.5, # Custom trained panel estimated using GSVA; estimate from aggregated estimates from training data (e.g. Prat, Gide)
-	"isTMBhigh" = log(0.7), # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately, estimate from Cristescu et al. omitting GEP
-	"isMale" = log(0.9), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ); conservative estimate
-	"isSquamous" = log(0.82) # Carbone et al. supplementary effect for OS; 0.72 if PD-L1 >5% alternatively
-)
+#b_sub = c(
+#	"CUSTOM_FOPANEL" = -0.5, # Custom trained panel estimated using GSVA; estimate from aggregated estimates from training data (e.g. Prat, Gide)
+#	"isTMBhigh" = log(0.7), # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately, estimate from Cristescu et al. omitting GEP
+#	"isMale" = log(0.9), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ); conservative estimate
+#	"isSquamous" = log(0.82) # Carbone et al. supplementary effect for OS; 0.72 if PD-L1 >5% alternatively
+#)
 ## -> DSS 0.0295 [0.0237, 0.0386], Nivo 0.5883, Chemo 0.5025
+
+## Subchallenge 2 submission 3
+#b_sub = c(
+#	"CUSTOM_FOPANEL" = -0.5, # Custom trained panel estimated using GSVA; estimate from aggregated estimates from training data (e.g. Prat, Gide)
+#	"isTMBhigh" = log(0.7), # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately, estimate from Cristescu et al. omitting GEP
+#	"isMale" = log(0.9), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ); conservative estimate; significant effect in Prat et al.
+#	"isSquamous" = log(0.82), # Carbone et al. for OS; HR = 0.82 if PD-L1 any
+#	"isSquamous_above5PDL1" = log(0.95), # Carbone et al. for OS; HR = 0.77 if PD-L1 >=5% alternatively; adding a small additive effect for PDL1 >= 5% IHC
+#	"isEversmoker" = log(0.8), # A manually curated average from Brahmer et al. and Borghaei et al., seemed a consistent OS univariate effect between SQ vs. non-SQ
+#	"isECOG0" = log(0.7) # A manually curated average from Brahmer et al. and Borghaei et al., seemed a consistent OS univariate effect between SQ vs. non-SQ
+#)
+## -> DSS 0.0313 [0.0142, 0.0416], Nivo 0.5941, Chemo 0.5341
+
+## Subchallenge 2 submission 4
+b_sub = c(
+	"CUSTOM_FOPANEL" = log(0.5), # Custom trained panel estimated using GSVA; estimate from aggregated estimates from training data (e.g. Prat, Gide)
+	"isTMBhigh" = log(0.7), # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately, estimate from Cristescu et al. omitting GEP
+	"isMale" = log(0.9), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ); conservative estimate; significant effect in Prat et al.
+	"isSquamous" = log(0.82), # Carbone et al. for OS; HR = 0.82 if PD-L1 any
+	"isSquamous_above5PDL1" = log(0.95), # Carbone et al. for OS; HR = 0.77 if PD-L1 >=5% alternatively; adding a small additive effect for PDL1 >= 5% IHC
+	"isEversmoker" = log(0.8), # A manually curated average from Brahmer et al. and Borghaei et al., seemed a consistent OS univariate effect between SQ vs. non-SQ
+	"isECOG0" = log(0.9) # A manually curated average from Brahmer et al. and Borghaei et al., seemed a consistent OS univariate effect between SQ vs. non-SQ
+)
+## -> DSS 0.0447 [0.0266, 0.064], Nivo 0.6074, Chemo 0.4895
+
 
 ## REPLACE
 #setwd("..")
@@ -164,6 +189,12 @@ ret <- predictX(
 	X = X_sub, # Data matrix
 	b = b_sub # Beta coefficients
 )
+# cbind(ret, TMB = dat_input[,"TMB"], FOPANEL = X_sub[,"CUSTOM_FOPANEL"], SEX = dat_input[,"SEX"], CRFHIST = dat_input[,"CRFHIST"], 
+# 	isECOG0 = X_sub[,"isECOG0"], isTMBhigh = X_sub[,"isTMBhigh"], isEversmoker = X_sub[,"isEversmoker"], isSquamous = X_sub[,"isSquamous"], isSquamous_above5PDL1 = X_sub[,"isSquamous_above5PDL1"], PDL1 = dat_input[,"PDL1"], 
+# Base panel
+# 	CD274 = gex_input["CD274",], PDCD1 = gex_input["PDCD1",], TIGIT = gex_input["TIGIT",], CXCL9 = gex_input["CXCL9",], CXCR6 = gex_input["CXCR6",], 
+# Part of wider panel
+# 	CD8A = gex_input["CD8A",], CCL5 = gex_input["CCL5",])
 # Write output
 write.csv(ret, file = args[3], quote=F, row.names=FALSE)
 print("Done writing out result")
