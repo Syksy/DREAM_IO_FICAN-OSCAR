@@ -15,7 +15,7 @@ RUN R -e "install.packages('lpSolve', repos = 'http://cran.us.r-project.org')"
 RUN R -e "install.packages('RSQLite', repos = 'http://cran.us.r-project.org')"
 
 
-COPY FICAN-OSCAR-subchallenge1.R /FICAN-OSCAR-subchallenge1.R
+COPY FICAN-OSCAR-subchallenge1_5.R /FICAN-OSCAR-subchallenge1_5.R
 COPY c6.all.v7.2.symbols.gmt /c6.all.v7.2.symbols.gmt
 COPY c7.all.v7.2.symbols.gmt /c7.all.v7.2.symbols.gmt
 COPY h.all.v7.2.symbols.gmt /h.all.v7.2.symbols.gmt
@@ -23,4 +23,4 @@ COPY c2.all.v7.2.symbols.gmt /c2.all.v7.2.symbols.gmt
 COPY selfmade.gmt /selfmade.gmt
 
 
-ENTRYPOINT ["Rscript", "/FICAN-OSCAR-subchallenge1.R","/data/GRCh37ERCC_refseq105_genes_tpm.csv","/data/clinical_data.csv","/output/predictions.csv"]
+ENTRYPOINT ["Rscript", "/FICAN-OSCAR-subchallenge1_5.R","/data/GRCh37ERCC_refseq105_genes_tpm.csv","/data/clinical_data.csv","/output/predictions.csv"]

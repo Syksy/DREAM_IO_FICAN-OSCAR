@@ -74,25 +74,23 @@ aggregateX <- function(
 	rownames(X) <- rownames(dat)
 	# Impute zero indicators if there are NA values
 	if(any(is.na(X[,"isTMBhigh"]))) X[is.na(X[,"isTMBhigh"]),"isTMBhigh"] <- 0
-	# TMB as a continuous value
-	X <- cbind(X, TMB = dat[,"TMB"])
-	if(any(is.na(X[,"TMB"]))) X[is.na(X[,"TMB"]),"TMB"] <- median(dat[,"TMB"], na.rm=TRUE)
 	
-	# Very often used characteristics
 	X <- cbind(X, isMale = as.integer(dat[,"SEX"] == "M"))
+
 	X <- cbind(X, isSquamous = as.integer(dat[,"CRFHIST"] == "SQUAMOUS"))
+
+	X <- cbind(X, isSquamous_above5PDL1 = ifelse(dat[,"PDL1"]>=5, X[,"isSquamous"], 0))
+
 	X <- cbind(X, isEversmoker = as.integer(dat[,"TOBACUSE"] %in% c("FORMER", "CURRENT")))
-	
-	# CD274 expression level modelled as a surrogate for PD-L1 IHC
-	# Normalized expressions between various platforms and their respective distributional characteristics
-	#X <- cbind(X, CD274 = logz(gex["CD274",]))
+
+	X <- cbind(X, isECOG0 = as.integer(dat[,"ECOGPS"] == 0))
 	
 	# GSVA 
 	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
-	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE)) # Custom GMTs
-	X <- cbind(X, CUSTOM_FOPANEL = res_gsva[,grep("CUSTOM_FOPANEL", colnames(res_gsva))])
+	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE, mx.diff=TRUE)) # Custom GMTs, mx.diff = TRUE as the genes in the FICAN-OSCAR panel are concordantly in one direction
+	X <- cbind(X, CUSTOM_FOPANEL = res_gsva[,"CUSTOM_FOPANEL"])
 	
-	# xCell
+	# Cell expression as reported by xCell
 	#tmp <- immunedeconv::deconvolute(gex, method="xcell")
 	#tmp <- as.matrix(tmp)
 	#rownames(tmp) <- paste("xce_", gsub(" ", "_", tmp[,1]), sep="")
@@ -177,12 +175,20 @@ predictX <- function(
 #)
 ## -> DSS -0.0029 [-0.003, 0.0035], Nivo 0.4434, Chemo 0.4813
 
-## Subchallenge 3 submission 5
+## Subchallenge 3 submission 5 - using correlation between OS and ORR as basis for reusing OS model (Shukuya et al. 2016)
+# also Gyawali et al. which included CheckMates: "The treatment effect sizes between PFS and OS for RCTs of non–small cell lung cancer 
+# trials were similar (rHR, 1.14; 95% CI, 0.99-1.31), whereas for the other cancer types, there was a greater effect on OS than on PFS 
+# (rHR, 1.23; 95% CI, 1.05-1.44)" 
 b_sub = c(
-	"CUSTOM_FOPANELv2" = 1, # The GSVA is bimodal around -0.5, and 0.5 with individual variation; giving equal weight to the gene set is done if both have the same coefficient
-	"isTMBhigh_PDL1above5" = 1, # a priori equal importance, albeit binary indicator
-	"isMale" = x
+	"CUSTOM_FOPANEL" = -log(0.5), # Custom trained panel estimated using GSVA; estimate from aggregated estimates from training data (e.g. Prat, Gide)
+	"isTMBhigh" = -log(0.7), # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately, estimate from Cristescu et al. omitting GEP
+	"isMale" = -log(0.9), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ); conservative estimate; significant effect in Prat et al.
+	"isSquamous" = -log(0.82), # Carbone et al. for OS; HR = 0.82 if PD-L1 any
+	"isSquamous_above5PDL1" = -log(0.95), # Carbone et al. for OS; HR = 0.77 if PD-L1 >=5% alternatively; adding a small additive effect for PDL1 >= 5% IHC
+	"isEversmoker" = -log(0.8), # A manually curated average from Brahmer et al. and Borghaei et al., seemed a consistent OS univariate effect between SQ vs. non-SQ
+	"isECOG0" = -log(0.9) # A manually curated average from Brahmer et al. and Borghaei et al., seemed a consistent OS univariate effect between SQ vs. non-SQ
 )
+## -> DSS x
 
 ## REPLACE
 #setwd("..")
@@ -204,7 +210,7 @@ ret <- predictX(
 	b = b_sub # Beta coefficients
 )
 # Sanity checking
-#head(cbind(ret, dat_input[,c("TMB")], X_sub[,c("isTMBhigh", "CUSTOM_FOPANEL")], t(gex_input[c("CD274","PDCD1","TIGIT","CXCL9","CXCR6"),])))
+#head(cbind(ret, dat_input[,c("TMB")], X_sub[,c("isTMBhigh", "isMale", "isSquamous", "isSquamous_above5PDL1", "CUSTOM_FOPANEL")]))
 
 # Write output
 write.csv(ret, file = args[3], quote=F, row.names=FALSE)

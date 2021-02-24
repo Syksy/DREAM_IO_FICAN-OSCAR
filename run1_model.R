@@ -1215,3 +1215,73 @@ RESP_chen_oscar <- oscar::oscar(x = X_chen[,intersect(selective, colnames(X_chen
 save.image("temprun_oscar_selective.RData")
 
 
+## CVs
+
+load("temprun_oscar_selective.RData")
+
+RESP_kim_oscar_cv_f5s1 <- oscar::cv.oscar(RESP_kim_oscar, fold=5, seed=1)
+RESP_kim_oscar_cv_f5s2 <- oscar::cv.oscar(RESP_kim_oscar, fold=5, seed=2)
+RESP_kim_oscar_cv_f5s3 <- oscar::cv.oscar(RESP_kim_oscar, fold=5, seed=3)
+
+save.image("temprun_oscar_selective_cv.RData")
+
+RESP_prat_oscar_cv_f5s1 <- oscar::cv.oscar(RESP_prat_oscar, fold=5, seed=1)
+RESP_prat_oscar_cv_f5s2 <- oscar::cv.oscar(RESP_prat_oscar, fold=5, seed=2)
+RESP_prat_oscar_cv_f5s3 <- oscar::cv.oscar(RESP_prat_oscar, fold=5, seed=3)
+PFS_prat_oscar_cv_f5s1 <- oscar::cv.oscar(PFS_prat_oscar, fold=5, seed=1)
+PFS_prat_oscar_cv_f5s2 <- oscar::cv.oscar(PFS_prat_oscar, fold=5, seed=2)
+PFS_prat_oscar_cv_f5s3 <- oscar::cv.oscar(PFS_prat_oscar, fold=5, seed=3)
+
+save.image("temprun_oscar_selective_cv.RData")
+
+RESP_tcga_oscar_cv_f5s1 <- oscar::cv.oscar(RESP_tcga_oscar, fold=5, seed=1)
+RESP_tcga_oscar_cv_f5s2 <- oscar::cv.oscar(RESP_tcga_oscar, fold=5, seed=2)
+RESP_tcga_oscar_cv_f5s3 <- oscar::cv.oscar(RESP_tcga_oscar, fold=5, seed=3)
+PFS_tcga_oscar_cv_f5s1 <- oscar::cv.oscar(PFS_tcga_oscar, fold=5, seed=1)
+PFS_tcga_oscar_cv_f5s2 <- oscar::cv.oscar(PFS_tcga_oscar, fold=5, seed=2)
+PFS_tcga_oscar_cv_f5s3 <- oscar::cv.oscar(PFS_tcga_oscar, fold=5, seed=3)
+OS_tcga_oscar_cv_f5s1 <- oscar::cv.oscar(OS_tcga_oscar, fold=5, seed=1)
+OS_tcga_oscar_cv_f5s2 <- oscar::cv.oscar(OS_tcga_oscar, fold=5, seed=2)
+OS_tcga_oscar_cv_f5s3 <- oscar::cv.oscar(OS_tcga_oscar, fold=5, seed=3)
+
+save.image("temprun_oscar_selective_cv.RData")
+
+RESP_riaz_oscar_cv_f5s1 <- oscar::cv.oscar(RESP_riaz_oscar, fold=5, seed=1)
+RESP_riaz_oscar_cv_f5s2 <- oscar::cv.oscar(RESP_riaz_oscar, fold=5, seed=2)
+RESP_riaz_oscar_cv_f5s3 <- oscar::cv.oscar(RESP_riaz_oscar, fold=5, seed=3)
+
+save.image("temprun_oscar_selective_cv.RData")
+
+
+RESP_braun_nivo_oscar_cv_f5s1 <- oscar::cv.oscar(RESP_braun_nivo_oscar, fold=5, seed=1)
+RESP_braun_nivo_oscar_cv_f5s2 <- oscar::cv.oscar(RESP_braun_nivo_oscar, fold=5, seed=2)
+RESP_braun_nivo_oscar_cv_f5s3 <- oscar::cv.oscar(RESP_braun_nivo_oscar, fold=5, seed=3)
+PFS_braun_nivo_oscar_cv_f5s1 <- oscar::cv.oscar(PFS_braun_nivo_oscar, fold=5, seed=1)
+PFS_braun_nivo_oscar_cv_f5s2 <- oscar::cv.oscar(PFS_braun_nivo_oscar, fold=5, seed=2)
+PFS_braun_nivo_oscar_cv_f5s3 <- oscar::cv.oscar(PFS_braun_nivo_oscar, fold=5, seed=3)
+OS_braun_nivo_oscar_cv_f5s1 <- oscar::cv.oscar(OS_braun_nivo_oscar, fold=5, seed=1)
+OS_braun_nivo_oscar_cv_f5s2 <- oscar::cv.oscar(OS_braun_nivo_oscar, fold=5, seed=2)
+OS_braun_nivo_oscar_cv_f5s3 <- oscar::cv.oscar(OS_braun_nivo_oscar, fold=5, seed=3)
+
+save.image("temprun_oscar_selective_cv.RData")
+
+RESP_braun_ever_oscar_cv_f5s1 <- oscar::cv.oscar(RESP_braun_ever_oscar, fold=5, seed=1)
+RESP_braun_ever_oscar_cv_f5s2 <- oscar::cv.oscar(RESP_braun_ever_oscar, fold=5, seed=2)
+RESP_braun_ever_oscar_cv_f5s3 <- oscar::cv.oscar(RESP_braun_ever_oscar, fold=5, seed=3)
+PFS_braun_ever_oscar_cv_f5s1 <- oscar::cv.oscar(PFS_braun_ever_oscar, fold=5, seed=1)
+PFS_braun_ever_oscar_cv_f5s2 <- oscar::cv.oscar(PFS_braun_ever_oscar, fold=5, seed=2)
+PFS_braun_ever_oscar_cv_f5s3 <- oscar::cv.oscar(PFS_braun_ever_oscar, fold=5, seed=3)
+OS_braun_ever_oscar_cv_f5s1 <- oscar::cv.oscar(OS_braun_ever_oscar, fold=5, seed=1)
+OS_braun_ever_oscar_cv_f5s2 <- oscar::cv.oscar(OS_braun_ever_oscar, fold=5, seed=2)
+OS_braun_ever_oscar_cv_f5s3 <- oscar::cv.oscar(OS_braun_ever_oscar, fold=5, seed=3)
+
+save.image("temprun_oscar_selective_cv.RData")
+
+RESP_hugo_oscar_cv_f5s1 <- oscar::cv.oscar(RESP_hugo_oscar, fold=5, seed=1)
+RESP_hugo_oscar_cv_f5s2 <- oscar::cv.oscar(RESP_hugo_oscar, fold=5, seed=2)
+RESP_hugo_oscar_cv_f5s3 <- oscar::cv.oscar(RESP_hugo_oscar, fold=5, seed=3)
+OS_hugo_oscar_cv_f5s1 <- oscar::cv.oscar(OS_hugo_oscar, fold=5, seed=1)
+OS_hugo_oscar_cv_f5s2 <- oscar::cv.oscar(OS_hugo_oscar, fold=5, seed=2)
+OS_hugo_oscar_cv_f5s3 <- oscar::cv.oscar(OS_hugo_oscar, fold=5, seed=3)
+
+save.image("temprun_oscar_selective_cv.RData")

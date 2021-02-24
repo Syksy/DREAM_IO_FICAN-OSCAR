@@ -41,7 +41,7 @@ rownames(dat_input) <- dat_input[,1]
 dat_input <- dat_input[,-1]
 print("Done reading in tpm and clinical data")
 
-# DREAM IO: !PD response
+# Submission 3, PFS
 
 # Transformation for gene expression data
 logz <- function(x) { 
@@ -90,7 +90,7 @@ aggregateX <- function(
 	# GSVA 
 	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
 	res_gsva <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE)) # Custom GMTs
-	X <- cbind(X, CUSTOM_FOPANEL = res_gsva[,grep("CUSTOM_FOPANEL", colnames(res_gsva))])
+	X <- cbind(X, CUSTOM_FOPANELv2 = res_gsva[,grep("CUSTOM_FOPANELv2", colnames(res_gsva))])
 	
 	# xCell
 	#tmp <- immunedeconv::deconvolute(gex, method="xcell")
@@ -124,65 +124,52 @@ predictX <- function(
 		patientID = IDs,
 		prediction = Xhat %*% b
 	)
-	# Flip sign
+	# Flip the sign
 	ret[,"prediction"] <- -ret[,"prediction"]
 	rownames(ret) <- NULL
 	ret
 }
 
 # Beta vector
-## Subchallenge 3 submission 1
+## Subchallenge 1 submission 1
 #b_sub = c(	
-#	"CUSTOM_MCP_ENDOTHELIAL.CELLS" = -1.0566, # Presence of endothelial cells according to GSVA reduces response likelihood
-#	"CUSTOM_IFNG3" = 1.3909 # Presence of Interferon-gamma signalling increases response likelihood
+#	"CD274" = -0.5326, # Estimated from aggregated PFS data
+#	"isTMBhigh" = log(0.62) # Carbone et al. cutoff and HR into a coef
 #)
-## -> DSS -0.0436, Nivo 0.5149, Chemo 0.4052
+## -> DSS 0.0353, Nivo 0.4064 (flip 1-0.4064), Chemo 0.5118
 
-## Subchallenge 3 submission 2
+
+## Subchallenge 1 submission 2 
+# missing exact coefs, last submitted coefs buried in version control
 #b_sub = c(	
-#	"CD274" = 0.03635064, # mRNA expression of PD-L1; increases likelihood of response; aggregate estimate from all RESP data
-#	"log10TMB" = 1, # log10 of tumor mutational burden; increases likelihood of response; literature based estimate
-#	"HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION" = -0.5 # EMT, conservative estimate derived from Hugo et al.
+#	"CD274" = ,
+#	"isTMBhigh" =, # In chemo low TMB advantage but not high or medium, in nivo high TMB advantage; pick high separately
+#	"isMale" =, # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ)
+#	"isSquamous" = log(0.77) # Carbone et al. supplementary effect for OS
+#	"isSquamousEversmoker" = log(0.59), # Brahmer et al. for SQ eversmoker HR
+#	"isNonsquamousEversmoker" = log(0.7), # Borhaei et al for non-SQ eversmoker HR
+#	"isEversmoker" = log(0.7) # Huant et al. OncoImmunology 2018 pooled meta-analy
 #)
-## -> DSS -0.0404, Nivo 0.4319, Chemo 0.6026
+## -> DSS 0.0291, Nivo 0.5897, Chemo 0.4638
 
-# To test: CD8A and isMale came out from Prat et al, others borderline (CD274 p=0.11, isEversmoker p=0.2); TMB known from literature to predict and does not correlate with PD-L1 (or CD274)
-# Coefs from Prat et al. in PD prediction (based on available limited sample size and variable data):
-#Coefficients:
-#             Estimate Std. Error t value Pr(>|t|)    
-#(Intercept)   0.23187    0.21616   1.073   0.2908    
-#CD274         0.12319    0.07513   1.640   0.1100    
-#CD8A          0.15857    0.07597   2.087   0.0442 *  
-#isEversmoker -0.35441    0.27158  -1.305   0.2004    
-#isMale        0.85753    0.18241   4.701 3.95e-05 ***
-#
-## TCGA control didn't identify coefs as significant
-
-
-## Subchallenge 3 submission 3
+## Subchallenge 1 submission 3
 #b_sub = c(
-#	"CD274" = 0.12319, # Estimated from Prat et al.
-#	"CD8A" = 0.15857, # Estimated from Prat et al.
-#	"isPDL1high" = 1, # a priori
-#	"isTMBhigh" = 1, # a priori
-#	"isPDL1high_isTMBhigh" = 2, # a priori
-#	"isMale" = 0.25 # Being male had a significant effect in predicting !PD in Prat et al., coef estimate a priori
+#	"TMB" = -0.0025, # Estimate a continuous value for the TMB effect, which seems to focus towards hypermutated samples
+#	"CUSTOM_FOPANELv2" = -1, # Custom trained panel estimated using GSVA; estimate from aggregated estimates from training data (e.g. Prat, Gide)
+#	"isMale" = log(0.9), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ); lesser effect expected in this CheckMate trial
+#	"isSquamous" = log(0.83) # Carbone et al. PFS effect HR
 #)
-## -> DSS -0.068, Nivo 0.4564, Chemo 0.3961
+## -> DSS 0.0125, Nivo 0.5591, Chemo 0.5007
 
-## Subchallenge 3 submission 4
-#b_sub = c(
-#	"CUSTOM_FOPANEL" = 1, # The GSVA is bimodal around -0.5, and 0.5 with individual variation; giving equal weight to the gene set is done if both have the same coefficient
-#	"isTMBhigh" = 1 # a priori equal importance, albeit binary indicator
-#)
-## -> DSS -0.0029 [-0.003, 0.0035], Nivo 0.4434, Chemo 0.4813
-
-## Subchallenge 3 submission 5
+## Subchallenge 1 submission 4
 b_sub = c(
-	"CUSTOM_FOPANELv2" = 1, # The GSVA is bimodal around -0.5, and 0.5 with individual variation; giving equal weight to the gene set is done if both have the same coefficient
-	"isTMBhigh_PDL1above5" = 1, # a priori equal importance, albeit binary indicator
-	"isMale" = x
+	"isTMBhigh" = log(0.62), # Carbone et al. cutoff and HR into a coef
+	"CUSTOM_FOPANEL" = -0.5, # Custom trained panel estimated using GSVA; estimate from aggregated estimates from training data (e.g. Prat, Gide)
+	"isMale" = log(0.9), # Brahmer HR = 0.57 (SQ),  Borghaei HR = 0.73 (non-SQ); lesser effect expected in this CheckMate trial
+	"isSquamous" = log(0.83) # Carbone et al. PFS effect HR
 )
+## -> DSS x, Nivo x, Chemo x
+
 
 ## REPLACE
 #setwd("..")
@@ -190,22 +177,21 @@ b_sub = c(
 #gex_input <- gex_input[order(rownames(gex_input)),]
 #gex_input <- as.matrix(gex_input)
 #dat_input <- read.csv(".\\CM_026_formatted_synthetic_data_subset\\clinical_data.csv", row.names=1)
-#setwd("Docker_subch3")
+#setwd("Docker_subch2")
 ## REPLACE ENDS
 
 X_sub <- aggregateX(
 	gex = gex_input,	# Gene expression matrix of actual data
 	dat = dat_input	# Clinical variable matrix of actual data
 )
+# cbind(ret, TMB = dat_input[,"TMB"], FOPANELv2 = X_sub[,"CUSTOM_FOPANELv2"], SEX = dat_input[,"SEX"], CRFHIST = dat_input[,"CRFHIST"], CD274 = gex_input["CD274",], PDCD1 = gex_input["PDCD1",], TIGIT = gex_input["TIGIT",], CXCL9 = gex_input["CXCL9",], CXCR6 = gex_input["CXCR6",], CD8A = gex_input["CD8A",], CCL5 = gex_input["CCL5",])
+
 
 # Xb
 ret <- predictX(
 	X = X_sub, # Data matrix
 	b = b_sub # Beta coefficients
 )
-# Sanity checking
-#head(cbind(ret, dat_input[,c("TMB")], X_sub[,c("isTMBhigh", "CUSTOM_FOPANEL")], t(gex_input[c("CD274","PDCD1","TIGIT","CXCL9","CXCR6"),])))
-
 # Write output
 write.csv(ret, file = args[3], quote=F, row.names=FALSE)
 print("Done writing out result")
