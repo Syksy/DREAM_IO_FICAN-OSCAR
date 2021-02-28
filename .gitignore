@@ -5,3 +5,9 @@
 *.pdf
 temp.RData
 Annotations/
+TIDE/
+download/
+GEO/
+MSigDB/
+CM_026_formatted_synthetic_data_subset/
+DREAM-docker/
