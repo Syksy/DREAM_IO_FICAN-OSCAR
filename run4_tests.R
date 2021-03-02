@@ -522,7 +522,6 @@ coef(summary(coxph(PFS_prat ~ dat_prat[,"CRFHIST"] == "SQUAMOUS")))
 library(oscar)
 pfs_prat_oscar_keygenes <- oscar(x = gex_prat[,intersect(colnames(gex_prat), keygenes)], y = PFS_prat, family = "cox")
 
-library(oscar)
 resp_prat_oscar_keygenes <- oscar(x = gex_prat[,intersect(colnames(gex_prat), keygenes)], y = RESP_prat, family = "logistic")
 
 cv_resp_prat_oscar_keygenes_seed1 <- cv.oscar(resp_prat_oscar_keygenes, fold=5, seed=1)
@@ -573,4 +572,390 @@ lapply(1:4, FUN=function(k) { predict(resp_prat_oscar_keygenes, k=k, type="nonze
 # TNFAIP3: 
 # Inhibition of TNFAIP3 increases invasiveness etc of NSCLC
 # https://onlinelibrary.wiley.com/doi/abs/10.1002/jcb.29323
+
+
+## Updated "datas.RData"
+
+library(glmnet)
+
+PFS_prat_lasso <- glmnet(x = X_prat[-which(PFS_prat[,1]==0),], y = PFS_prat[-which(PFS_prat[,1]==0)], family = "cox")
+set.seed(1); PFS_prat_lasso_cv1 <- cv.glmnet(x = X_prat[-which(PFS_prat[,1]==0),], y = PFS_prat[-which(PFS_prat[,1]==0)], family = "cox", nfolds=5, type.measure="C")
+set.seed(2); PFS_prat_lasso_cv2 <- cv.glmnet(x = X_prat[-which(PFS_prat[,1]==0),], y = PFS_prat[-which(PFS_prat[,1]==0)], family = "cox", nfolds=5, type.measure="C")
+set.seed(3); PFS_prat_lasso_cv3 <- cv.glmnet(x = X_prat[-which(PFS_prat[,1]==0),], y = PFS_prat[-which(PFS_prat[,1]==0)], family = "cox", nfolds=5, type.measure="C")
+set.seed(4); PFS_prat_lasso_cv4 <- cv.glmnet(x = X_prat[-which(PFS_prat[,1]==0),], y = PFS_prat[-which(PFS_prat[,1]==0)], family = "cox", nfolds=5, type.measure="C")
+set.seed(5); PFS_prat_lasso_cv5 <- cv.glmnet(x = X_prat[-which(PFS_prat[,1]==0),], y = PFS_prat[-which(PFS_prat[,1]==0)], family = "cox", nfolds=5, type.measure="C")
+
+RESP_prat_lasso <- glmnet(x = X_prat, y = RESP_prat, family = "binomial")
+set.seed(1); RESP_prat_lasso_cv1 <- cv.glmnet(x = X_prat, y = RESP_prat, family = "binomial", nfolds=5, type.measure="auc")
+set.seed(2); RESP_prat_lasso_cv2 <- cv.glmnet(x = X_prat, y = RESP_prat, family = "binomial", nfolds=5, type.measure="auc")
+set.seed(3); RESP_prat_lasso_cv3 <- cv.glmnet(x = X_prat, y = RESP_prat, family = "binomial", nfolds=5, type.measure="auc")
+set.seed(4); RESP_prat_lasso_cv4 <- cv.glmnet(x = X_prat, y = RESP_prat, family = "binomial", nfolds=5, type.measure="auc")
+set.seed(5); RESP_prat_lasso_cv5 <- cv.glmnet(x = X_prat, y = RESP_prat, family = "binomial", nfolds=5, type.measure="auc")
+
+
+
+predict(RESP_prat_lasso, type="coefficients", s=RESP_prat_lasso_cv1$lambda.1se)
+predict(PFS_prat_lasso, type="coefficients", s=PFS_prat_lasso_cv1$lambda.min)
+
+
+
+
+coef(summary(coxph(PFS_prat ~ X_prat[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_hugo ~ X_hugo[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_lauss ~ X_lauss[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_westin ~ X_westin[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_kim ~ X_kim[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_chen ~ X_chen[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_riaz ~ X_riaz[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_gide ~ X_gide[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FEHRENBACHER"])))
+
+coef(summary(coxph(PFS_tcga ~ X_tcga[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(PFS_braun_ever ~ X_braun_ever[,"CUSTOM_FEHRENBACHER"])))
+
+# Significant in Gide et al. but...
+coef(summary(coxph(OS_hugo ~ X_hugo[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(OS_lauss ~ X_lauss[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(OS_westin ~ X_westin[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(OS_kim ~ X_kim[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(OS_chen ~ X_chen[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(OS_riaz ~ X_riaz[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(OS_gide ~ X_gide[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(OS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FEHRENBACHER"])))
+
+coef(summary(coxph(OS_tcga ~ X_tcga[,"CUSTOM_FEHRENBACHER"])))
+coef(summary(coxph(OS_braun_ever ~ X_braun_ever[,"CUSTOM_FEHRENBACHER"])))
+
+# TCGA for OS prediction is significant
+#> coef(summary(coxph(OS_tcga ~ X_tcga[,"CUSTOM_FEHRENBACHER"])))
+#                                    coef exp(coef) se(coef)        z   Pr(>|z|)
+#X_tcga[, "CUSTOM_FEHRENBACHER"] 0.551216  1.735362 0.270275 2.039464 0.04140376
+
+# Output and collect to Excel preliminary panel results
+
+
+write.table(do.call("rbind", apply(X_lauss, MARGIN=2, FUN=function(z){
+	as.data.frame(coef(summary(coxph(PFS_lauss ~ z))))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+
+write.table(do.call("rbind", apply(X_lauss, MARGIN=2, FUN=function(z){
+	as.data.frame(coef(summary(coxph(OS_lauss ~ z))))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+
+write.table(do.call("rbind", apply(X_lauss, MARGIN=2, FUN=function(z){
+	as.data.frame(t(coef(summary(glm(RESP_lauss ~ z)))[2,]))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+	
+
+
+write.table(do.call("rbind", apply(X_hugo, MARGIN=2, FUN=function(z){
+	as.data.frame(coef(summary(coxph(OS_hugo ~ z))))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+
+write.table(do.call("rbind", apply(X_hugo, MARGIN=2, FUN=function(z){
+	as.data.frame(t(coef(summary(glm(RESP_hugo ~ z)))[2,]))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+
+
+
+
+write.table(do.call("rbind", apply(X_braun_nivo, MARGIN=2, FUN=function(z){
+	as.data.frame(coef(summary(coxph(PFS_braun_nivo ~ z))))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+
+write.table(do.call("rbind", apply(X_braun_ever, MARGIN=2, FUN=function(z){
+	as.data.frame(coef(summary(coxph(PFS_braun_ever ~ z))))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+
+
+write.table(do.call("rbind", apply(X_braun_nivo, MARGIN=2, FUN=function(z){
+	as.data.frame(coef(summary(coxph(OS_braun_nivo ~ z))))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+
+write.table(do.call("rbind", apply(X_braun_ever, MARGIN=2, FUN=function(z){
+	as.data.frame(coef(summary(coxph(OS_braun_ever ~ z))))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+
+
+
+write.table(do.call("rbind", apply(X_braun_nivo, MARGIN=2, FUN=function(z){
+	as.data.frame(t(coef(summary(glm(RESP_braun_nivo ~ z)))[2,]))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+	
+write.table(do.call("rbind", apply(X_braun_ever, MARGIN=2, FUN=function(z){
+	as.data.frame(t(coef(summary(glm(RESP_braun_ever ~ z)))[2,]))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+	
+	
+
+write.table(do.call("rbind", apply(X_kim, MARGIN=2, FUN=function(z){
+	as.data.frame(t(coef(summary(glm(RESP_kim ~ z)))[2,]))
+})), file="temp.tsv", sep="\t", row.names=TRUE, col.names=TRUE, quote=FALSE, dec=",")
+	
+
+## Testing self-made GMT sets
+
+
+coef(summary(stats::glm(RESP_prat ~ ., data = as.data.frame(X_prat[,c("CUSTOM_FOPANEL", "BASE_isMale", "BASE_isSmokerEver")]), family="binomial")))
+coef(summary(stats::glm(RESP_prat ~ ., data = as.data.frame(X_prat[,c("CUSTOM_FOPANELv2", "BASE_isMale", "BASE_isSmokerEver")]), family="binomial")))
+
+
+coef(summary(stats::glm(RESP_prat ~ ., data = as.data.frame(X_prat[,"CUSTOM_FICAN-OSCAR_larger"]), family="binomial")))
+coef(summary(stats::glm(RESP_prat ~ ., data = as.data.frame(X_prat[,"CUSTOM_FICAN-OSCAR_midsize"]), family="binomial")))
+coef(summary(stats::glm(RESP_prat ~ ., data = as.data.frame(X_prat[,"CUSTOM_FICAN-OSCAR_smaller"]), family="binomial")))
+
+coef(summary(coxph(PFS_prat ~ X_prat[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(PFS_prat ~ X_prat[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(PFS_prat ~ X_prat[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+
+coef(summary(stats::glm(RESP_prat ~ ., data = as.data.frame(X_prat[,"CUSTOM_FOPANEL"]), family="binomial")))
+coef(summary(coxph(PFS_prat ~ X_prat[,"CUSTOM_FOPANEL"])))
+
+#> coef(summary(stats::glm(RESP_prat ~ ., data = as.data.frame(X_prat[,"CUSTOM_FOPANEL"]), family="binomial")))
+#                              Estimate Std. Error   z value  Pr(>|z|)
+#(Intercept)                  0.2233265  0.2516593 0.8874163 0.3748548
+#`X_prat[, "CUSTOM_FOPANEL"]` 0.4276865  0.4328936 0.9879714 0.3231667
+#> coef(summary(coxph(PFS_prat ~ X_prat[,"CUSTOM_FOPANEL"])))
+#                                 coef exp(coef)  se(coef)         z  Pr(>|z|)
+#X_prat[, "CUSTOM_FOPANEL"] -0.4403945 0.6437824 0.2690536 -1.636828 0.1016663
+
+# None significant above ...
+
+coef(summary(stats::glm(RESP_gide ~ ., data = as.data.frame(X_gide[,"CUSTOM_FICAN-OSCAR_larger"]), family="binomial")))
+coef(summary(stats::glm(RESP_gide ~ ., data = as.data.frame(X_gide[,"CUSTOM_FICAN-OSCAR_midsize"]), family="binomial")))
+coef(summary(stats::glm(RESP_gide ~ ., data = as.data.frame(X_gide[,"CUSTOM_FICAN-OSCAR_smaller"]), family="binomial")))
+
+coef(summary(coxph(PFS_gide ~ X_gide[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(PFS_gide ~ X_gide[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(PFS_gide ~ X_gide[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+coef(summary(coxph(OS_gide ~ X_gide[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(OS_gide ~ X_gide[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(OS_gide ~ X_gide[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+coef(summary(stats::glm(RESP_gide ~ ., data = as.data.frame(X_gide[,"CUSTOM_FOPANEL"]), family="binomial")))
+coef(summary(coxph(PFS_gide ~ X_gide[,"CUSTOM_FOPANEL"])))
+coef(summary(coxph(OS_gide ~ X_gide[,"CUSTOM_FOPANEL"])))
+
+#> coef(summary(stats::glm(RESP_gide ~ ., data = as.data.frame(X_gide[,"CUSTOM_FOPANEL"]), family="binomial")))
+#                              Estimate Std. Error  z value   Pr(>|z|)
+#(Intercept)                  0.6222962  0.3652501 1.703754 0.08842710
+#`X_gide[, "CUSTOM_FOPANEL"]` 1.3128936  0.5901614 2.224635 0.02610577
+#> coef(summary(coxph(PFS_gide ~ X_gide[,"CUSTOM_FOPANEL"])))
+#                               coef exp(coef)  se(coef)         z     Pr(>|z|)
+#X_gide[, "CUSTOM_FOPANEL"] -1.26436 0.2824199 0.3715725 -3.402729 0.0006671645
+#> coef(summary(coxph(OS_gide ~ X_gide[,"CUSTOM_FOPANEL"])))
+#                                coef exp(coef)  se(coef)         z    Pr(>|z|)
+#X_gide[, "CUSTOM_FOPANEL"] -1.170658 0.3101629 0.3983575 -2.938711 0.003295804
+
+# All highly significant above!
+
+
+
+coef(summary(coxph(PFS_westin ~ X_westin[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(PFS_westin ~ X_westin[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(PFS_westin ~ X_westin[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+# None significant above ...
+
+
+
+
+coef(summary(stats::glm(RESP_braun_nivo ~ ., data = as.data.frame(X_braun_nivo[,"CUSTOM_FICAN-OSCAR_larger"]), family="binomial")))
+coef(summary(stats::glm(RESP_braun_nivo ~ ., data = as.data.frame(X_braun_nivo[,"CUSTOM_FICAN-OSCAR_midsize"]), family="binomial")))
+coef(summary(stats::glm(RESP_braun_nivo ~ ., data = as.data.frame(X_braun_nivo[,"CUSTOM_FICAN-OSCAR_smaller"]), family="binomial")))
+
+
+coef(summary(stats::glm(RESP_braun_nivo ~ ., data = as.data.frame(X_braun_nivo[,"CUSTOM_FOPANEL"]), family="binomial")))
+coef(summary(coxph(PFS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FOPANEL"])))
+coef(summary(coxph(OS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FOPANEL"])))
+
+#> coef(summary(stats::glm(RESP_braun_nivo ~ ., data = as.data.frame(X_braun_nivo[,"CUSTOM_FOPANEL"]), family="binomial")))
+#                                     Estimate Std. Error   z value   Pr(>|z|)
+#(Intercept)                         0.3848503  0.1571834  2.448416 0.01434859
+#`X_braun_nivo[, "CUSTOM_FOPANEL"]` -0.4786612  0.2615470 -1.830116 0.06723266
+#> coef(summary(coxph(PFS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FOPANEL"])))
+#                                      coef exp(coef)  se(coef)        z  Pr(>|z|)
+#X_braun_nivo[, "CUSTOM_FOPANEL"] 0.1400138   1.15029 0.1332416 1.050827 0.2933382
+#> coef(summary(coxph(OS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FOPANEL"])))
+#                                       coef exp(coef) se(coef)         z  Pr(>|z|)
+#X_braun_nivo[, "CUSTOM_FOPANEL"] 0.03251653  1.033051  0.14843 0.2190698 0.8265957
+
+
+# Significant for RESP prediction
+
+coef(summary(coxph(PFS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(PFS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(PFS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+coef(summary(coxph(OS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(OS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(OS_braun_nivo ~ X_braun_nivo[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+
+
+coef(summary(stats::glm(RESP_kim ~ ., data = as.data.frame(X_kim[,"CUSTOM_FOPANEL"]), family="binomial")))
+
+
+coef(summary(stats::glm(RESP_kim ~ ., data = as.data.frame(X_kim[,"CUSTOM_FICAN-OSCAR_larger"]), family="binomial")))
+coef(summary(stats::glm(RESP_kim ~ ., data = as.data.frame(X_kim[,"CUSTOM_FICAN-OSCAR_midsize"]), family="binomial")))
+coef(summary(stats::glm(RESP_kim ~ ., data = as.data.frame(X_kim[,"CUSTOM_FICAN-OSCAR_smaller"]), family="binomial")))
+
+# Highly significant
+
+coef(summary(stats::glm(RESP_riaz ~ ., data = as.data.frame(X_riaz[,"CUSTOM_FICAN-OSCAR_larger"]), family="binomial")))
+coef(summary(stats::glm(RESP_riaz ~ ., data = as.data.frame(X_riaz[,"CUSTOM_FICAN-OSCAR_midsize"]), family="binomial")))
+coef(summary(stats::glm(RESP_riaz ~ ., data = as.data.frame(X_riaz[,"CUSTOM_FICAN-OSCAR_smaller"]), family="binomial")))
+
+# Not significant ...
+
+coef(summary(stats::glm(RESP_lauss ~ ., data = as.data.frame(X_lauss[,"CUSTOM_FICAN-OSCAR_larger"]), family="binomial")))
+coef(summary(stats::glm(RESP_lauss ~ ., data = as.data.frame(X_lauss[,"CUSTOM_FICAN-OSCAR_midsize"]), family="binomial")))
+coef(summary(stats::glm(RESP_lauss ~ ., data = as.data.frame(X_lauss[,"CUSTOM_FICAN-OSCAR_smaller"]), family="binomial")))
+
+coef(summary(coxph(PFS_lauss ~ X_lauss[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(PFS_lauss ~ X_lauss[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(PFS_lauss ~ X_lauss[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+coef(summary(coxph(OS_lauss ~ X_lauss[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(OS_lauss ~ X_lauss[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(OS_lauss ~ X_lauss[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+# Slight trend but not significant...
+
+
+
+
+
+
+coef(summary(stats::glm(RESP_tcga ~ ., data = as.data.frame(X_tcga[,"CUSTOM_FICAN-OSCAR_larger"]), family="binomial")))
+coef(summary(stats::glm(RESP_tcga ~ ., data = as.data.frame(X_tcga[,"CUSTOM_FICAN-OSCAR_midsize"]), family="binomial")))
+coef(summary(stats::glm(RESP_tcga ~ ., data = as.data.frame(X_tcga[,"CUSTOM_FICAN-OSCAR_smaller"]), family="binomial")))
+
+coef(summary(coxph(PFS_tcga ~ X_tcga[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(PFS_tcga ~ X_tcga[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(PFS_tcga ~ X_tcga[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+coef(summary(coxph(OS_tcga ~ X_tcga[,"CUSTOM_FICAN-OSCAR_larger"])))
+coef(summary(coxph(OS_tcga ~ X_tcga[,"CUSTOM_FICAN-OSCAR_midsize"])))
+coef(summary(coxph(OS_tcga ~ X_tcga[,"CUSTOM_FICAN-OSCAR_smaller"])))
+
+# None significant! Midsize for OS p = 0.099 
+
+
+
+paneltest <- as.integer(X_prat[,grep("FOPANEL", colnames(X_prat))] > median(X_prat[,grep("FOPANEL", colnames(X_prat))]) )
+coef(summary(stats::glm(RESP_prat ~ ., data = data.frame(panel = paneltest), family="binomial")))
+coef(summary(coxph(PFS_prat ~ paneltest)))
+
+#> coef(summary(coxph(PFS_prat ~ paneltest)))
+#                coef exp(coef)  se(coef)         z   Pr(>|z|)
+#paneltest -0.5378729 0.5839892 0.3056254 -1.759909 0.07842324
+
+# Median separation almost significant for PFS in Prat et al.
+
+paneltest <- as.integer(X_kim[,grep("FOPANEL", colnames(X_kim))] > median(X_kim[,grep("FOPANEL", colnames(X_kim))]) )
+coef(summary(stats::glm(RESP_kim ~ ., data = data.frame(panel = paneltest), family="binomial")))
+coef(summary(coxph(PFS_kim ~ paneltest)))
+
+
+
+# Plot pairwise gex of key genes
+
+cor(t(gex_prat)[,c("CD274","PDCD1","TIGIT","CXCL9","CXCR6","CD8A","CCL5")])
+#> cor(t(gex_prat)[,c("CD274","PDCD1","TIGIT","CXCL9","CXCR6","CD8A","CCL5")])
+#          CD274     PDCD1     TIGIT     CXCL9     CXCR6      CD8A      CCL5
+#CD274 1.0000000 0.6149574 0.5315081 0.5855758 0.6036138 0.5065241 0.5717045
+#PDCD1 0.6149574 1.0000000 0.8680663 0.7544276 0.7884796 0.8509263 0.8222999
+#TIGIT 0.5315081 0.8680663 1.0000000 0.7346146 0.7716124 0.8508972 0.7947507
+#CXCL9 0.5855758 0.7544276 0.7346146 1.0000000 0.7075072 0.7357269 0.8450064
+#CXCR6 0.6036138 0.7884796 0.7716124 0.7075072 1.0000000 0.7967732 0.8301419
+#CD8A  0.5065241 0.8509263 0.8508972 0.7357269 0.7967732 1.0000000 0.8875111
+#CCL5  0.5717045 0.8222999 0.7947507 0.8450064 0.8301419 0.8875111 1.0000000
+
+#> cor(X_gide[,c("BASE_CD274","BASE_PDCD1","BASE_TIGIT","BASE_CXCL9","BASE_CXCR6","BASE_CD8A","BASE_CCL5")])
+#           BASE_CD274 BASE_PDCD1 BASE_TIGIT BASE_CXCL9 BASE_CXCR6 BASE_CD8A BASE_CCL5
+#BASE_CD274  1.0000000  0.4698337  0.3417720  0.3244007  0.3252779 0.6504630 0.5953016
+#BASE_PDCD1  0.4698337  1.0000000  0.6558968  0.3632884  0.5548962 0.5460538 0.6508817
+#BASE_TIGIT  0.3417720  0.6558968  1.0000000  0.2260284  0.3586055 0.4810126 0.4904197
+#BASE_CXCL9  0.3244007  0.3632884  0.2260284  1.0000000  0.1540326 0.2313270 0.5234739
+#BASE_CXCR6  0.3252779  0.5548962  0.3586055  0.1540326  1.0000000 0.3908119 0.4354839
+#BASE_CD8A   0.6504630  0.5460538  0.4810126  0.2313270  0.3908119 1.0000000 0.5260353
+#BASE_CCL5   0.5953016  0.6508817  0.4904197  0.5234739  0.4354839 0.5260353 1.0000000
+
+#> cor(X_kim[,c("BASE_CD274","BASE_PDCD1","BASE_TIGIT","BASE_CXCL9","BASE_CXCR6","BASE_CD8A","BASE_CCL5")])
+#           BASE_CD274 BASE_PDCD1 BASE_TIGIT BASE_CXCL9 BASE_CXCR6 BASE_CD8A BASE_CCL5
+#BASE_CD274  1.0000000  0.5512703  0.4812833  0.6884432  0.4070490 0.5274523 0.4687048
+#BASE_PDCD1  0.5512703  1.0000000  0.8656795  0.7428670  0.7456384 0.7516692 0.6696468
+#BASE_TIGIT  0.4812833  0.8656795  1.0000000  0.6951449  0.7542240 0.7775300 0.6996296
+#BASE_CXCL9  0.6884432  0.7428670  0.6951449  1.0000000  0.6452362 0.7680803 0.7099427
+#BASE_CXCR6  0.4070490  0.7456384  0.7542240  0.6452362  1.0000000 0.8980258 0.7500849
+#BASE_CD8A   0.5274523  0.7516692  0.7775300  0.7680803  0.8980258 1.0000000 0.8587271
+#BASE_CCL5   0.4687048  0.6696468  0.6996296  0.7099427  0.7500849 0.8587271 1.0000000
+
+
+
+
+
+## OSCAR Model k cardinality
+
+
+load("temprun_oscar.RData")
+
+
+# Test concordance indices between studies Resp <-> OS, Resp <-> PFS (and PFS <-> OS ?)
+
+library(survival)
+
+coef(summary(coxph(PFS_prat ~ RESP_prat)))
+coef(summary(coxph(PFS_gide ~ RESP_gide)))
+coef(summary(coxph(OS_gide ~ RESP_gide)))
+coef(summary(coxph(PFS_lauss ~ RESP_lauss)))
+coef(summary(coxph(OS_lauss ~ RESP_lauss)))
+coef(summary(coxph(OS_hugo ~ RESP_hugo)))
+coef(summary(coxph(OS_tcga ~ RESP_tcga)))
+coef(summary(coxph(PFS_tcga ~ RESP_tcga)))
+coef(summary(coxph(OS_braun_nivo ~ RESP_braun_nivo)))
+coef(summary(coxph(PFS_braun_nivo ~ RESP_braun_nivo)))
+coef(summary(coxph(OS_braun_ever ~ RESP_braun_ever)))
+coef(summary(coxph(PFS_braun_ever ~ RESP_braun_ever)))
+
+#> coef(summary(coxph(PFS_prat ~ RESP_prat)))
+#               coef  exp(coef) se(coef)         z     Pr(>|z|)
+#RESP_prat -3.325811 0.03594337 0.529172 -6.284933 3.279959e-10
+#> coef(summary(coxph(PFS_gide ~ RESP_gide)))
+#               coef  exp(coef) se(coef)         z     Pr(>|z|)
+#RESP_gide -4.333642 0.01311968 1.058936 -4.092448 4.268439e-05
+#> coef(summary(coxph(OS_gide ~ RESP_gide)))
+#               coef exp(coef)  se(coef)         z     Pr(>|z|)
+#RESP_gide -2.223079 0.1082753 0.4798473 -4.632888 3.606001e-06
+#> coef(summary(coxph(PFS_lauss ~ RESP_lauss)))
+#                coef  exp(coef) se(coef)         z     Pr(>|z|)
+#RESP_lauss -3.827152 0.02177153 1.128189 -3.392297 0.0006930914
+#> coef(summary(coxph(OS_lauss ~ RESP_lauss)))
+#                coef exp(coef) se(coef)         z    Pr(>|z|)
+#RESP_lauss -1.804191 0.1646075 0.582915 -3.095119 0.001967337
+#> coef(summary(coxph(OS_hugo ~ RESP_hugo)))
+#               coef  exp(coef) se(coef)        z    Pr(>|z|)
+#RESP_hugo -3.013772 0.04910611 1.060657 -2.84142 0.004491317
+#> coef(summary(coxph(OS_tcga ~ RESP_tcga)))
+#                coef exp(coef)  se(coef)         z   Pr(>|z|)
+#RESP_tcga -0.9349917 0.3925891 0.5513813 -1.695726 0.08993773
+#> coef(summary(coxph(PFS_tcga ~ RESP_tcga)))
+#               coef exp(coef) se(coef)         z     Pr(>|z|)
+#RESP_tcga -1.852649 0.1568211 0.263972 -7.018356 2.244945e-12
+#> coef(summary(coxph(OS_braun_nivo ~ RESP_braun_nivo)))
+#                      coef exp(coef)  se(coef)         z     Pr(>|z|)
+#RESP_braun_nivo -0.8553068 0.4251527 0.1880501 -4.548292 5.408302e-06
+#> coef(summary(coxph(PFS_braun_nivo ~ RESP_braun_nivo)))
+#                    coef exp(coef)  se(coef)         z     Pr(>|z|)
+#RESP_braun_nivo -2.28576 0.1016967 0.1920104 -11.90436 1.123234e-32
+#> coef(summary(coxph(OS_braun_ever ~ RESP_braun_ever)))
+#                     coef exp(coef)  se(coef)         z     Pr(>|z|)
+#RESP_braun_ever -1.137041 0.3207668 0.2257391 -5.036969 4.729623e-07
+#> coef(summary(coxph(PFS_braun_ever ~ RESP_braun_ever)))
+#                     coef  exp(coef)  se(coef)         z     Pr(>|z|)
+#RESP_braun_ever -4.140137 0.01592067 0.5265367 -7.862959 3.751625e-15
+
 
