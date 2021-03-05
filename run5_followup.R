@@ -85,6 +85,7 @@ ht_prat_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_prat_row <- ComplexHeatmap::rowAnnotation(
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=1)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -123,7 +124,7 @@ ht_kim_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_kim_row <- ComplexHeatmap::rowAnnotation(
-	# Note that 2 of the extensive genes are available in Kim et al., in contrast to only one of the two being available in Prat et al.
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=2)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -169,6 +170,7 @@ ht_gide_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_gide_row <- ComplexHeatmap::rowAnnotation(
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=2)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -209,6 +211,7 @@ ht_hugo_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_hugo_row <- ComplexHeatmap::rowAnnotation(
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=2)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -248,6 +251,7 @@ ht_lauss_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_lauss_row <- ComplexHeatmap::rowAnnotation(
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=2)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -282,6 +286,7 @@ ht_riaz_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_riaz_row <- ComplexHeatmap::rowAnnotation(
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=2)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -316,6 +321,7 @@ ht_chen_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_chen_row <- ComplexHeatmap::rowAnnotation(
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=4), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=1)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -350,6 +356,7 @@ ht_westin_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_westin_row <- ComplexHeatmap::rowAnnotation(
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=4), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=1)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -397,7 +404,7 @@ ht_braun_nivo_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_braun_nivo_row <- ComplexHeatmap::rowAnnotation(
-	# Note that 2 of the extensive genes are available in Kim et al., in contrast to only one of the two being available in Prat et al.
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=1), rep("Extensive FO-panel", times=2)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -449,7 +456,7 @@ ht_braun_ever_col <- ComplexHeatmap::columnAnnotation(
 	)
 )
 ht_braun_ever_row <- ComplexHeatmap::rowAnnotation(
-	# Note that 2 of the extensive genes are available in Kim et al., in contrast to only one of the two being available in Prat et al.
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=1), rep("Extensive FO-panel", times=2)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -504,7 +511,7 @@ ht_tcga_col <- ComplexHeatmap::columnAnnotation(
 )
 
 ht_tcga_row <- ComplexHeatmap::rowAnnotation(
-	# Note that 2 of the extensive genes are available in Kim et al., in contrast to only one of the two being available in Prat et al.
+	# Adjusted according to what genes were available in the particular data
 	PANEL = c(rep("Base FO-panel", times=5), rep("Extended FO-panel", times=2), rep("Extensive FO-panel", times=2)),
 	col = list(
 		PANEL = c("Base FO-panel" = "cadetblue2", "Extended FO-panel" = "cornflowerblue", "Extensive FO-panel" = "darkgreen")
@@ -535,4 +542,38 @@ draw(ht_tcga, annotation_legend_list = packLegend(ht_tcga_leg0, ht_tcga_leg1, ht
 ####
 #### KAPLAN-MEIERS / ROC-CURVES
 ####
+
+
+library(survminer)
+
+
+
+
+
+
+####
+#### Example of LASSO penalization coefficients as a function of lambda vs OSCAR unbiased estimates as a function of cardinality in Prat et al.
+####
+
+# Oscar fits and CV-runs
+load("temprun_oscar_selective.RData")
+
+#par(mfrow=c(2,2))
+par(mfrow=c(2,2))
+set.seed(0)
+library(glmnet)
+RESP_prat_lasso <- glmnet::glmnet(y = RESP_prat, x = X_prat[,intersect(selective, colnames(X_prat))], family = "binomial")
+RESP_prat_lasso_cv <- glmnet::cv.glmnet(y = RESP_prat, x = X_prat[,intersect(selective, colnames(X_prat))], family = "binomial", nfolds=5, type.measure="auc")
+plot(RESP_prat_lasso, xvar="lambda")
+abline(v=log(RESP_prat_lasso_cv$lambda.min), col="grey", lwd=2)
+plot.new(); plot.window(xlim=c(1,15), ylim=c(-50,50)); box(); axis(1); axis(2)
+plot(RESP_prat_oscar, add=TRUE) # Stored object in the .RData
+abline(v=which.max(apply(RESP_prat_oscar_cv_f5s1, MARGIN=2, FUN=mean)), col="grey", lwd=2)
+title(main="\nOSCAR coefficients per cardinality")
+plot(RESP_prat_lasso_cv)
+oscar::cv.visu(RESP_prat_oscar_cv_f5s1, xlab="Cardinality 'k'", ylab="ROC-AUC") # 5-fold, seed=1 suffix
+
+
+
+
 
