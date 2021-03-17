@@ -105,8 +105,9 @@ ht_prat <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_prat))
 )
 
+png("hmap_prat.png", width=1500, height=500)
 draw(ht_prat, annotation_legend_list = packLegend(ht_prat_leg0))
-
+dev.off()
 
 # Kim et al.
 
@@ -145,7 +146,9 @@ ht_kim <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_kim))
 )
 
+png("hmap_kim.png", width=1500, height=500)
 draw(ht_kim, annotation_legend_list = packLegend(ht_kim_leg0, ht_kim_leg1, ht_kim_leg2))
+dev.off()
 
 # Gide et al.
 Xz_gide <- t(apply(t(X_gide[,c("BASE_CD274", "BASE_PDCD1", "BASE_TIGIT", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1", "BASE_ALK")]), MARGIN=1, FUN=scale))
@@ -191,8 +194,9 @@ ht_gide <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_gide))
 )
 
+png("hmap_gide.png", width=1500, height=500)
 draw(ht_gide, annotation_legend_list = packLegend(ht_gide_leg0, ht_gide_leg1))
-
+dev.off()
 
 # Hugo et al.
 Xz_hugo <- t(apply(t(X_hugo[,c("BASE_CD274", "BASE_PDCD1", "BASE_TIGIT", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1", "BASE_ALK")]), MARGIN=1, FUN=scale))
@@ -232,8 +236,9 @@ ht_hugo <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_hugo))
 )
 
+png("hmap_hugo.png", width=1500, height=500)
 draw(ht_hugo, annotation_legend_list = packLegend(ht_hugo_leg0, ht_hugo_leg1))
-
+dev.off()
 
 # Lauss et al.
 Xz_lauss <- t(apply(t(X_lauss[,c("BASE_CD274", "BASE_PDCD1", "BASE_TIGIT", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1", "BASE_ALK")]), MARGIN=1, FUN=scale))
@@ -271,8 +276,9 @@ ht_lauss <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_lauss))
 )
 
+png("hmap_lauss.png", width=1500, height=500)
 draw(ht_lauss, annotation_legend_list = packLegend(ht_riaz_leg0))
-
+dev.off()
 
 # Riaz et al.
 Xz_riaz <- t(apply(t(X_riaz[,c("BASE_CD274", "BASE_PDCD1", "BASE_TIGIT", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1", "BASE_ALK")]), MARGIN=1, FUN=scale))
@@ -306,8 +312,9 @@ ht_riaz <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_riaz))
 )
 
+png("hmap_riaz.png", width=1500, height=500)
 draw(ht_riaz, annotation_legend_list = packLegend(ht_riaz_leg0))
-
+dev.off()
 
 # Chen et al.
 Xz_chen <- t(apply(t(X_chen[,c("BASE_CD274", "BASE_PDCD1", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1")]), MARGIN=1, FUN=scale))
@@ -341,8 +348,9 @@ ht_chen <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_chen))
 )
 
+png("hmap_chen.png", width=1500, height=500)
 draw(ht_chen, annotation_legend_list = packLegend(ht_chen_leg0))
-
+dev.off()
 
 # Westin et al.
 Xz_westin <- t(apply(t(X_westin[,c("BASE_CD274", "BASE_PDCD1", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1")]), MARGIN=1, FUN=scale))
@@ -377,8 +385,9 @@ ht_westin <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_westin))
 )
 
+png("hmap_westin.png", width=1500, height=500)
 draw(ht_westin, annotation_legend_list = packLegend(ht_westin_leg0))
-
+dev.off()
 
 # Braun et al. (Nivolumab)
 
@@ -427,8 +436,9 @@ ht_braun_nivo <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_braun_nivo))
 )
 
+png("hmap_braun_nivo.png", width=1500, height=500)
 draw(ht_braun_nivo, annotation_legend_list = packLegend(ht_braun_nivo_leg0, ht_braun_nivo_leg1, ht_braun_nivo_leg2))
-
+dev.off()
 
 
 
@@ -479,8 +489,9 @@ ht_braun_ever <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_braun_ever))
 )
 
+png("hmap_braun_chemo.png", width=1500, height=500)
 draw(ht_braun_ever, annotation_legend_list = packLegend(ht_braun_ever_leg0, ht_braun_ever_leg1, ht_braun_ever_leg2))
-
+dev.off()
 
 
 
@@ -534,9 +545,18 @@ ht_tcga <- ComplexHeatmap::Heatmap(
 	row_labels = gsub("BASE_", "", rownames(Xz_tcga))
 )
 
+png("hmap_tcga_chemo.png", width=1500, height=500)
 draw(ht_tcga, annotation_legend_list = packLegend(ht_tcga_leg0, ht_tcga_leg1, ht_tcga_leg2))
+dev.off()
 
 
+####
+#### CORRELATION PLOT FOR GENE EXPRESSION
+####
+
+#install.packages("corrplot")
+library(corrplot)
+corrplot(cor(X_tcga[,c("BASE_CD274", "BASE_PDCD1", "BASE_TIGIT", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1", "BASE_ALK")]), method="circle")
 
 
 ####
