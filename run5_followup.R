@@ -556,8 +556,12 @@ dev.off()
 
 #install.packages("corrplot")
 library(corrplot)
-corrplot(cor(X_tcga[,c("BASE_CD274", "BASE_PDCD1", "BASE_TIGIT", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1", "BASE_ALK")]), method="circle")
-
+png("Fig3_panelA_genecorrelations.png", width=600, height=600)
+tmp <- X_tcga[,c("BASE_CD274", "BASE_PDCD1", "BASE_TIGIT", "BASE_CXCL9","BASE_CXCR6", "BASE_CD8A", "BASE_CCL5", "BASE_IDO1", "BASE_ALK")]
+colnames(tmp) <- gsub("BASE_", "", colnames(tmp))
+genecors <- cor(tmp)
+corrplot(genecors, method="circle")
+dev.off()
 
 ####
 #### KAPLAN-MEIERS / ROC-CURVES
@@ -566,10 +570,76 @@ corrplot(cor(X_tcga[,c("BASE_CD274", "BASE_PDCD1", "BASE_TIGIT", "BASE_CXCL9","B
 
 library(survminer)
 
+# Response datasets: 
 
+RESP_braun_nivo
+RESP_braun_ever
+RESP_chen
+RESP_gide
+RESP_hugo
+RESP_kim
+RESP_lauss
+RESP_prat
+RESP_riaz
+RESP_tcga
 
+library(pROC)
 
+roc_io <- function(RESP, gex, panel="CUSTOM_FICAN-OSCAR_smaller"){
+	# Removal additional prefix
+	colnames(gex) <- gsub("BASE_", "", colnames(gex))
+	# Transpose required
+	gex <- t(gex)
+	
+	gmt_custom <- GSEABase::getGmt("selfmade.gmt")
+	pred <- t(GSVA::gsva(as.matrix(gex), gmt_custom, verbose=FALSE))[,panel] # Custom GMTs
+	
+	roc <- pROC::roc(response = RESP, predictor = pred)
+	roc
+}
 
+# 5 gene panel
+
+roc_prat <- roc_io(RESP = RESP_prat, gex = X_prat, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_braun_nivo <- roc_io(RESP = RESP_braun_nivo, gex = X_braun_nivo, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_braun_ever <- roc_io(RESP = RESP_braun_ever, gex = X_braun_ever, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_chen <- roc_io(RESP = RESP_chen, gex = X_chen, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_gide <- roc_io(RESP = RESP_gide, gex = X_gide, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_hugo <- roc_io(RESP = RESP_hugo, gex = X_hugo, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_kim <- roc_io(RESP = RESP_kim, gex = X_kim, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_lauss <- roc_io(RESP = RESP_lauss, gex = X_lauss, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_riaz <- roc_io(RESP = RESP_riaz, gex = X_riaz, panel="CUSTOM_FICAN-OSCAR_smaller")
+roc_tcga <- roc_io(RESP = RESP_tcga, gex = X_tcga, panel="CUSTOM_FICAN-OSCAR_smaller")
+
+palet <- rainbow(10)
+
+png("Fig3_ROCAUCs_panelB_5genesGSVa.png", width=600, height=600)
+plot(roc_prat, col=palet[1])
+plot(roc_braun_nivo, col=palet[2], add=TRUE)
+plot(roc_braun_ever, col=palet[3], add=TRUE)
+plot(roc_chen, col=palet[4], add=TRUE)
+plot(roc_gide, col=palet[5], add=TRUE)
+plot(roc_hugo, col=palet[6], add=TRUE)
+plot(roc_kim, col=palet[7], add=TRUE)
+plot(roc_lauss, col=palet[8], add=TRUE)
+plot(roc_riaz, col=palet[9], add=TRUE)
+plot(roc_tcga, col=palet[10], add=TRUE)
+
+legend("bottomright", col=c(NA_integer_, palet), lwd=c(NA_integer_, rep(2, times=10)), legend=c("ROC-AUCs (Responder)", 
+	paste("Prat et al.", round(as.numeric(roc_prat$auc),3)),
+	paste("Braun et al. Nivo", round(as.numeric(roc_braun_nivo$auc),3)),
+	paste("Braun et al. Chemo", round(as.numeric(roc_braun_ever$auc),3)),
+	paste("Chen et al.", round(as.numeric(roc_chen$auc),3)),
+	paste("Gide et al.", round(as.numeric(roc_gide$auc),3)),
+	paste("Hugo et al.", round(as.numeric(roc_hugo$auc),3)),
+	paste("Kim et al.", round(as.numeric(roc_kim$auc),3)),
+	paste("Lauss et al.", round(as.numeric(roc_lauss$auc),3)),
+	paste("Riaz et al.", round(as.numeric(roc_riaz$auc),3)),
+	paste("TCGA LUSC/LUAD Chemo", round(as.numeric(roc_tcga$auc),3))
+	)
+)
+title(main="Predicting responders using just base 5 gene panel estimated with GSVA\n")
+dev.off()
 
 ####
 #### Example of LASSO penalization coefficients as a function of lambda vs OSCAR unbiased estimates as a function of cardinality in Prat et al.
