@@ -8,3 +8,4 @@ Key notes:
 - One final model constructed that was used for all the subchallenge predictions
 - Identified novel gene panel during the challenge with CD274, PDCD1, TIGIT, CXCL9 and CXCR6 depicting TME and ICB responsiveness
 - Further genes of interest include CD8A, CCL5, IDO1, and ALK
+- Elaborated write-up available at: https://www.synapse.org/#!Synapse:syn24180900/wiki/608579
