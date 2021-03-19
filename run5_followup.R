@@ -613,33 +613,42 @@ roc_tcga <- roc_io(RESP = RESP_tcga, gex = X_tcga, panel="CUSTOM_FICAN-OSCAR_sma
 
 palet <- rainbow(10)
 
-png("Fig3_ROCAUCs_panelB_5genesGSVa.png", width=600, height=600)
+png("Fig3_ROCAUCs_panelB_predictive.png", width=700, height=700)
 plot(roc_prat, col=palet[1])
 plot(roc_braun_nivo, col=palet[2], add=TRUE)
-plot(roc_braun_ever, col=palet[3], add=TRUE)
 plot(roc_chen, col=palet[4], add=TRUE)
 plot(roc_gide, col=palet[5], add=TRUE)
 plot(roc_hugo, col=palet[6], add=TRUE)
 plot(roc_kim, col=palet[7], add=TRUE)
 plot(roc_lauss, col=palet[8], add=TRUE)
 plot(roc_riaz, col=palet[9], add=TRUE)
-plot(roc_tcga, col=palet[10], add=TRUE)
 
-legend("bottomright", col=c(NA_integer_, palet), lwd=c(NA_integer_, rep(2, times=10)), legend=c("ROC-AUCs (Responder)", 
+legend("bottomright", col=c(NA_integer_, palet[-c(3,10)]), lwd=c(NA_integer_, rep(2, times=8)), legend=c("ROC-AUCs (Responder)", 
 	paste("Prat et al.", round(as.numeric(roc_prat$auc),3)),
 	paste("Braun et al. Nivo", round(as.numeric(roc_braun_nivo$auc),3)),
-	paste("Braun et al. Chemo", round(as.numeric(roc_braun_ever$auc),3)),
 	paste("Chen et al.", round(as.numeric(roc_chen$auc),3)),
 	paste("Gide et al.", round(as.numeric(roc_gide$auc),3)),
 	paste("Hugo et al.", round(as.numeric(roc_hugo$auc),3)),
 	paste("Kim et al.", round(as.numeric(roc_kim$auc),3)),
 	paste("Lauss et al.", round(as.numeric(roc_lauss$auc),3)),
-	paste("Riaz et al.", round(as.numeric(roc_riaz$auc),3)),
+	paste("Riaz et al.", round(as.numeric(roc_riaz$auc),3))
+	)
+)
+title(main="Anti-PD-1 prediction using just base 5 gene panel estimated with GSVA\n")
+dev.off()
+
+png("Fig3_ROCAUCs_panelB_5genesGSVa.png", width=700, height=700)
+plot(roc_braun_ever, col=palet[3])
+plot(roc_tcga, col=palet[10], add=TRUE)
+
+legend("bottomright", col=c(NA_integer_, palet[c(3,10)]), lwd=c(NA_integer_, rep(2, times=2)), legend=c("ROC-AUCs (Responder)", 
+	paste("Braun et al. Chemo", round(as.numeric(roc_braun_ever$auc),3)),
 	paste("TCGA LUSC/LUAD Chemo", round(as.numeric(roc_tcga$auc),3))
 	)
 )
-title(main="Predicting responders using just base 5 gene panel estimated with GSVA\n")
+title(main="Chemo-response prediction using just base 5 gene panel estimated with GSVA\n")
 dev.off()
+
 
 ####
 #### Example of LASSO penalization coefficients as a function of lambda vs OSCAR unbiased estimates as a function of cardinality in Prat et al.
