@@ -1,4 +1,4 @@
-# DREAM_2020_IO" 
+# DREAM_IO_FICAN-OSCAR
 
 Workspace of the team FICAN-OSCAR for the DREAM Challenge "Anti-PD1 Response Prediction DREAM Challenge" at https://www.synapse.org/#!Synapse:syn18404605/wiki/589611
 
