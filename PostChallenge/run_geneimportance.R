@@ -294,27 +294,27 @@ PFS_unigene_aggregate_chem <- list(
 ## GSVA
 
 OS_gsva_aggregate_nivo <- list(
-	OS_oscar_gsva_braun_nivo,
-	OS_oscar_gsva_gide,
-	OS_oscar_gsva_hugo
+	OS_oscar_gsva_braun_nivo@bperk,
+	OS_oscar_gsva_gide@bperk,
+	OS_oscar_gsva_hugo@bperk
 )
 
 OS_gsva_aggregate_chem <- list(
-	OS_oscar_gsva_braun_ever,
-	OS_oscar_gsva_tcga
+	OS_oscar_gsva_braun_ever@bperk,
+	OS_oscar_gsva_tcga@bperk
 )
 
 ## unigene
 
 OS_unigene_aggregate_nivo <- list(
-	OS_oscar_unigene_braun_nivo,
-	OS_oscar_unigene_gide,
-	OS_oscar_unigene_hugo
+	OS_oscar_unigene_braun_nivo@bperk,
+	OS_oscar_unigene_gide@bperk,
+	OS_oscar_unigene_hugo@bperk
 )
 
 OS_unigene_aggregate_chem <- list(
-	OS_oscar_unigene_braun_ever,
-	OS_oscar_unigene_tcga
+	OS_oscar_unigene_braun_ever@bperk,
+	OS_oscar_unigene_tcga@bperk
 )
 
 
@@ -323,51 +323,151 @@ OS_unigene_aggregate_chem <- list(
 ## GSVA
 
 RESP_gsva_aggregate_nivo <- list(
-	RESP_oscar_gsva_braun_nivo,
-	RESP_oscar_gsva_chen,
-	RESP_oscar_gsva_gide,
-	RESP_oscar_gsva_hugo,
-	RESP_oscar_gsva_kim,
-	RESP_oscar_gsva_lauss,
-	RESP_oscar_gsva_prat,
-	RESP_oscar_gsva_riaz
+	RESP_oscar_gsva_braun_nivo@bperk,
+	RESP_oscar_gsva_chen@bperk,
+	RESP_oscar_gsva_gide@bperk,
+	RESP_oscar_gsva_hugo@bperk,
+	RESP_oscar_gsva_kim@bperk,
+	RESP_oscar_gsva_lauss@bperk,
+	RESP_oscar_gsva_prat@bperk,
+	RESP_oscar_gsva_riaz@bperk
 )
 	
 RESP_gsva_aggregate_chem <- list(
-	RESP_oscar_gsva_braun_ever,
-	RESP_oscar_gsva_tcga
+	RESP_oscar_gsva_braun_ever@bperk,
+	RESP_oscar_gsva_tcga@bperk
 )
 
 ## unigene
 
 RESP_unigene_aggregate_nivo <- list(
-	RESP_oscar_unigene_braun_nivo,
-	RESP_oscar_unigene_chen,
-	RESP_oscar_unigene_gide,
-	RESP_oscar_unigene_hugo,
-	RESP_oscar_unigene_kim,
-	RESP_oscar_unigene_lauss,
-	RESP_oscar_unigene_prat,
-	RESP_oscar_unigene_riaz
+	RESP_oscar_unigene_braun_nivo@bperk,
+	RESP_oscar_unigene_chen@bperk,
+	RESP_oscar_unigene_gide@bperk,
+	RESP_oscar_unigene_hugo@bperk,
+	RESP_oscar_unigene_kim@bperk,
+	RESP_oscar_unigene_lauss@bperk,
+	RESP_oscar_unigene_prat@bperk,
+	RESP_oscar_unigene_riaz@bperk
 )
 	
 RESP_unigene_aggregate_chem <- list(
-	RESP_oscar_unigene_braun_ever,
-	RESP_oscar_unigene_tcga
+	RESP_oscar_unigene_braun_ever@bperk,
+	RESP_oscar_unigene_tcga@bperk
 )
 
 # Order of oscar feature selection paths:
 
 # Nivo-arms
 
-## gsva
+## gsva - ELIMINATION ORDER; inverse is importance
 
-## unigene
+PFS_gsva_aggregate_nivo
+# Braun nivo: TIGIT, CXCR6, PDCD1, CXCL9, CD274
+## Braun et al. not really representative of NSCLC
+# Gide: CXCR6, CD274, TIGIT, PDCD1, CXCL9
+# Lauss: CXCR6, TIGIT, PDCD1, CD274, CXCL9
+# Prat: CXCL9, CXCR6, TIGIT, PDCD1, CD274
+# Westin: CXCL9, CXCR6, TIGIT, PDCD1, CD274
+## Interestingly, gsva_all gets eliminated quite late (keeping C274 in?) - not reported here
 
+OS_gsva_aggregate_nivo
+# Braun nivo: TIGIT, CXCL9, CXCR6, CD274, PDCD1
+## Braun et al. not really representative of NSCLC
+# Gide: CD274, CXCR9, TIGIT, CXCL6, PDCD1
+# Hugo: PDCD1, CXCL9, CD274, CXCR6/TIGIT
+
+RESP_gsva_aggregate_nivo
+# Braun nivo: Not converging
+## Not very representative
+# Chen: CXCR6, CD274, CXCL9/TIGIT, PDCD1
+# Gide: CXCR6, CD274, PDCD1, CXCL9, TIGIT
+# Hugo: PDCD1, TIGIT, CXCL9/CD274, CXCR6
+# Kim: PDCD1, CXCL9/CXCR6, PDCD1/TIGIT, CD274
+# Lauss: CXCR6, CXCL9/TIGIT, CD274, PDCD1
+# Prat: PDCD1, CXCL9, TIGIT, CD274, CXCR6
+# Riaz: PDCD1, CXCL9, CD274, CXCR6/TIGIT
+
+## unigene - SELECTION ORDER; most important chosen first
+
+PFS_unigene_aggregate_nivo
+# Braun: CXCR6, CD274, CXCL9, TIGIT, PDCD1
+## Not very representative
+# Gide: CXCR6, CXCL9, CD274, PDCD1, TIGIT
+# Lauss: CD274, TIGIT, CXCR6, PDCD1, CXCL9
+# Prat: PDCD1, TIGIT, CXCL9, CXCR6, CD274
+# Westin: CXCL9, CD274, TIGIT, CXCR6, PDCD1 
+
+OS_unigene_aggregate_nivo
+# Braun: PDCD1, CD274, CXCR6, TIGIT, CXCL9
+## Not very representative
+# Gide: CD274, CXCR6, PDCD1, CXCL9, TIGIT
+# Hugo: CXCR6, TIGIT, CXCL9, PDCD1, CD274
+
+RESP_unigene_aggregate_nivo
+# Braun: Did not converge
+# Chen: PDCD1, CD274, CXCR6, CXCL9
+# Gide: CXCR6, CD274, TIGIT, CXCL9, PDCD1
+# Hugo: CXCR6, TIGIT, PDCD1, CXCL9, CD274
+# Kim: PDCD1, CD274, CXCL9, CXCR6, TIGIT
+# Lauss: CD274, PDCD1, CXCR6, TIGIT, CXCL9
+# Prat: CD274, PDCD1, TIGIT, CXCR6, CXCL9
+# Riaz: TIGIT, CXCR9, CXCL9, CD274, PDCD1
 
 # Chemo-arms
 
 ## gsva
+PFS_gsva_aggregate_chem
+# Braun ever: CXCL9, PDCD1, CD274, TIGIT, CXCR6
+# TCGA: CXCR6, TIGIT, PDCD1, CXCL9, CD274
+
+OS_gsva_aggregate_chem
+# Braun ever: PDCD1, TIGIT, CD274/CXCL9, CXCR6
+# TCGA: PDCD1, TIGIT, CD274/CXCL9, CXCR6
+
+RESP_gsva_aggregate_chem
+# Braun ever: Did not converge
+# TCGA: Did not converge
 
 ## unigene
+PFS_unigene_aggregate_chem
+# Braun ever: TIGIT, CXCL9, CD274, CXCR6, PDCD1
+# TCGA: CD274, CXCR6, CXCL9, PDCD1, TIGIT
+
+OS_unigene_aggregate_chem
+# Braun ever: CXCR6, CXCL9, PDCD1, TIGIT, CD274
+# TCGA: CXCR6, CXCL9, PDCD1, TIGIT, CD274
+
+RESP_unigene_aggregate_chem
+# Braun ever: CD274, CXCL9, PDCD1, CXCR6, TIGIT
+# TCGA: CD274, CXCL9, PDCD1, TIGIT, CXCR6
+
+##
+## Conflicting and very difficult to interpret
+## Some consisting trends though... while considering also the chemo arms
+##
+
+## CXCR6 seems like a very strong candidate, for predictivity even better than CD274
+## CXCL9 seems about at par with CD274, but is quite close with CXCR6
+## PDCD1 and TIGIT clearly show the least signal, with a bit of dataset generalizability to order them as 4th or 5th
+
+## With such a small gene set, priority is to be placed on the unigene feature selection rather than GSVA estimates (possibly misleading due to small gene set size etc)
+
+## Best performing curation (OS) emphasis requested by organizers, in benchmarking by other teams in the challenge
+## Importance curated from unigene results, weighting the most representative datasets, favoring nivo datasets over chemo arms in such a selective subset: 
+## CXCR6 > CD274 >  CXCL9 > PDCD1 > TIGIT
+
+ranks <- read.csv("gene_ranks_FICAN-OSCAR.csv")
+#> sum(ranks$rank, na.rm=TRUE)
+#[1] 0
+ranks[match(c("CXCR6", "CD274", "CXCL9", "PDCD1", "TIGIT"), ranks$gene),"rank"] <- 1:5
+#> sum(ranks$rank, na.rm=TRUE)
+#[1] 15
+#> sum(1:5)
+#[1] 15
+#> sum(is.na(ranks$rank))
+#[1] 29182
+
+## Write out the gene rankings in same format as the input file
+write.csv(ranks, file="gene_ranks_FICAN-OSCAR.csv", quote=FALSE, row.names=FALSE)
 
