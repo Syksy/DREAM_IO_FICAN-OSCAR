@@ -146,103 +146,213 @@ if(FALSE){
 library(oscar)
 library(survival)
 
-# Current working directory ought to be inside ..\\PostChallenge\\ where the generanking_workspace.RData is located
-load("generanking_workspace.RData")
+# Commented out due to runs done on June 24th
+if(FALSE){
 
-set.seed(1)
-# 0.7.0 needs debugging - memory overflow in below calls:
-# try-function is not catching any errors; something goes wrong in Fortran
+	# Current working directory ought to be inside ..\\PostChallenge\\ where the generanking_workspace.RData is located
+	load("generanking_workspace.RData")
 
-# Prat et al.
+	set.seed(1)
+	# 0.7.0 needs debugging - memory overflow in below calls:
+	# try-function is not catching any errors; something goes wrong in Fortran
 
-PFS_oscar_gsva_prat <- oscar::oscar(x = gsva_prat, y = PFS_prat, family = 'cox')
-PFS_oscar_unigene_prat <- oscar::oscar(x = unigene_prat, y = PFS_prat, family = 'cox')
+	# Prat et al.
 
-RESP_oscar_gsva_prat <- oscar::oscar(x = gsva_prat, y = RESP_prat, family = 'logistic')
-RESP_oscar_unigene_prat <- oscar::oscar(x = unigene_prat, y = RESP_prat, family = 'logistic')
+	PFS_oscar_gsva_prat <- oscar::oscar(x = gsva_prat, y = PFS_prat, family = 'cox')
+	PFS_oscar_unigene_prat <- oscar::oscar(x = unigene_prat, y = PFS_prat, family = 'cox')
 
-# Gide et al.
+	RESP_oscar_gsva_prat <- oscar::oscar(x = gsva_prat, y = RESP_prat, family = 'logistic')
+	RESP_oscar_unigene_prat <- oscar::oscar(x = unigene_prat, y = RESP_prat, family = 'logistic')
 
-PFS_oscar_gsva_gide <- oscar::oscar(x = gsva_gide, y = PFS_gide, family = 'cox')
-PFS_oscar_unigene_gide <- oscar::oscar(x = unigene_gide, y = PFS_gide, family = 'cox')
+	# Gide et al.
 
-OS_oscar_gsva_gide <- oscar::oscar(x = gsva_gide, y = OS_gide, family = 'cox')
-OS_oscar_unigene_gide <- oscar::oscar(x = unigene_gide, y = OS_gide, family = 'cox')
+	PFS_oscar_gsva_gide <- oscar::oscar(x = gsva_gide, y = PFS_gide, family = 'cox')
+	PFS_oscar_unigene_gide <- oscar::oscar(x = unigene_gide, y = PFS_gide, family = 'cox')
 
-RESP_oscar_gsva_gide <- oscar::oscar(x = gsva_gide, y = RESP_gide, family = 'logistic')
-RESP_oscar_unigene_gide <- oscar::oscar(x = unigene_gide, y = RESP_gide, family = 'logistic')
+	OS_oscar_gsva_gide <- oscar::oscar(x = gsva_gide, y = OS_gide, family = 'cox')
+	OS_oscar_unigene_gide <- oscar::oscar(x = unigene_gide, y = OS_gide, family = 'cox')
 
-# Hugo et al.
+	RESP_oscar_gsva_gide <- oscar::oscar(x = gsva_gide, y = RESP_gide, family = 'logistic')
+	RESP_oscar_unigene_gide <- oscar::oscar(x = unigene_gide, y = RESP_gide, family = 'logistic')
 
-OS_oscar_gsva_hugo <- oscar::oscar(x = gsva_hugo, y = OS_hugo, family = 'cox')
-OS_oscar_unigene_hugo <- oscar::oscar(x = unigene_hugo, y = OS_hugo, family = 'cox')
+	# Hugo et al.
 
-RESP_oscar_gsva_hugo <- oscar::oscar(x = gsva_hugo, y = RESP_hugo, family = 'logistic')
-RESP_oscar_unigene_hugo <- oscar::oscar(x = unigene_hugo, y = RESP_hugo, family = 'logistic')
+	OS_oscar_gsva_hugo <- oscar::oscar(x = gsva_hugo, y = OS_hugo, family = 'cox')
+	OS_oscar_unigene_hugo <- oscar::oscar(x = unigene_hugo, y = OS_hugo, family = 'cox')
 
-# Lauss et al.
+	RESP_oscar_gsva_hugo <- oscar::oscar(x = gsva_hugo, y = RESP_hugo, family = 'logistic')
+	RESP_oscar_unigene_hugo <- oscar::oscar(x = unigene_hugo, y = RESP_hugo, family = 'logistic')
 
-PFS_oscar_gsva_lauss <- oscar::oscar(x = gsva_lauss, y = PFS_lauss, family = 'cox')
-PFS_oscar_unigene_lauss <- oscar::oscar(x = unigene_lauss, y = PFS_lauss, family = 'cox')
+	# Lauss et al.
 
-OS_oscar_gsva_lauss <- oscar::oscar(x = gsva_lauss, y = OS_lauss, family = 'cox')
-OS_oscar_unigene_lauss <- oscar::oscar(x = unigene_lauss, y = OS_lauss, family = 'cox')
+	PFS_oscar_gsva_lauss <- oscar::oscar(x = gsva_lauss, y = PFS_lauss, family = 'cox')
+	PFS_oscar_unigene_lauss <- oscar::oscar(x = unigene_lauss, y = PFS_lauss, family = 'cox')
 
-RESP_oscar_gsva_lauss <- oscar::oscar(x = gsva_lauss, y = RESP_lauss, family = 'logistic')
-RESP_oscar_unigene_lauss <- oscar::oscar(x = unigene_lauss, y = RESP_lauss, family = 'logistic')
+	OS_oscar_gsva_lauss <- oscar::oscar(x = gsva_lauss, y = OS_lauss, family = 'cox')
+	OS_oscar_unigene_lauss <- oscar::oscar(x = unigene_lauss, y = OS_lauss, family = 'cox')
 
-# Kim et al.
+	RESP_oscar_gsva_lauss <- oscar::oscar(x = gsva_lauss, y = RESP_lauss, family = 'logistic')
+	RESP_oscar_unigene_lauss <- oscar::oscar(x = unigene_lauss, y = RESP_lauss, family = 'logistic')
 
-RESP_oscar_gsva_kim <- oscar::oscar(x = gsva_kim, y = RESP_kim, family = 'logistic')
-RESP_oscar_unigene_kim <- oscar::oscar(x = unigene_kim, y = RESP_kim, family = 'logistic')
+	# Kim et al.
 
-# Chen et al.
+	RESP_oscar_gsva_kim <- oscar::oscar(x = gsva_kim, y = RESP_kim, family = 'logistic')
+	RESP_oscar_unigene_kim <- oscar::oscar(x = unigene_kim, y = RESP_kim, family = 'logistic')
 
-RESP_oscar_gsva_chen <- oscar::oscar(x = gsva_chen, y = RESP_chen, family = 'logistic')
-RESP_oscar_unigene_chen <- oscar::oscar(x = unigene_chen, y = RESP_chen, family = 'logistic')
+	# Chen et al.
 
-# Westin et al.
+	RESP_oscar_gsva_chen <- oscar::oscar(x = gsva_chen, y = RESP_chen, family = 'logistic')
+	RESP_oscar_unigene_chen <- oscar::oscar(x = unigene_chen, y = RESP_chen, family = 'logistic')
 
-PFS_oscar_gsva_westin <- oscar::oscar(x = gsva_westin, y = PFS_westin, family = 'cox')
-PFS_oscar_unigene_westin <- oscar::oscar(x = unigene_westin, y = PFS_westin, family = 'cox')
+	# Westin et al.
 
-# Riaz et al.
+	PFS_oscar_gsva_westin <- oscar::oscar(x = gsva_westin, y = PFS_westin, family = 'cox')
+	PFS_oscar_unigene_westin <- oscar::oscar(x = unigene_westin, y = PFS_westin, family = 'cox')
 
-RESP_oscar_gsva_riaz <- oscar::oscar(x = gsva_riaz, y = RESP_riaz, family = 'logistic')
-RESP_oscar_unigene_riaz <- oscar::oscar(x = unigene_riaz, y = RESP_riaz, family = 'logistic')
+	# Riaz et al.
 
-# Braun et al. (Nivo & Chemo)
+	RESP_oscar_gsva_riaz <- oscar::oscar(x = gsva_riaz, y = RESP_riaz, family = 'logistic')
+	RESP_oscar_unigene_riaz <- oscar::oscar(x = unigene_riaz, y = RESP_riaz, family = 'logistic')
 
-# Nivo-arm
+	# Braun et al. (Nivo & Chemo)
 
-PFS_oscar_gsva_braun_nivo <- oscar::oscar(x = gsva_braun_nivo, y = PFS_braun_nivo, family = 'cox')
-PFS_oscar_unigene_braun_nivo <- oscar::oscar(x = unigene_braun_nivo, y = PFS_braun_nivo, family = 'cox')
+	# Nivo-arm
 
-OS_oscar_gsva_braun_nivo <- oscar::oscar(x = gsva_braun_nivo, y = OS_braun_nivo, family = 'cox')
-OS_oscar_unigene_braun_nivo <- oscar::oscar(x = unigene_braun_nivo, y = OS_braun_nivo, family = 'cox')
+	PFS_oscar_gsva_braun_nivo <- oscar::oscar(x = gsva_braun_nivo, y = PFS_braun_nivo, family = 'cox')
+	PFS_oscar_unigene_braun_nivo <- oscar::oscar(x = unigene_braun_nivo, y = PFS_braun_nivo, family = 'cox')
 
-RESP_oscar_gsva_braun_nivo <- oscar::oscar(x = gsva_braun_nivo, y = RESP_braun_nivo, family = 'logistic')
-RESP_oscar_unigene_braun_nivo <- oscar::oscar(x = unigene_braun_nivo, y = RESP_braun_nivo, family = 'logistic')
+	OS_oscar_gsva_braun_nivo <- oscar::oscar(x = gsva_braun_nivo, y = OS_braun_nivo, family = 'cox')
+	OS_oscar_unigene_braun_nivo <- oscar::oscar(x = unigene_braun_nivo, y = OS_braun_nivo, family = 'cox')
 
-# Chemo-arm
+	RESP_oscar_gsva_braun_nivo <- oscar::oscar(x = gsva_braun_nivo, y = RESP_braun_nivo, family = 'logistic')
+	RESP_oscar_unigene_braun_nivo <- oscar::oscar(x = unigene_braun_nivo, y = RESP_braun_nivo, family = 'logistic')
 
-PFS_oscar_gsva_braun_ever <- oscar::oscar(x = gsva_braun_ever, y = PFS_braun_ever, family = 'cox')
-PFS_oscar_unigene_braun_ever <- oscar::oscar(x = unigene_braun_ever, y = PFS_braun_ever, family = 'cox')
+	# Chemo-arm
 
-OS_oscar_gsva_braun_ever <- oscar::oscar(x = gsva_braun_ever, y = OS_braun_ever, family = 'cox')
-OS_oscar_unigene_braun_ever <- oscar::oscar(x = unigene_braun_ever, y = OS_braun_ever, family = 'cox')
+	PFS_oscar_gsva_braun_ever <- oscar::oscar(x = gsva_braun_ever, y = PFS_braun_ever, family = 'cox')
+	PFS_oscar_unigene_braun_ever <- oscar::oscar(x = unigene_braun_ever, y = PFS_braun_ever, family = 'cox')
 
-RESP_oscar_gsva_braun_ever <- oscar::oscar(x = gsva_braun_ever, y = RESP_braun_ever, family = 'logistic')
-RESP_oscar_unigene_braun_ever <- oscar::oscar(x = unigene_braun_ever, y = RESP_braun_ever, family = 'logistic')
+	OS_oscar_gsva_braun_ever <- oscar::oscar(x = gsva_braun_ever, y = OS_braun_ever, family = 'cox')
+	OS_oscar_unigene_braun_ever <- oscar::oscar(x = unigene_braun_ever, y = OS_braun_ever, family = 'cox')
 
-# TCGA
+	RESP_oscar_gsva_braun_ever <- oscar::oscar(x = gsva_braun_ever, y = RESP_braun_ever, family = 'logistic')
+	RESP_oscar_unigene_braun_ever <- oscar::oscar(x = unigene_braun_ever, y = RESP_braun_ever, family = 'logistic')
 
-PFS_oscar_gsva_tcga <- oscar::oscar(x = gsva_tcga, y = PFS_tcga, family = 'cox')
-PFS_oscar_unigene_tcga <- oscar::oscar(x = unigene_tcga, y = PFS_tcga, family = 'cox')
+	# TCGA
 
-OS_oscar_gsva_tcga <- oscar::oscar(x = gsva_tcga, y = OS_tcga, family = 'cox')
-OS_oscar_unigene_tcga <- oscar::oscar(x = unigene_tcga, y = OS_tcga, family = 'cox')
+	PFS_oscar_gsva_tcga <- oscar::oscar(x = gsva_tcga, y = PFS_tcga, family = 'cox')
+	PFS_oscar_unigene_tcga <- oscar::oscar(x = unigene_tcga, y = PFS_tcga, family = 'cox')
 
-RESP_oscar_gsva_tcga <- oscar::oscar(x = gsva_tcga, y = RESP_tcga, family = 'logistic')
-RESP_oscar_unigene_tcga <- oscar::oscar(x = unigene_tcga, y = RESP_tcga, family = 'logistic')
+	OS_oscar_gsva_tcga <- oscar::oscar(x = gsva_tcga, y = OS_tcga, family = 'cox')
+	OS_oscar_unigene_tcga <- oscar::oscar(x = unigene_tcga, y = OS_tcga, family = 'cox')
+
+	RESP_oscar_gsva_tcga <- oscar::oscar(x = gsva_tcga, y = RESP_tcga, family = 'logistic')
+	RESP_oscar_unigene_tcga <- oscar::oscar(x = unigene_tcga, y = RESP_tcga, family = 'logistic')
+}
+
+# Run and aggregate results from each dataset
+
+load("DREAM_generanking_ash_240621.RData")
+
+# Aggregate coefficient paths over PFS
+## -> Weighting to be added with binarizing the beta-k matrices?
+
+## GSVA
+
+PFS_gsva_aggregate_nivo <- list(
+	PFS_oscar_gsva_braun_nivo@bperk
+	PFS_oscar_gsva_gide@bperk
+	PFS_oscar_gsva_lauss@bperk
+	PFS_oscar_gsva_prat@bperk
+	PFS_oscar_gsva_westin@bperk
+)
+
+PFS_gsva_aggregate_chem <- list(
+	PFS_oscar_gsva_braun_ever@bperk
+	PFS_oscar_gsva_tcga@bperk	
+)
+
+
+## unigene
+
+PFS_unigene_aggregate_nivo <- list(
+	PFS_oscar_unigene_braun_nivo@bperk,
+	PFS_oscar_unigene_gide@bperk,
+	PFS_oscar_unigene_lauss@bperk,
+	PFS_oscar_unigene_prat@bperk,
+	PFS_oscar_unigene_westin@bperk
+)
+
+PFS_unigene_aggregate_chem <- list(
+	PFS_oscar_unigene_braun_ever@bperk,
+	PFS_oscar_unigene_tcga@bperk	
+)
+
+
+# Aggregate coefficient paths over OS
+
+## GSVA
+
+OS_gsva_aggregate_nivo <- list(
+	OS_oscar_gsva_braun_nivo,
+	OS_oscar_gsva_gide,
+	OS_oscar_gsva_hugo
+)
+
+OS_gsva_aggregate_chem <- list(
+	OS_oscar_gsva_braun_ever,
+	OS_oscar_gsva_tcga
+)
+
+## unigene
+
+OS_unigene_aggregate_nivo <- list(
+	OS_oscar_unigene_braun_nivo,
+	OS_oscar_unigene_gide,
+	OS_oscar_unigene_hugo
+)
+
+OS_unigene_aggregate_chem <- list(
+	OS_oscar_unigene_braun_ever,
+	OS_oscar_unigene_tcga
+)
+
+
+# Aggregate coefficient paths over RESP
+
+## GSVA
+
+RESP_gsva_aggregate_nivo <- list(
+	RESP_oscar_gsva_braun_nivo,
+	RESP_oscar_gsva_chen,
+	RESP_oscar_gsva_gide,
+	RESP_oscar_gsva_hugo,
+	RESP_oscar_gsva_kim,
+	RESP_oscar_gsva_lauss,
+	RESP_oscar_gsva_prat,
+	RESP_oscar_gsva_riaz
+)
+	
+RESP_gsva_aggregate_chem <- list(
+	RESP_oscar_gsva_braun_ever,
+	RESP_oscar_gsva_tcga
+)
+
+## unigene
+
+RESP_unigene_aggregate_nivo <- list(
+	RESP_oscar_unigene_braun_nivo,
+	RESP_oscar_unigene_chen,
+	RESP_oscar_unigene_gide,
+	RESP_oscar_unigene_hugo,
+	RESP_oscar_unigene_kim,
+	RESP_oscar_unigene_lauss,
+	RESP_oscar_unigene_prat,
+	RESP_oscar_unigene_riaz
+)
+	
+RESP_unigene_aggregate_chem <- list(
+	RESP_oscar_unigene_braun_ever,
+	RESP_oscar_unigene_tcga
+)
 
