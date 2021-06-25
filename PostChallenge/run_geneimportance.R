@@ -260,15 +260,15 @@ load("DREAM_generanking_ash_240621.RData")
 ## GSVA
 
 PFS_gsva_aggregate_nivo <- list(
-	PFS_oscar_gsva_braun_nivo@bperk
-	PFS_oscar_gsva_gide@bperk
-	PFS_oscar_gsva_lauss@bperk
-	PFS_oscar_gsva_prat@bperk
+	PFS_oscar_gsva_braun_nivo@bperk,
+	PFS_oscar_gsva_gide@bperk,
+	PFS_oscar_gsva_lauss@bperk,
+	PFS_oscar_gsva_prat@bperk,
 	PFS_oscar_gsva_westin@bperk
 )
 
 PFS_gsva_aggregate_chem <- list(
-	PFS_oscar_gsva_braun_ever@bperk
+	PFS_oscar_gsva_braun_ever@bperk,
 	PFS_oscar_gsva_tcga@bperk	
 )
 
@@ -355,4 +355,19 @@ RESP_unigene_aggregate_chem <- list(
 	RESP_oscar_unigene_braun_ever,
 	RESP_oscar_unigene_tcga
 )
+
+# Order of oscar feature selection paths:
+
+# Nivo-arms
+
+## gsva
+
+## unigene
+
+
+# Chemo-arms
+
+## gsva
+
+## unigene
 
